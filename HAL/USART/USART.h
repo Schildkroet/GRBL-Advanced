@@ -19,13 +19,24 @@
 #define USART_H_INCLUDED
 
 #include <stdbool.h>
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_usart.h"
 
 
-#define STDOUT	USART2
+// Number of USARTs on this device
+#define USART_NUM			3
 
-#define RX		0
-#define TX		1
+// Numerate available USARTs in ascending order
+#define USART1_NUM			0
+#define USART2_NUM			1
+#define USART6_NUM			2
+
+// Usart used for Printf(...)
+#define STDOUT				USART2
+#define STDOUT_NUM			USART2_NUM
+
+// Direction definitions
+#define USART_DIR_RX		0
+#define USART_DIR_TX		1
 
 
 #ifdef __cplusplus

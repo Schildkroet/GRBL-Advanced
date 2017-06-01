@@ -194,10 +194,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="HAL\TIM\TIM.h" />
-		<Unit filename="HAL\USART\Usart.c">
+		<Unit filename="HAL\USART\FIFO_USART.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="HAL\USART\Usart.h" />
+		<Unit filename="HAL\USART\FIFO_USART.h" />
+		<Unit filename="HAL\USART\USART.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\USART\USART.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -317,10 +321,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\debug.h" />
-		<Unit filename="Src\Fifo.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Fifo.h" />
 		<Unit filename="Src\Print.c">
 			<Option compilerVar="CC" />
 		</Unit>

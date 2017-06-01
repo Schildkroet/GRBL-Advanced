@@ -24,7 +24,6 @@
 #include "System32.h"
 #include "grbl_advance.h"
 
-#include "Fifo.h"
 #include "Print.h"
 
 
@@ -54,10 +53,8 @@ int main(void) {
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
 	// Init SysTick 1ms
-	SysClock_Init();
+	SysTick_Init();
 
-	// Init USART-FIFO
-	Fifo_Init();
 	// Init formatted output
 	Print_Init();
 

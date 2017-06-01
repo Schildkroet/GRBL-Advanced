@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include "Print.h"
 #include "Config.h"
-#include "Usart.h"
-#include "Fifo.h"
+#include "USART.h"
+#include "FIFO_USART.h"
 #include "Settings.h"
 
 
@@ -87,7 +87,7 @@ void PrintFloat(float n, uint8_t decimal_places)
 
 int8_t Getc(char *c)
 {
-	if(FifoUSART_Get(2, RX, c) == 0) {
+	if(FifoUsart_Get(STDOUT_NUM, USART_DIR_RX, c) == 0) {
 		return 0;
 	}
 

@@ -16,14 +16,23 @@
   along with STM32F4_HAL.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <stdio.h>
-#include "Usart.h"
-#include "Fifo.h"
+#include "USART.h"
+#include "FIFO_USART.h"
+
+
+static uint8_t FifoInit = 0;
 
 
 void Usart_Init(USART_TypeDef *usart, uint32_t baud)
 {
 	USART_InitTypeDef USART_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
+
+	if(!FifoInit) {
+		// Initialize fifo once
+		FifoUsart_Init();
+		FifoInit = 1;
+	}
 
 	if(usart == USART1) {
 		/* Enable GPIO clock */
@@ -150,7 +159,7 @@ void Usart_Init(USART_TypeDef *usart, uint32_t baud)
 void Usart_Put(USART_TypeDef *usart, char c)
 {
 	if(usart == STDOUT)
-		FifoUSART_Insert(2, TX, c);
+		FifoUsart_Insert(STDOUT_NUM, USART_DIR_TX, c);
 
 	// Enable sending via interrupt
 	Usart_TxInt(usart, true);
@@ -163,7 +172,7 @@ void Usart_Write(USART_TypeDef *usart, uint8_t *data, uint8_t len)
 	while(len--)
 	{
 		if(usart == STDOUT)
-			FifoUSART_Insert(2, TX, data[i++]);
+			FifoUsart_Insert(STDOUT_NUM, USART_DIR_TX, data[i++]);
 	}
 
 	// Enable sending via interrupt

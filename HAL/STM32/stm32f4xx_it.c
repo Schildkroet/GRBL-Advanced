@@ -28,8 +28,8 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
-#include "Usart.h"
-#include "Fifo.h"
+#include "USART.h"
+#include "FIFO_USART.h"
 #include "Limits.h"
 #include "Stepper.h"
 #include "System.h"
@@ -54,7 +54,7 @@ extern void Limit_PinChangeISR(void);
 extern void System_PinChangeISR(void);
 
 
-void SysClock_Init(void)
+void SysTick_Init(void)
 {
 	RCC_ClocksTypeDef RCC_Clocks;
 
@@ -339,7 +339,7 @@ void USART2_IRQHandler(void)
 			}
 			else {
 				// Write character to buffer
-				FifoUSART_Insert(2, RX, c);
+				FifoUsart_Insert(USART2_NUM, USART_DIR_RX, c);
 			}
 		}
 	}
@@ -347,7 +347,7 @@ void USART2_IRQHandler(void)
 	if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET) {
 		char c;
 
-		if(FifoUSART_Get(2, TX, &c) == 0) {
+		if(FifoUsart_Get(USART2_NUM, USART_DIR_TX, &c) == 0) {
 			/* Write one byte to the transmit data register */
 			while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
 			USART_SendData(USART2, c);
@@ -373,9 +373,25 @@ void USART2_IRQHandler(void)
 void USART6_IRQHandler(void)
 {
 	if(USART_GetITStatus(USART6, USART_IT_RXNE) != RESET) {
+		/* Read one byte from the receive data register */
+		unsigned char c = (USART_ReceiveData(USART6) & 0xFF);
+
+		// Write character to buffer
+		FifoUsart_Insert(USART6_NUM, USART_DIR_RX, c);
 	}
 
 	if(USART_GetITStatus(USART6, USART_IT_TXE) != RESET) {
+		char c;
+
+		if(FifoUsart_Get(USART6_NUM, USART_DIR_TX, &c) == 0) {
+			/* Write one byte to the transmit data register */
+			while(USART_GetFlagStatus(USART6, USART_FLAG_TC) == RESET);
+			USART_SendData(USART6, c);
+		}
+		else {
+			// Nothing to transmit - disable interrupt
+			USART_ITConfig(USART6, USART_IT_TXE, DISABLE);
+		}
 	}
 
 	/* If overrun condition occurs, clear the ORE flag and recover communication */

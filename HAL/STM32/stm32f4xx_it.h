@@ -42,10 +42,6 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
-void SysTick_Init(void);
-void Delay_us(volatile uint32_t us);
-void Delay_ms(volatile uint32_t ms);
-
 void NMI_Handler(void);
 void HardFault_Handler(void);
 void MemManage_Handler(void);

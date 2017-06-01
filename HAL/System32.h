@@ -40,6 +40,12 @@ typedef struct {
 } Date_t;
 
 
+
+void SysTick_Init(void);
+void Delay_us(volatile uint32_t us);
+void Delay_ms(volatile uint32_t ms);
+
+
 #ifdef __cplusplus
 }
 #endif

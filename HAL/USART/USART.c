@@ -1,5 +1,5 @@
 /*
-  Usart.c - Usart implementation
+  USART.c - USART implementation
   Part of STM32F4_HAL
 
   Copyright (c)	2017 Patrick F.

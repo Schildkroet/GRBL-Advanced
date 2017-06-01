@@ -1,5 +1,5 @@
 /*
-  Usart.h - Usart Header
+  USART.h - USART Header
   Part of STM32F4_HAL
 
   Copyright (c)	2017 Patrick F.

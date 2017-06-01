@@ -20,23 +20,12 @@
 #include "TIM.h"
 
 
-void Timer1_Init(void);
-void Timer9_Init(void);
-
-
-void TIM_Init(void)
-{
-	Timer1_Init();
-	Timer9_Init();
-}
-
-
 /**
  * Timer 1
  * Outputs ~10 KHz on D11
  * Used for Variable Spindle PWM
  **/
-void Timer1_Init(void)
+void TIM1_Init(void)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef TIM_OCInitStructure;
@@ -77,7 +66,7 @@ void Timer1_Init(void)
  * On CC1, Main Stepper Interuppt is called
  * On Update, Stepper Port Reset is called
  **/
-void Timer9_Init(void)
+void TIM9_Init(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;

@@ -23,6 +23,7 @@
 #include "Settings.h"
 #include "System.h"
 #include "GPIO.h"
+#include "TIM.h"
 #include "GCode.h"
 #include "SpindleControl.h"
 
@@ -35,6 +36,8 @@ void Spindle_Init(void)
     // Configure variable spindle PWM and enable pin, if requried. On the Uno, PWM and enable are
     // combined unless configured otherwise.
     GPIO_InitGPIO(GPIO_SPINDLE);
+
+    TIM1_Init();
 
     pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
 

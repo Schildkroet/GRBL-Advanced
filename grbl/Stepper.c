@@ -58,9 +58,9 @@
 // and timer accuracy.  Do not alter these settings unless you know what you are doing.
 #define MAX_AMASS_LEVEL		3
 // AMASS_LEVEL0: Normal operation. No AMASS. No upper cutoff frequency. Starts at LEVEL1 cutoff frequency.
-#define AMASS_LEVEL1			(F_CPU/8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
-#define AMASS_LEVEL2			(F_CPU/4000) // Over-drives ISR (x4)
-#define AMASS_LEVEL3			(F_CPU/2000) // Over-drives ISR (x8)
+#define AMASS_LEVEL1			(20000000/8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
+#define AMASS_LEVEL2			(20000000/4000) // Over-drives ISR (x4)
+#define AMASS_LEVEL3			(20000000/2000) // Over-drives ISR (x8)
 
 #if MAX_AMASS_LEVEL <= 0
   error "AMASS must have 1 or more levels to operate correctly."
@@ -213,7 +213,7 @@ void Stepper_Init(void)
 	GPIO_InitGPIO(GPIO_STEPPER);
 
 	// Init TIM9
-	TIM_Init();
+	TIM9_Init();
 }
 
 // Stepper state initialization. Cycle should only start if the st.cycle_start flag is

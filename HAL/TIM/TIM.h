@@ -24,7 +24,8 @@ extern "C" {
 #endif
 
 
-void TIM_Init(void);
+void TIM1_Init(void);
+void TIM9_Init(void);
 
 
 #ifdef __cplusplus

@@ -31,6 +31,11 @@ void TIM_Init(void)
 }
 
 
+/**
+ * Timer 1
+ * Outputs ~10 KHz on D11
+ * Used for Variable Spindle PWM
+ **/
 void Timer1_Init(void)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
@@ -64,6 +69,14 @@ void Timer1_Init(void)
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
 }
 
+
+/**
+ * Timer 9
+ * Base clock: 20 MHz
+ * Used for Stepper Interrupt
+ * On CC1, Main Stepper Interuppt is called
+ * On Update, Stepper Port Reset is called
+ **/
 void Timer9_Init(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;

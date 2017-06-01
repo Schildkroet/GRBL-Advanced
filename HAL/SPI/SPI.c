@@ -142,10 +142,12 @@ void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode)
 	SPI_Cmd(SPIx, ENABLE);
 }
 
+
 uint8_t Spi_ReadByte(SPI_TypeDef *SPIx)
 {
 	return Spi_WriteByte(SPIx, 0xFF);
 }
+
 
 uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data)
 {

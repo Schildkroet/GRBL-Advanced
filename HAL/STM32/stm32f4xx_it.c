@@ -242,9 +242,25 @@ void EXTI9_5_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
+		/* Read one byte from the receive data register */
+		unsigned char c = (USART_ReceiveData(USART1) & 0xFF);
+
+		// Write character to buffer
+		FifoUsart_Insert(USART1_NUM, USART_DIR_RX, c);
 	}
 
 	if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET) {
+		char c;
+
+		if(FifoUsart_Get(USART1_NUM, USART_DIR_TX, &c) == 0) {
+			/* Write one byte to the transmit data register */
+			while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+			USART_SendData(USART1, c);
+		}
+		else {
+			// Nothing to transmit - disable interrupt
+			USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
+		}
 	}
 
 	/* If overrun condition occurs, clear the ORE flag and recover communication */

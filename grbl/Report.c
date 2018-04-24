@@ -40,6 +40,7 @@
 #include "Report.h"
 
 #include "Print.h"
+#include "FIFO_USART.h"
 #include "System32.h"
 
 
@@ -652,7 +653,7 @@ void Report_RealtimeStatus(void)
 		Printf("|Bf:");
 		Printf("%d", Planner_GetBlockBufferAvailable());
 		Putc(',');
-		Printf("%d", 100);
+		Printf("%d", FifoUsart_Available(STDOUT_NUM));
 	}
 #endif
 

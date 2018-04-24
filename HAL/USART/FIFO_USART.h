@@ -24,7 +24,7 @@
 
 
 /* Queue structure */
-#define QUEUE_ELEMENTS 		256
+#define QUEUE_ELEMENTS 		320
 #define QUEUE_SIZE 			(QUEUE_ELEMENTS + 1)
 
 
@@ -36,6 +36,7 @@ extern "C" {
 void FifoUsart_Init(void);
 int8_t FifoUsart_Insert(uint8_t usart, uint8_t direction, char ch);
 int8_t FifoUsart_Get(uint8_t usart, uint8_t direction, char *ch);
+uint32_t FifoUsart_Available(uint8_t usart);
 
 
 #ifdef __cplusplus

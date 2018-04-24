@@ -35,7 +35,7 @@ void TIM1_Init(void)
 
 	/* Time base configuration */
 	TIM_TimeBaseStructure.TIM_Period = 100-1;		// ~10 KHz
-	TIM_TimeBaseStructure.TIM_Prescaler = 50;		// 2 MHz
+	TIM_TimeBaseStructure.TIM_Prescaler = 48;		// 2 MHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -61,7 +61,7 @@ void TIM1_Init(void)
 
 /**
  * Timer 9
- * Base clock: 20 MHz
+ * Base clock: 24 MHz
  * Used for Stepper Interrupt
  * On CC1, Main Stepper Interuppt is called
  * On Update, Stepper Port Reset is called
@@ -77,7 +77,7 @@ void TIM9_Init(void)
 
 	/* Time base configuration */
 	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;
-	TIM_TimeBaseStructure.TIM_Prescaler = 5-1;		// 20 MHz
+	TIM_TimeBaseStructure.TIM_Prescaler = 4-1;		// 24 MHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 

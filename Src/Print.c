@@ -8,6 +8,9 @@
 #include "Settings.h"
 
 
+#define MAX_BUFFER_SIZE     128
+
+
 void Print_Init(void)
 {
 	Usart_Init(STDOUT, BAUD_RATE);
@@ -15,14 +18,20 @@ void Print_Init(void)
 
 int Printf(const char *str, ...)
 {
-	char buffer[128];
+	char buffer[MAX_BUFFER_SIZE];
 	uint8_t idx = 0;
 
 	va_list vl;
 	va_start(vl, str);
-	uint8_t i = vsprintf(buffer, str, vl);
+	int i = vsnprintf(buffer, MAX_BUFFER_SIZE, str, vl);
 
-	while(i) {
+	if(i > MAX_BUFFER_SIZE)
+    {
+        i = MAX_BUFFER_SIZE;
+    }
+
+	while(i)
+    {
 		while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
 		USART_SendData(USART2, buffer[idx++]);
 

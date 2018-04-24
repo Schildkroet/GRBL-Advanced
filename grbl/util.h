@@ -42,7 +42,7 @@
 #define BIT_IS_FALSE(x,mask) 		((x & mask) == 0)
 
 
-#define F_CPU						100000000UL
+#define F_CPU						96000000UL
 
 #define N_AXIS						3
 

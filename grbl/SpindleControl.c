@@ -55,17 +55,19 @@ void Spindle_Stop(void)
 
 
 uint8_t Spindle_GetState(void)
-{/*
-
-	if(SPINDLE_TCCRA_REGISTER & (1<<SPINDLE_COMB_BIT)) { // Check if PWM is enabled.
-		if(SPINDLE_DIRECTION_PORT & (1<<SPINDLE_DIRECTION_BIT)) {
+{
+    // Check if PWM is enabled.
+	if(TIM1->CCR1 < 100)
+    {
+		/*if(SPINDLE_DIRECTION_PORT & (1<<SPINDLE_DIRECTION_BIT)) {
 			return SPINDLE_STATE_CCW;
 		}
 		else {
 			return SPINDLE_STATE_CW;
-		}
+		}*/
+		return SPINDLE_STATE_CW;
 	}
-*/
+
 	return SPINDLE_STATE_DISABLE;
 }
 

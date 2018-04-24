@@ -35,12 +35,14 @@
 
 static char FifoQueue[USART_NUM][2][QUEUE_SIZE];
 static uint8_t QueueIn[2][USART_NUM], QueueOut[2][USART_NUM];
+static uint32_t Count[USART_NUM] = {0};
 
 
 void FifoUsart_Init(void)
 {
     memset(QueueIn, 0, sizeof(QueueIn));
     memset(QueueOut, 0, sizeof(QueueOut));
+    memset(Count, 0, sizeof(Count));
 }
 
 
@@ -65,6 +67,8 @@ int8_t FifoUsart_Insert(uint8_t usart, uint8_t direction, char ch)
     FifoQueue[usart][direction][QueueIn[direction][usart]] = ch;
 
     QueueIn[direction][usart] = (QueueIn[direction][usart] + 1) % QUEUE_SIZE;
+
+    Count[usart]++;
 
     return 0; // No errors
 }
@@ -92,5 +96,19 @@ int8_t FifoUsart_Get(uint8_t usart, uint8_t direction, char *ch)
 
     QueueOut[direction][usart] = (QueueOut[direction][usart] + 1) % QUEUE_SIZE;
 
+    Count[usart]--;
+
     return 0; // No errors
+}
+
+
+uint32_t FifoUsart_Available(uint8_t usart)
+{
+    if(usart >= USART_NUM) {
+		d_printf("ERROR: Wrong USART %d\n", usart);
+
+		return 0xFFFFFFFF;
+	}
+
+    return (QUEUE_ELEMENTS - Count[usart]);
 }

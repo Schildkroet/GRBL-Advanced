@@ -17,10 +17,24 @@ Hardware:
 
 * [STM32 Nucleo F411RE](http://www.st.com/en/evaluation-tools/nucleo-f411re.html)
 * STM32F411RET6 in LQFP64 package
-* ARM®32-bit Cortex®-M4 CPU with FPU
+* ARMÂ®32-bit CortexÂ®-M4 CPU with FPU
 * 100 MHz max CPU frequency
 * 512 KB Flash
 * 128 KB SRAM
+
+***
+Install:
+
+Windows
+* Download and install EmBitz
+* Open .ebp Project File with EmBitz
+* Select 'Release' Target
+* Hit Compile
+* Flash HEX created in bin/Release
+
+Linux
+* Install Build Essentials, GCC arm-none-eabi and Texane st-util
+* Run 'make' and 'make flash' in Terminal
 
 ***
 

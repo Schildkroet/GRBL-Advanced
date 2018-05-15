@@ -66,6 +66,12 @@
   error "AMASS must have 1 or more levels to operate correctly."
 #endif
 
+#ifdef MAX_STEP_RATE_HZ
+    #define STEP_TIMER_MIN          (uint16_t)(24000000UL / MAX_STEP_RATE_HZ)
+#else
+    #define STEP_TIMER_MIN          (uint16_t)(50000)
+#endif
+
 
 // Stores the planner block Bresenham algorithm execution data for the segments in the segment
 // buffer. Normally, this buffer is partially in-use, but, for the worst case scenario, it will
@@ -358,8 +364,8 @@ void Stepper_MainISR(void)
 
 			// Initialize step segment timing per step and load number of steps to execute.
 			// Limit ISR to 30 KHz
-			if(st.exec_segment->cycles_per_tick < 667) {
-				st.exec_segment->cycles_per_tick = 667;
+			if(st.exec_segment->cycles_per_tick < STEP_TIMER_MIN) {
+				st.exec_segment->cycles_per_tick = STEP_TIMER_MIN;
 			}
 
 			TIM9->ARR = st.exec_segment->cycles_per_tick;

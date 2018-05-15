@@ -9,11 +9,11 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 
 ***
 
-Build Environment:
+### Build Environment:
 
 [EmBitz 1.11](https://www.embitz.org/)
 
-Hardware:
+### Hardware:
 
 * [STM32 Nucleo F411RE](http://www.st.com/en/evaluation-tools/nucleo-f411re.html)
 * STM32F411RET6 in LQFP64 package
@@ -23,16 +23,16 @@ Hardware:
 * 128 KB SRAM
 
 ***
-Install:
+### Install:
 
-Windows
+#### Windows
 * Download and install EmBitz
 * Open .ebp Project File with EmBitz
 * Select 'Release' Target
 * Hit Compile
 * Flash HEX created in bin/Release
 
-Linux
+#### Linux
 * Install Build Essentials, GCC arm-none-eabi and Texane st-util
 * Run 'make' and 'make flash' in Terminal
 

@@ -33,7 +33,7 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 * Flash HEX created in bin/Release
 
 #### Linux
-* Install Build Essentials, GCC arm-none-eabi and Texane st-util
+* Install Build Essentials, [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm) and [texane st-util](https://github.com/texane/stlink)
 * Run 'make' and 'make flash' in Terminal
 
 ***

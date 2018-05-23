@@ -30,10 +30,10 @@ INCLUDES    :=	$(SOURCES) SPL/inc
 # options for code generation
 #---------------------------------------------------------------------------------
 FLAGS       := 	-mfloat-abi=hard -mcpu=cortex-m4 -gdwarf-2 -mfpu=fpv4-sp-d16 -mthumb
-CFLAGS      := 	-O2 -g1 -std=c99 -Wall -Wextra $(INCLUDE) -fdata-sections -ffunction-sections -mlittle-endian -fomit-frame-pointer -DUSE_STDPERIPH_DRIVER -DSTM32F411xE -DSTM32F411RE -D__FPU_USED -DARM_MATH_CM4
+CFLAGS      := 	-O2 -g1 -std=c99 -Wall -Wextra $(INCLUDE) -fno-common -fsingle-precision-constant -fdata-sections -ffunction-sections -fomit-frame-pointer -mlittle-endian  -DUSE_STDPERIPH_DRIVER -DSTM32F411xE -DSTM32F411RE -D__FPU_USED -DARM_MATH_CM4
 CXXFLAGS    :=  $(CFLAGS)
 
-LDFLAGS		:=	-lm -Wl,--gc-sections -T ../stm32f411re_flash.ld --specs=nosys.specs -nostartfiles -flto
+LDFLAGS		:=	-lm -flto -Wl,--gc-sections -T../stm32f411re_flash.ld -Wl,-M=$(OUTPUT).map --specs=nosys.specs -nostartfiles
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -98,7 +98,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).hex -f $(CURDIR)/Makefile -j2
+	@make --no-print-directory -C $(BUILD) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).hex $(OUTPUT).lst -f $(CURDIR)/Makefile -j2
 	@$(SIZE) $(OUTPUT).elf
 
 #---------------------------------------------------------------------------------
@@ -128,6 +128,9 @@ $(OUTPUT).bin: $(OUTPUT).elf
 $(OUTPUT).hex: $(OUTPUT).elf
 	@echo Creating hex...
 	@$(OBJ) -O ihex $< $@
+
+$(OUTPUT).lst: $(OUTPUT).elf
+	@arm-none-eabi-objdump -d $< > $@
 
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .c extension

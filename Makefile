@@ -103,7 +103,7 @@ $(BUILD):
 
 #---------------------------------------------------------------------------------
 clean:
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).hex
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).hex $(OUTPUT).map $(OUTPUT).lst
 
 #---------------------------------------------------------------------------------
 flash: $(OUTPUT).bin

@@ -90,7 +90,9 @@ void TIM9_Init(void)
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
 	TIM_OC1Init(TIM9, &TIM_OCInitStructure);
 
+    // Enable register preload, to ensure all new register values are only updated after an update event
 	TIM_OC1PreloadConfig(TIM9, TIM_OCPreload_Enable);
+	TIM_ARRPreloadConfig(TIM9, ENABLE);
 
 	/* Enable the TIM9 global Interrupt */
 	NVIC_InitStructure.NVIC_IRQChannel = TIM1_BRK_TIM9_IRQn;

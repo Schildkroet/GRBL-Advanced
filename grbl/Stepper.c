@@ -58,16 +58,16 @@
 // and timer accuracy.  Do not alter these settings unless you know what you are doing.
 #define MAX_AMASS_LEVEL		3
 // AMASS_LEVEL0: Normal operation. No AMASS. No upper cutoff frequency. Starts at LEVEL1 cutoff frequency.
-#define AMASS_LEVEL1			(24000000/8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
-#define AMASS_LEVEL2			(24000000/4000) // Over-drives ISR (x4)
-#define AMASS_LEVEL3			(24000000/2000) // Over-drives ISR (x8)
+#define AMASS_LEVEL1			(uint32_t)(F_TIMER_STEPPER/8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
+#define AMASS_LEVEL2			(uint32_t)(F_TIMER_STEPPER/4000) // Over-drives ISR (x4)
+#define AMASS_LEVEL3			(uint32_t)(F_TIMER_STEPPER/2000) // Over-drives ISR (x8)
 
 #if MAX_AMASS_LEVEL <= 0
   error "AMASS must have 1 or more levels to operate correctly."
 #endif
 
 #ifdef MAX_STEP_RATE_HZ
-    #define STEP_TIMER_MIN          (uint16_t)(24000000UL / MAX_STEP_RATE_HZ)
+    #define STEP_TIMER_MIN          (uint16_t)(F_TIMER_STEPPER / MAX_STEP_RATE_HZ)
 #else
     #define STEP_TIMER_MIN          (uint16_t)(50000)
 #endif
@@ -363,13 +363,13 @@ void Stepper_MainISR(void)
 			st.exec_segment = &segment_buffer[segment_buffer_tail];
 
 			// Initialize step segment timing per step and load number of steps to execute.
-			// Limit ISR to 30 KHz
+			// Limit ISR to 50 KHz
 			if(st.exec_segment->cycles_per_tick < STEP_TIMER_MIN) {
 				st.exec_segment->cycles_per_tick = STEP_TIMER_MIN;
 			}
 
 			TIM9->ARR = st.exec_segment->cycles_per_tick;
-			TIM9->CCR1 = (uint32_t)(st.exec_segment->cycles_per_tick * 0.75);
+			TIM9->CCR1 = (uint16_t)(st.exec_segment->cycles_per_tick * 0.75);
 			st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.
 
 			// If the new segment starts a new planner block, initialize stepper variables and counters.
@@ -1075,7 +1075,7 @@ void Stepper_PrepareBuffer(void)
 		}
 
 		if(cycles < (1UL << 16)) {
-			// < 65536 (4.1ms @ 16MHz)
+			// < 65536 (2.7ms @ 24MHz)
 			prep_segment->cycles_per_tick = cycles;
 		}
 		else {

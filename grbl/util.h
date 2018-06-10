@@ -43,6 +43,7 @@
 
 
 #define F_CPU						96000000UL
+#define F_TIMER_STEPPER             24000000UL
 
 #define N_AXIS						3
 
@@ -89,7 +90,7 @@
 // Conversions
 #define MM_PER_INCH 				(25.40)
 #define INCH_PER_MM 				(0.0393701)
-#define TICKS_PER_MICROSECOND 		(20UL)
+#define TICKS_PER_MICROSECOND 		(24UL)
 
 
 #define SOME_LARGE_VALUE 			1.0E+38

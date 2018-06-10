@@ -75,6 +75,7 @@
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-fno-strict-aliasing" />
+			<Add option="-fsingle-precision-constant" />
 			<Add symbol="ARM_MATH_CM4" />
 			<Add symbol="__FPU_USED" />
 			<Add symbol="STM32F411RE" />

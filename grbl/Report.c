@@ -528,6 +528,9 @@ void Report_BuildInfo(char *line)
 #ifndef HOMING_INIT_LOCK
 	Putc('L');
 #endif
+#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+    Putc('+');
+#endif
 
 	// NOTE: Compiled values, like override increments/max/min values, may be added at some point later.
 	Putc(',');

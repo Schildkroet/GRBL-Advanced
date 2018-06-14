@@ -373,14 +373,15 @@ uint8_t GC_ExecuteLine(char *line)
 				{
 #ifdef ENABLE_M7
 				case 7:
-					gc_block.modal.coolant = COOLANT_MIST_ENABLE;
+					gc_block.modal.coolant |= COOLANT_MIST_ENABLE;
 					break;
 #endif
 				case 8:
-					gc_block.modal.coolant = COOLANT_FLOOD_ENABLE;
+					gc_block.modal.coolant |= COOLANT_FLOOD_ENABLE;
 					break;
 
 				case 9:
+				    // M9: Disable both
 					gc_block.modal.coolant = COOLANT_DISABLE;
 					break;
 				}
@@ -1245,12 +1246,7 @@ uint8_t GC_ExecuteLine(char *line)
 		// NOTE: Coolant M-codes are modal. Only one command per line is allowed. But, multiple states
 		// can exist at the same time, while coolant disable clears all states.
 		Coolant_Sync(gc_block.modal.coolant);
-		if(gc_block.modal.coolant == COOLANT_DISABLE) {
-			gc_state.modal.coolant = COOLANT_DISABLE;
-		}
-		else {
-			gc_state.modal.coolant |= gc_block.modal.coolant;
-		}
+		gc_state.modal.coolant = gc_block.modal.coolant;
 	}
 	pl_data->condition |= gc_state.modal.coolant; // Set condition flag for planner use.
 

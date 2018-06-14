@@ -90,28 +90,36 @@ void Coolant_SetState(uint8_t mode)
 		return;
 	}
 
-	if(mode == COOLANT_DISABLE) {
-		Coolant_Stop();
-	}
-	else {
-		if(mode & COOLANT_FLOOD_ENABLE) {
+    if (mode & COOLANT_FLOOD_ENABLE) {
 #ifdef INVERT_COOLANT_FLOOD_PIN
-			GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+        GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #else
-			GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+        GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #endif
-		}
+    }
+    else {
+#ifdef INVERT_COOLANT_FLOOD_PIN
+        GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+#else
+        GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+#endif
+    }
 
 #ifdef ENABLE_M7
-		if(mode & COOLANT_MIST_ENABLE) {
-	#ifdef INVERT_COOLANT_MIST_PIN
-			GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-	#else
-			GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-	#endif
-		}
+    if (mode & COOLANT_MIST_ENABLE) {
+#ifdef INVERT_COOLANT_MIST_PIN
+        GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+#else
+        GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #endif
-	}
+    } else {
+#ifdef INVERT_COOLANT_MIST_PIN
+        GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+#else
+        GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+#endif
+    }
+#endif
 
 	sys.report_ovr_counter = 0; // Set to report change immediately
 }

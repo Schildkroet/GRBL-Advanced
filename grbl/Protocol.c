@@ -557,8 +557,9 @@ void Protocol_ExecRtSystem(void)
 		last_s_override = max(last_s_override,MIN_SPINDLE_SPEED_OVERRIDE);
 
 		if(last_s_override != sys.spindle_speed_ovr) {
-			BIT_TRUE(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM);
-			sys.spindle_speed_ovr = last_s_override;
+			// NOTE: Spindle speed overrides during HOLD state are taken care of by suspend function.
+            if (sys.state == STATE_IDLE) { Spindle_SetState(gc_state.modal.spindle, gc_state.spindle_speed); }
+			else { BIT_TRUE(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM); }
 			sys.report_ovr_counter = 0; // Set to report change immediately
 		}
 
@@ -577,8 +578,9 @@ void Protocol_ExecRtSystem(void)
 
 		// NOTE: Since coolant state always performs a planner sync whenever it changes, the current
 		// run state can be determined by checking the parser state.
+		// NOTE: Coolant overrides only operate during IDLE, CYCLE, HOLD, and JOG states. Ignored otherwise.
 		if(rt_exec & (EXEC_COOLANT_FLOOD_OVR_TOGGLE | EXEC_COOLANT_MIST_OVR_TOGGLE)) {
-			if((sys.state == STATE_IDLE) || (sys.state & (STATE_CYCLE | STATE_HOLD))) {
+			if((sys.state == STATE_IDLE) || (sys.state & (STATE_CYCLE | STATE_HOLD | STATE_JOG))) {
 				uint8_t coolant_state = gc_state.modal.coolant;
 #ifdef ENABLE_M7
 				if(rt_exec & EXEC_COOLANT_MIST_OVR_TOGGLE) {
@@ -656,7 +658,7 @@ static void Protocol_ExecRtSuspend(void)
 		restore_spindle_speed = gc_state.spindle_speed;
     }
     else {
-		restore_condition = block->condition;
+		restore_condition = (block->condition & PL_COND_SPINDLE_MASK) | Coolant_GetState();
 		restore_spindle_speed = block->spindle_speed;
     }
 #ifdef DISABLE_LASER_DURING_HOLD
@@ -810,7 +812,7 @@ static void Protocol_ExecRtSuspend(void)
 							// Block if safety door re-opened during prior restore actions.
 							if(BIT_IS_FALSE(sys.suspend, SUSPEND_RESTART_RETRACT)) {
 								// NOTE: Laser mode will honor this delay. An exhaust system is often controlled by this pin.
-								Coolant_SetState((restore_condition & (PL_COND_FLAG_COOLANT_FLOOD | PL_COND_FLAG_COOLANT_FLOOD)));
+								Coolant_SetState((restore_condition & (PL_COND_FLAG_COOLANT_FLOOD | PL_COND_FLAG_COOLANT_MIST)));
 								Delay_sec(SAFETY_DOOR_COOLANT_DELAY, DELAY_MODE_SYS_SUSPEND);
 							}
 						}

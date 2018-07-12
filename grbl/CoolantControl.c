@@ -23,6 +23,7 @@
 #include "GPIO.h"
 #include "GCode.h"
 #include "CoolantControl.h"
+#include "Config.h"
 
 
 void Coolant_Init(void)

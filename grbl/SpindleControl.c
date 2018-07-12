@@ -26,6 +26,7 @@
 #include "TIM.h"
 #include "GCode.h"
 #include "SpindleControl.h"
+#include "Config.h"
 
 
 static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversions.

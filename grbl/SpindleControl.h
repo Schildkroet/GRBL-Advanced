@@ -36,7 +36,7 @@
 #ifndef SPINDLE_PWM_MIN_VALUE
     #define SPINDLE_PWM_MIN_VALUE   1   // Must be greater than zero.
 #endif
-#define SPINDLE_PWM_OFF_VALUE     	0
+#define SPINDLE_PWM_OFF_VALUE     	1
 #define SPINDLE_PWM_RANGE         	(SPINDLE_PWM_MAX_VALUE-SPINDLE_PWM_MIN_VALUE)
 
 

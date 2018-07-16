@@ -52,6 +52,12 @@ void Spindle_Init(void)
 void Spindle_Stop(void)
 {
 	TIM1->CCR1 = 100; // Disable PWM. Output voltage is zero.
+
+#ifdef INVERT_SPINDLE_ENABLE_PIN
+    GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+#else
+    GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+#endif
 }
 
 

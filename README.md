@@ -9,6 +9,10 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 
 ***
 
+#### Beta:
+Switch to branch 'backlash' for backlash compensation.
+Edit defaults.h to your needs.
+
 ### Build Environment:
 
 [EmBitz 1.11](https://www.embitz.org/)
@@ -18,7 +22,7 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 * [STM32 Nucleo F411RE](http://www.st.com/en/evaluation-tools/nucleo-f411re.html)
 * STM32F411RET6 in LQFP64 package
 * ARM®32-bit Cortex®-M4 CPU with FPU
-* 100 MHz max CPU frequency
+* 96 MHz max CPU frequency
 * 512 KB Flash
 * 128 KB SRAM
 

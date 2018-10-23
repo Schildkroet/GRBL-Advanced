@@ -94,10 +94,11 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
 {
 	// Prepare and initialize new block. Copy relevant pl_data for block execution.
 	Planner_Block_t *block = &block_buffer[block_buffer_head];
-	memset(block,0,sizeof(Planner_Block_t)); // Zero all block values.
+	memset(block, 0, sizeof(Planner_Block_t)); // Zero all block values.
 	block->condition = pl_data->condition;
 	block->spindle_speed = pl_data->spindle_speed;
 	block->line_number = pl_data->line_number;
+	block->backlash_motion = pl_data->backlash_motion;
 
 	// Compute and store initial move distance data.
 	int32_t target_steps[N_AXIS], position_steps[N_AXIS];
@@ -247,9 +248,12 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
 		Planner_ComputeProfileParams(block, nominal_speed, planner.previous_nominal_speed);
 		planner.previous_nominal_speed = nominal_speed;
 
-		// Update previous path unit_vector and planner position.
-		memcpy(planner.previous_unit_vec, unit_vec, sizeof(unit_vec)); 	// pl.previous_unit_vec[] = unit_vec[]
-		memcpy(planner.position, target_steps, sizeof(target_steps)); 	// pl.position[] = target_steps[]
+        if(block->backlash_motion == 0)
+        {
+            // Update previous path unit_vector and planner position.
+            memcpy(planner.previous_unit_vec, unit_vec, sizeof(unit_vec)); 	// pl.previous_unit_vec[] = unit_vec[]
+            memcpy(planner.position, target_steps, sizeof(target_steps)); 	// pl.position[] = target_steps[]
+        }
 
 		// New block is all set. Update buffer head and next buffer head indices.
 		block_buffer_head = next_buffer_head;

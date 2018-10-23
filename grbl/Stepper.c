@@ -97,6 +97,8 @@ typedef struct {
 	uint8_t  st_block_index;   // Stepper block data index. Uses this information to execute this segment.
 	uint8_t amass_level;    // Indicates AMASS level for the ISR to execute this segment
 	uint8_t spindle_pwm;
+
+	uint8_t backlash_motion;
 } Stepper_Segment_t;
 
 
@@ -221,6 +223,7 @@ void Stepper_Init(void)
 	// Init TIM9
 	TIM9_Init();
 }
+
 
 // Stepper state initialization. Cycle should only start if the st.cycle_start flag is
 // enabled. Startup init and limits call this function but shouldn't start the cycle.
@@ -444,12 +447,15 @@ void Stepper_MainISR(void)
 		st.step_outbits |= (1<<X_STEP_BIT);
 		st.counter_x -= st.exec_block->step_event_count;
 
-		if(st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)) {
-			sys_position[X_AXIS]--;
-		}
-		else {
-			sys_position[X_AXIS]++;
-		}
+        if(st.exec_segment->backlash_motion == 0)
+        {
+            if(st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)) {
+                sys_position[X_AXIS]--;
+            }
+            else {
+                sys_position[X_AXIS]++;
+            }
+        }
 	}
 
 	st.counter_y += st.steps[Y_AXIS];
@@ -458,12 +464,15 @@ void Stepper_MainISR(void)
 		st.step_outbits |= (1<<Y_STEP_BIT);
 		st.counter_y -= st.exec_block->step_event_count;
 
-		if(st.exec_block->direction_bits & (1<<Y_DIRECTION_BIT)) {
-			sys_position[Y_AXIS]--;
-		}
-		else {
-			sys_position[Y_AXIS]++;
-		}
+        if(st.exec_segment->backlash_motion == 0)
+        {
+            if(st.exec_block->direction_bits & (1<<Y_DIRECTION_BIT)) {
+                sys_position[Y_AXIS]--;
+            }
+            else {
+                sys_position[Y_AXIS]++;
+            }
+        }
 	}
 
 	st.counter_z += st.steps[Z_AXIS];
@@ -472,12 +481,15 @@ void Stepper_MainISR(void)
 		st.step_outbits |= (1<<Z_STEP_BIT);
 		st.counter_z -= st.exec_block->step_event_count;
 
-		if(st.exec_block->direction_bits & (1<<Z_DIRECTION_BIT)) {
-			sys_position[Z_AXIS]--;
-		}
-		else {
-			sys_position[Z_AXIS]++;
-		}
+        if(st.exec_segment->backlash_motion == 0)
+        {
+            if(st.exec_block->direction_bits & (1<<Z_DIRECTION_BIT)) {
+                sys_position[Z_AXIS]--;
+            }
+            else {
+                sys_position[Z_AXIS]++;
+            }
+        }
 	}
 
 	// During a homing cycle, lock out and prevent desired axes from moving.
@@ -858,6 +870,8 @@ void Stepper_PrepareBuffer(void)
 
 		// Set new segment to point to the current segment data block.
 		prep_segment->st_block_index = prep.st_block_index;
+
+		prep_segment->backlash_motion = pl_block->backlash_motion;
 
 		/*------------------------------------------------------------------------------------
 		Compute the average velocity of this new segment by determining the total distance

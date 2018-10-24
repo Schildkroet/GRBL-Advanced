@@ -250,9 +250,12 @@ void Report_GrblSettings(void) {
 	uint8_t idx, set_idx;
 	uint8_t val = AXIS_SETTINGS_START_VAL;
 
-	for(set_idx = 0; set_idx < AXIS_N_SETTINGS; set_idx++) {
-		for(idx = 0; idx < N_AXIS; idx++) {
-			switch(set_idx) {
+	for(set_idx = 0; set_idx < AXIS_N_SETTINGS; set_idx++)
+    {
+		for(idx = 0; idx < N_AXIS; idx++)
+        {
+			switch(set_idx)
+            {
 			case 0:
 				report_util_float_setting(val+idx,settings.steps_per_mm[idx],N_DECIMAL_SETTINGVALUE);
 				break;
@@ -268,6 +271,10 @@ void Report_GrblSettings(void) {
 			case 3:
 				report_util_float_setting(val+idx,-settings.max_travel[idx],N_DECIMAL_SETTINGVALUE);
 				break;
+
+            case 4:
+                report_util_float_setting(val+idx,settings.backlash[idx],N_DECIMAL_SETTINGVALUE);
+                break;
 
 			default:
 				break;

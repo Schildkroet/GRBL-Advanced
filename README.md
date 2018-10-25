@@ -13,6 +13,10 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 Switch to branch 'backlash' for backlash compensation.
 Edit defaults.h to your needs.
 
+* $140=(X Backlash [mm])
+* $141=(Y Backlash [mm])
+* $142=(Z Backlash [mm])
+
 ### Build Environment:
 
 [EmBitz 1.11](https://www.embitz.org/)

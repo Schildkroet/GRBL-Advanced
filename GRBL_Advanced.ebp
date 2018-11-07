@@ -74,8 +74,8 @@
 			<Add option="-std=c99" />
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
-			<Add option="-fno-strict-aliasing" />
 			<Add option="-fsingle-precision-constant" />
+			<Add option="-fno-strict-aliasing" />
 			<Add symbol="ARM_MATH_CM4" />
 			<Add symbol="__FPU_USED" />
 			<Add symbol="STM32F411RE" />
@@ -93,6 +93,11 @@
 			<Add option="-flto" />
 			<Add option="-lm" />
 		</Linker>
+		<ExtraCommands>
+			<Add after="arm-none-eabi-objcopy -O binary ${PROJECT_DIR}${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}.elf ${PROJECT_DIR}${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}.bin" />
+			<Mode before="0" />
+			<Mode after="1" />
+		</ExtraCommands>
 		<Unit filename="cmsis\arm_common_tables.h" />
 		<Unit filename="cmsis\arm_math.h" />
 		<Unit filename="cmsis\core_cm4.h" />

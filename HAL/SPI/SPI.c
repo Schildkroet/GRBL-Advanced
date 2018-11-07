@@ -1,4 +1,6 @@
 #include "SPI.h"
+#include "stm32f4xx_rcc.h"
+#include "stm32f4xx_gpio.h"
 
 
 void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode)
@@ -163,3 +165,84 @@ uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data)
 	return (uint8_t)SPI_I2S_ReceiveData(SPIx);
 }
 
+
+void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint8_t _len)
+{
+	uint8_t i = 0;
+
+	for(i = 0; i < _len; ++i)
+    {
+		// Loop while DR register is not empty
+		while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
+
+		// Send byte through the SPIx peripheral
+		SPI_I2S_SendData(SPIx, 0xFF);
+
+		while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET);
+
+		_buffer[i] = (uint8_t)SPI_I2S_ReceiveData(SPIx);
+	}
+}
+
+void Spi_WriteDataArray(SPI_TypeDef *SPIx, uint8_t *_data, uint8_t _len)
+{
+	uint8_t i = 0;
+
+	for(i = 0; i < _len; ++i)
+    {
+		// Loop while DR register is not empty
+		while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
+
+		// Send byte through the SPIx peripheral
+		SPI_I2S_SendData(SPIx, _data[i]);
+	}
+}
+
+
+void Spi_SetPrescaler(SPI_TypeDef *SPIx, uint16_t prescaler)
+{
+    SPI_Cmd(SPIx, DISABLE);
+
+    uint16_t tmpreg = SPIx->CR1;
+
+    tmpreg |= prescaler;
+
+    SPIx->CR1 = tmpreg;
+
+    SPI_Cmd(SPIx, ENABLE);
+}
+
+
+void Spi_ChipSelect(SPI_TypeDef *SPIx, bool select)
+{
+    if(select)
+    {
+        if(SPIx == SPI1)
+        {
+            GPIO_ResetBits(SPI1_CS_GPIO_PORT, SPI1_CS_PIN);
+        }
+        else if(SPIx == SPI2)
+        {
+            GPIO_ResetBits(SPI2_CS_GPIO_PORT, SPI2_CS_PIN);
+        }
+        else if(SPIx == SPI3)
+        {
+            GPIO_ResetBits(SPI3_CS_GPIO_PORT, SPI3_CS_PIN);
+        }
+    }
+    else
+    {
+        if(SPIx == SPI1)
+        {
+            GPIO_SetBits(SPI1_CS_GPIO_PORT, SPI1_CS_PIN);
+        }
+        else if(SPIx == SPI2)
+        {
+            GPIO_SetBits(SPI2_CS_GPIO_PORT, SPI2_CS_PIN);
+        }
+        else if(SPIx == SPI3)
+        {
+            GPIO_SetBits(SPI3_CS_GPIO_PORT, SPI3_CS_PIN);
+        }
+    }
+}

@@ -16,6 +16,7 @@ void Print_Init(void)
 	Usart_Init(STDOUT, BAUD_RATE);
 }
 
+
 int Printf(const char *str, ...)
 {
 	char buffer[MAX_BUFFER_SIZE];
@@ -30,17 +31,30 @@ int Printf(const char *str, ...)
         i = MAX_BUFFER_SIZE;
     }
 
+#ifdef BUFFERD_OUTPUT
 	while(i)
-    {
-		while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
-		USART_SendData(USART2, buffer[idx++]);
-
+	{
+		FifoUsart_Insert(STDOUT_NUM, 1, buffer[idx++]);
 		i--;
 	}
 
 	va_end(vl);
 
-	return 0;
+	// Enable sending via interrupt
+	Usart_TxInt(STDOUT, true);
+#else
+    while(i)
+    {
+		while(USART_GetFlagStatus(STDOUT, USART_FLAG_TC) == RESET);
+		USART_SendData(STDOUT, buffer[idx++]);
+		i--;
+	}
+
+	va_end(vl);
+#endif
+
+    // Return number of sent bytes
+	return idx;
 }
 
 // Convert float to string by immediately converting to a long integer, which contains
@@ -105,8 +119,15 @@ int8_t Getc(char *c)
 
 int Putc(const char c)
 {
+#ifdef BUFFERD_OUTPUT
+    FifoUsart_Insert(STDOUT_NUM, 1, c);
+
+	// Enable sending via interrupt
+	Usart_TxInt(STDOUT, true);
+#else
 	while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
 	USART_SendData(USART2, c);
+#endif
 
 	return 0;
 }

@@ -107,6 +107,9 @@ int main(void) {
 
 		// Start Grbl-Advanced main loop. Processes program inputs and executes them.
 		Protocol_MainLoop();
+
+        // Clear serial buffer after soft reset to prevent undefined behavior
+		FifoUsart_Init();
 	}
 
     return 0;

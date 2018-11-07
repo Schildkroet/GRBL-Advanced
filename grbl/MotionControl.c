@@ -49,6 +49,7 @@ static uint8_t dir_negative[N_AXIS] = {0};
 void MC_Line(float *target, Planner_LineData_t *pl_data)
 {
     Planner_LineData_t pl_backlash = {0};
+    uint8_t backlash_update = 0;
 
 
     pl_backlash.spindle_speed = pl_data->spindle_speed;
@@ -105,6 +106,9 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
 	} while(1);
 
 #ifdef ENABLE_BACKLASH_COMPENSATION
+    pl_backlash.backlash_motion = 1;
+    pl_backlash.condition = PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
+
 	// Backlash compensation
     for(uint8_t i = 0; i < N_AXIS; i++)
     {
@@ -117,11 +121,7 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
                 dir_negative[i] = 0;
                 target_prev[i] += settings.backlash[i];
 
-                // Backlash compensation
-                pl_backlash.backlash_motion = 1;
-                pl_backlash.condition = PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
-
-                Planner_BufferLine(target_prev, &pl_backlash);
+                backlash_update = 1;
             }
         }
         // Move negative?
@@ -133,16 +133,36 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
                 dir_negative[i] = 1;
                 target_prev[i] -= settings.backlash[i];
 
-                // Backlash compensation
-                pl_backlash.backlash_motion = 1;
-                pl_backlash.condition = PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
-
-                Planner_BufferLine(target_prev, &pl_backlash);
+                backlash_update = 1;
             }
         }
     }
 
+    if(backlash_update)
+    {
+        // Perform backlash move if necessary
+        Planner_BufferLine(target_prev, &pl_backlash);
+    }
+
     memcpy(target_prev, target, N_AXIS*sizeof(float));
+
+    // Backlash move needs a slot in planner buffer, so we have to check again, if planner is free
+    do {
+		Protocol_ExecuteRealtime(); // Check for any run-time commands
+
+		if(sys.abort) {
+			// Bail, if system abort.
+			return;
+		}
+
+		if(Planner_CheckBufferFull()) {
+			// Auto-cycle start when buffer is full.
+			Protocol_AutoCycleStart();
+		}
+		else {
+			break;
+		}
+	} while(1);
 #endif
 
 	// Plan and queue motion into planner buffer

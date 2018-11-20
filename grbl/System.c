@@ -103,10 +103,10 @@ void System_PinChangeISR(void)
 		else if(BIT_IS_TRUE(pin, CONTROL_PIN_INDEX_CYCLE_START)) {
 			BIT_TRUE(sys_rt_exec_state, EXEC_CYCLE_START);
 		}
-		else if(BIT_IS_TRUE(pin, CONTROL_PIN_INDEX_FEED_HOLD)) {
+		if(BIT_IS_TRUE(pin, CONTROL_PIN_INDEX_FEED_HOLD)) {
 			BIT_TRUE(sys_rt_exec_state, EXEC_FEED_HOLD);
 		}
-		else if(BIT_IS_TRUE(pin, CONTROL_PIN_INDEX_SAFETY_DOOR)) {
+		if(BIT_IS_TRUE(pin, CONTROL_PIN_INDEX_SAFETY_DOOR)) {
 			BIT_TRUE(sys_rt_exec_state, EXEC_SAFETY_DOOR);
 		}
 	}

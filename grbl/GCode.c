@@ -1134,7 +1134,7 @@ uint8_t GC_ExecuteLine(char *line)
 	if(gc_parser_flags & GC_PARSER_JOG_MOTION) {
 		// Only distance and unit modal commands and G53 absolute override command are allowed.
 		// NOTE: Feed rate word and axis word checks have already been performed in STEP 3.
-		if(command_words & ~(BIT(MODAL_GROUP_G3) | BIT(MODAL_GROUP_G6 | BIT(MODAL_GROUP_G0)))) {
+		if(command_words & ~(BIT(MODAL_GROUP_G3) | BIT(MODAL_GROUP_G6) | BIT(MODAL_GROUP_G0))) {
 			return STATUS_INVALID_JOG_COMMAND;
 		}
 

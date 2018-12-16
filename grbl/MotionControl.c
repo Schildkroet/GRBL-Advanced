@@ -32,6 +32,11 @@
 #include "Report.h"
 #include "CoolantControl.h"
 #include "MotionControl.h"
+#include "defaults.h"
+
+
+static float target_prev[N_AXIS] = {0.0};
+static uint8_t dir_negative[N_AXIS] = {0};
 
 
 // Execute linear motion in absolute millimeter coordinates. Feed rate given in millimeters/second
@@ -43,6 +48,15 @@
 // in the planner and to let backlash compensation or canned cycle integration simple and direct.
 void MC_Line(float *target, Planner_LineData_t *pl_data)
 {
+    Planner_LineData_t pl_backlash = {0};
+    uint8_t backlash_update = 0;
+
+
+    pl_backlash.spindle_speed = pl_data->spindle_speed;
+    pl_backlash.line_number = pl_data->line_number;
+    pl_backlash.feed_rate = pl_data->feed_rate;
+
+
 	// If enabled, check for soft limit violations. Placed here all line motions are picked up
 	// from everywhere in Grbl.
 	if(BIT_IS_TRUE(settings.flags, BITFLAG_SOFT_LIMIT_ENABLE)) {
@@ -71,6 +85,7 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
 	// doesn't update the machine position values. Since the position values used by the g-code
 	// parser and planner are separate from the system machine positions, this is doable.
 
+
 	// If the buffer is full: good! That means we are well ahead of the robot.
 	// Remain in this loop until there is room in the buffer.
 	do {
@@ -89,6 +104,66 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
 			break;
 		}
 	} while(1);
+
+#ifdef ENABLE_BACKLASH_COMPENSATION
+    pl_backlash.backlash_motion = 1;
+    pl_backlash.condition = PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
+
+	// Backlash compensation
+    for(uint8_t i = 0; i < N_AXIS; i++)
+    {
+        // Move positive?
+        if(target[i] > target_prev[i])
+        {
+            // Last move negative?
+            if(dir_negative[i] == 1)
+            {
+                dir_negative[i] = 0;
+                target_prev[i] += settings.backlash[i];
+
+                backlash_update = 1;
+            }
+        }
+        // Move negative?
+        else if(target[i] < target_prev[i])
+        {
+            // Last move positive?
+            if(dir_negative[i] == 0)
+            {
+                dir_negative[i] = 1;
+                target_prev[i] -= settings.backlash[i];
+
+                backlash_update = 1;
+            }
+        }
+    }
+
+    if(backlash_update)
+    {
+        // Perform backlash move if necessary
+        Planner_BufferLine(target_prev, &pl_backlash);
+    }
+
+    memcpy(target_prev, target, N_AXIS*sizeof(float));
+
+    // Backlash move needs a slot in planner buffer, so we have to check again, if planner is free
+    do {
+		Protocol_ExecuteRealtime(); // Check for any run-time commands
+
+		if(sys.abort) {
+			// Bail, if system abort.
+			return;
+		}
+
+		if(Planner_CheckBufferFull()) {
+			// Auto-cycle start when buffer is full.
+			Protocol_AutoCycleStart();
+		}
+		else {
+			break;
+		}
+	} while(1);
+#endif
 
 	// Plan and queue motion into planner buffer
 	if(Planner_BufferLine(target, pl_data) == PLAN_EMPTY_BLOCK) {

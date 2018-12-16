@@ -54,10 +54,18 @@ extern void Limit_PinChangeISR(void);
 extern void System_PinChangeISR(void);
 
 
+// Counter for milliseconds
+static volatile uint32_t gMillis = 0;
+
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
+
+uint32_t millis(void)
+{
+	return gMillis;
+}
 
 /**
   * @brief  This function handles NMI exception.
@@ -191,6 +199,8 @@ void SysTick_Handler(void)
 	if(DebounceCounterControl && !controls) {
 		DebounceCounterControl--;
 	}
+
+	gMillis++;
 }
 
 

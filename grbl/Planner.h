@@ -73,6 +73,8 @@ typedef struct {
 
 	// Stored spindle speed data used by spindle overrides and resuming methods.
 	float spindle_speed;    // Block spindle speed. Copied from pl_line_data.
+
+	uint8_t backlash_motion;
 } Planner_Block_t;
 
 
@@ -82,6 +84,8 @@ typedef struct {
 	float spindle_speed;      // Desired spindle speed through line motion.
 	uint8_t condition;        // Bitflag variable to indicate planner conditions. See defines above.
 	int32_t line_number;    // Desired line number to report when executing.
+
+	uint8_t backlash_motion;
 } Planner_LineData_t;
 
 

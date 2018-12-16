@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2018 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -38,20 +38,8 @@ volatile uint8_t sys_rt_exec_motion_override; // Global realtime executor bitfla
 volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bitflag variable for spindle/coolant overrides.
 
 
-int main(void) {
-//	GPIO_InitTypeDef GPIO_InitStructure;
-//
-//	/* GPIOC clock enable */
-//	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC , ENABLE);
-//
-//	/* GPIOC Configuration: Test Pin */
-//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-//	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-//	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-//	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-//	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
+int main(void)
+{
 	// Init SysTick 1ms
 	SysTick_Init();
 
@@ -64,16 +52,19 @@ int main(void) {
 
     System_ResetPosition();
 
-    if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE)) {
+    if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE))
+    {
 		sys.state = STATE_ALARM;
     }
-    else {
+    else
+    {
 		sys.state = STATE_IDLE;
     }
 
 	// Grbl-Advanced initialization loop upon power-up or a system abort. For the latter, all processes
 	// will return to this loop to be cleanly re-initialized.
-	while(1) {
+	while(1)
+    {
 		// Reset system variables.
 		uint8_t prior_state = sys.state;
 

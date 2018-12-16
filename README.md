@@ -9,8 +9,8 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 
 ***
 
-#### Beta:
-Switch to branch 'backlash' for backlash compensation.
+#### Backlash Compensation:
+Backlash compensation enabled by default. You can switch it off in Config.h.
 Edit defaults.h to your needs.
 
 * $140=(X Backlash [mm])

@@ -45,9 +45,9 @@
   #define DEFAULT_SPINDLE_RPM_MAX 			3000.0 // rpm
   #define DEFAULT_SPINDLE_RPM_MIN 			0.0 // rpm
 
-  #define DEFAULT_X_BACKLASH                0.05     // mm
-  #define DEFAULT_Y_BACKLASH                0.05     // mm
-  #define DEFAULT_Z_BACKLASH                0.05     // mm
+  #define DEFAULT_X_BACKLASH                0.01     // mm
+  #define DEFAULT_Y_BACKLASH                0.01     // mm
+  #define DEFAULT_Z_BACKLASH                0.01     // mm
 
   #define DEFAULT_SYSTEM_INVERT_MASK		0
   #define DEFAULT_STEPPING_INVERT_MASK 		0

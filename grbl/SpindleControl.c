@@ -30,6 +30,7 @@
 
 
 static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversions.
+static uint8_t spindle_enabled = 0;
 
 
 void Spindle_Init(void)
@@ -52,6 +53,7 @@ void Spindle_Init(void)
 void Spindle_Stop(void)
 {
 	TIM1->CCR1 = 100; // Disable PWM. Output voltage is zero.
+	spindle_enabled = 0;
 
 #ifdef INVERT_SPINDLE_ENABLE_PIN
     GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
@@ -64,7 +66,7 @@ void Spindle_Stop(void)
 uint8_t Spindle_GetState(void)
 {
     // Check if PWM is enabled.
-	if(TIM1->CCR1 < 100)
+	if(spindle_enabled)
     {
 		/*if(SPINDLE_DIRECTION_PORT & (1<<SPINDLE_DIRECTION_BIT)) {
 			return SPINDLE_STATE_CCW;
@@ -95,13 +97,16 @@ void Spindle_SetSpeed(uint8_t pwm_value)
   #else
 		GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
   #endif
+        spindle_enabled = 1;
 	}
 #else
 	if(pwm_value == SPINDLE_PWM_OFF_VALUE) {
 		TIM_Cmd(TIM1, DISABLE); // Disable PWM. Output voltage is zero.
+		spindle_enabled = 0;
 	}
 	else {
 		TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
+		spindle_enabled = 1;
 	}
 #endif
 }

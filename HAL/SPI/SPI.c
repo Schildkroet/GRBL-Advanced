@@ -108,12 +108,12 @@ void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode)
 		// Periph clock enable
 		RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
 
-		GPIO_PinAFConfig(GPIOC, GPIO_PinSource3, GPIO_AF_SPI3);
-		GPIO_PinAFConfig(GPIOC, GPIO_PinSource4, GPIO_AF_SPI3);
-		GPIO_PinAFConfig(GPIOC, GPIO_PinSource5, GPIO_AF_SPI3);
+		GPIO_PinAFConfig(GPIOC, GPIO_PinSource10, GPIO_AF_SPI3);
+		GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_SPI3);
+		GPIO_PinAFConfig(GPIOC, GPIO_PinSource12, GPIO_AF_SPI3);
 
 		// Configure SPI pins: SCK, MOSI
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_5;
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_12;
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -121,7 +121,7 @@ void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode)
 		GPIO_Init(GPIOC, &GPIO_InitStructure);
 
 		// Configure pins: MISO
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
 		GPIO_Init(GPIOC, &GPIO_InitStructure);
 
 		// Reset SPI Interface
@@ -132,10 +132,24 @@ void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode)
 		SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
 		SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
 		SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-		SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+		SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
 		SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 		SPI_InitStructure.SPI_CRCPolynomial = 7;
 		SPI_Init(SPIx, &SPI_InitStructure);
+
+		// Initialize chip select
+		RCC_AHB1PeriphClockCmd(SPI3_CS_GPIO_CLK, ENABLE);
+
+        // Configure CS pin
+        GPIO_InitStructure.GPIO_Pin = SPI3_CS_PIN;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+		GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+		GPIO_Init(SPI3_CS_GPIO_PORT, &GPIO_InitStructure);
+
+        // Deselect chip
+        GPIO_SetBits(SPI3_CS_GPIO_PORT, SPI3_CS_PIN);
 	}
 
 	SPI_CalculateCRC(SPIx, DISABLE);

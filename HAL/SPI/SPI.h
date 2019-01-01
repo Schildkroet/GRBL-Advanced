@@ -19,9 +19,9 @@
 #define SPI2_CS_GPIO_CLK        RCC_APB2Periph_GPIOB
 
 // Default SPI3 CS Pins: PA15, PA4(AF)
-#define SPI3_CS_PIN             GPIO_Pin_15
-#define SPI3_CS_GPIO_PORT       GPIOA
-#define SPI3_CS_GPIO_CLK        RCC_APB2Periph_GPIOA
+#define SPI3_CS_PIN             GPIO_Pin_2
+#define SPI3_CS_GPIO_PORT       GPIOD
+#define SPI3_CS_GPIO_CLK        RCC_AHB1Periph_GPIOD
 
 
 #define SPI_PRESCALER_2         0x0000

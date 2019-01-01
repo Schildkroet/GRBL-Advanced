@@ -40,9 +40,6 @@ volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bit
 
 int main(void)
 {
-	// Init SysTick 1ms
-	SysTick_Init();
-
 	// Init formatted output
 	Print_Init();
 
@@ -51,6 +48,9 @@ int main(void)
     Settings_Init();
 
     System_ResetPosition();
+
+    // Init SysTick 1ms
+	SysTick_Init();
 
     if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE))
     {

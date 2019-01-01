@@ -33,22 +33,24 @@
 // a unique motion. These are defined in the NIST RS274-NGC v3 g-code standard, available online,
 // and are similar/identical to other g-code interpreters by manufacturers (Haas,Fanuc,Mazak,etc).
 // NOTE: Modal group define values must be sequential and starting from zero.
-#define MODAL_GROUP_G0 		0 // [G4,G10,G28,G28.1,G30,G30.1,G53,G92,G92.1] Non-modal
-#define MODAL_GROUP_G1 		1 // [G0,G1,G2,G3,G38.2,G38.3,G38.4,G38.5,G80] Motion
-#define MODAL_GROUP_G2 		2 // [G17,G18,G19] Plane selection
-#define MODAL_GROUP_G3 		3 // [G90,G91] Distance mode
-#define MODAL_GROUP_G4 		4 // [G91.1] Arc IJK distance mode
-#define MODAL_GROUP_G5 		5 // [G93,G94] Feed rate mode
-#define MODAL_GROUP_G6 		6 // [G20,G21] Units
-#define MODAL_GROUP_G7 		7 // [G40] Cutter radius compensation mode. G41/42 NOT SUPPORTED.
-#define MODAL_GROUP_G8 		8 // [G43.1,G49] Tool length offset
-#define MODAL_GROUP_G12 	9 // [G54,G55,G56,G57,G58,G59] Coordinate system selection
-#define MODAL_GROUP_G13 	10 // [G61] Control mode
+#define MODAL_GROUP_G0 		0   // [G4,G10,G28,G28.1,G30,G30.1,G53,G92,G92.1] Non-modal
+#define MODAL_GROUP_G1 		1   // [G0,G1,G2,G3,G38.2,G38.3,G38.4,G38.5,G80] Motion
+#define MODAL_GROUP_G2 		2   // [G17,G18,G19] Plane selection
+#define MODAL_GROUP_G3 		3   // [G90,G91] Distance mode
+#define MODAL_GROUP_G4 		4   // [G91.1] Arc IJK distance mode
+#define MODAL_GROUP_G5 		5   // [G93,G94] Feed rate mode
+#define MODAL_GROUP_G6 		6   // [G20,G21] Units
+#define MODAL_GROUP_G7 		7   // [G40] Cutter radius compensation mode. G41/42 NOT SUPPORTED.
+#define MODAL_GROUP_G8 		8   // [G43.1,G49] Tool length offset
+#define MODAL_GROUP_G12 	9   // [G54,G55,G56,G57,G58,G59] Coordinate system selection
+#define MODAL_GROUP_G13 	10  // [G61] Control mode
+
+#define MODAL_GROUP_G10     11  // [G98, G99] Canned Cycles Return Mode
 
 #define MODAL_GROUP_M4 		11  // [M0,M1,M2,M30] Stopping
-#define MODAL_GROUP_M7 		12 // [M3,M4,M5] Spindle turning
-#define MODAL_GROUP_M8 		13 // [M7,M8,M9] Coolant control
-#define MODAL_GROUP_M9 		14 // [M56] Override control
+#define MODAL_GROUP_M7 		12  // [M3,M4,M5] Spindle turning
+#define MODAL_GROUP_M8 		13  // [M7,M8,M9] Coolant control
+#define MODAL_GROUP_M9 		14  // [M56] Override control
 
 
 // Define command actions for within execution-type modal groups (motion, stopping, non-modal). Used
@@ -81,6 +83,9 @@
 #define MOTION_MODE_PROBE_AWAY 				142 // G38.4 (Do not alter value)
 #define MOTION_MODE_PROBE_AWAY_NO_ERROR 	143 // G38.5 (Do not alter value)
 #define MOTION_MODE_NONE 					80 // G80 (Do not alter value)
+#define MOTION_MODE_DRILL                   81  // G81
+#define MOTION_MODE_DRILL_DWELL             82  // G82
+#define MOTION_MODE_DRILL_PECK              83  // G83
 
 // Modal Group G2: Plane select
 #define PLANE_SELECT_XY 					0 // G17 (Default: Must be zero)
@@ -129,6 +134,10 @@
 #define TOOL_LENGTH_OFFSET_CANCEL 			0 // G49 (Default: Must be zero)
 #define TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC 	1 // G43.1
 
+// Modal Group G10: Canned Cycle Return Level
+#define RETRACT_OLD_Z                        0 // G98 (Default: Must be zero)
+#define RETRACT_SPECIFIED_R                  1
+
 // Modal Group G12: Active work coordinate system
 // N/A: Stores coordinate system value (54-59) to change to.
 
@@ -146,6 +155,7 @@
 #define WORD_X		10
 #define WORD_Y		11
 #define WORD_Z		12
+#define WORD_Q      13
 
 // Define g-code parser position updating flags
 #define GC_UPDATE_POS_TARGET	0 // Must be zero
@@ -183,6 +193,7 @@ typedef struct {
 	uint8_t feed_rate;       // {G93,G94}
 	uint8_t units;           // {G20,G21}
 	uint8_t distance;        // {G90,G91}
+	uint8_t retract;         // {G98,G99}
 	// uint8_t distance_arc; // {G91.1} NOTE: Don't track. Only default supported.
 	uint8_t plane_select;    // {G17,G18,G19}
 	// uint8_t cutter_comp;  // {G40} NOTE: Don't track. Only default supported.
@@ -201,7 +212,7 @@ typedef struct {
 	uint8_t l;       // G10 or canned cycles parameters
 	int32_t n;       // Line number
 	float p;         // G10 or dwell parameters
-	// float q;      // G82 peck drilling
+	float q;        // G82 peck drilling
 	float r;         // Arc radius
 	float s;         // Spindle speed
 	uint8_t t;       // Tool selection

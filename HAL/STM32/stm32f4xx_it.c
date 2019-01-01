@@ -67,6 +67,7 @@ uint32_t millis(void)
 	return gMillis;
 }
 
+
 /**
   * @brief  This function handles NMI exception.
   * @param  None

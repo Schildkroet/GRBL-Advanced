@@ -82,6 +82,7 @@ int main(void)
 		// Reset Grbl-Advanced primary systems.
 		GC_Init();
 		Planner_Init();
+		MC_Init();
 
 		Coolant_Init();
 		Limits_Init();

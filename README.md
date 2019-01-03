@@ -17,6 +17,10 @@ Edit defaults.h to your needs.
 * $141=(Y Backlash [mm])
 * $142=(Z Backlash [mm])
 
+#### Canned Drill Cycles (G81-G83):
+Added Canned Drill Cycles G81-G83 as experimental features. They are roughly tested and seem to work, but may contain still errors. Use at own risk!
+
+
 ### Build Environment:
 
 [EmBitz 1.11](https://www.embitz.org/)

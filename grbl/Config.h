@@ -28,7 +28,7 @@
 #define CONFIG_H
 
 
-#define GRBL_VERSION 		"0.1"
+#define GRBL_VERSION 		"1.1"
 #define GRBL_VERSION_BUILD 	__DATE__
 
 
@@ -305,7 +305,7 @@
 // step rate is strictly limited by the CPU speed and will change if something other than an AVR running
 // at 16MHz is used.
 // NOTE: For now disabled, will enable if flash space permits.
-#define MAX_STEP_RATE_HZ        50000 // Hz
+#define MAX_STEP_RATE_HZ        80000 // Hz
 
 
 // By default, Grbl sets all input pins to normal-high operation with their internal pull-up resistors

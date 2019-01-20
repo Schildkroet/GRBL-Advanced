@@ -128,10 +128,10 @@ uint8_t GC_ExecuteLine(char *line)
      perform initial error-checks for command word modal group violations, for any repeated
      words, and for negative values set for the value words F, N, P, T, and S. */
 
-	uint8_t word_bit; // Bit-value for assigning tracking variables
-	uint8_t char_counter;
-	char letter;
-	float value;
+	uint8_t word_bit = 0; // Bit-value for assigning tracking variables
+	uint8_t char_counter = 0;
+	char letter = 0;
+	float value = 0.0;
 	uint8_t int_value = 0;
 	uint16_t mantissa = 0;
 	float old_xyz[N_AXIS] = {0.0};
@@ -1497,7 +1497,7 @@ uint8_t GC_ExecuteLine(char *line)
 	// [17. Set distance mode ]:
 	gc_state.modal.distance = gc_block.modal.distance;
 
-	// [18. Set retract mode ]: NOT SUPPORTED
+	// [18. Set retract mode ]:
     gc_state.modal.retract = gc_block.modal.retract;
 
 	// [19. Go to predefined position, Set G10, or Set axis offsets ]:

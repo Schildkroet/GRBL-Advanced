@@ -35,20 +35,27 @@
 #include "defaults.h"
 
 
+#define DIR_POSITIV     0
+#define DIR_NEGATIV     1
+
+
 static float target_prev[N_AXIS] = {0.0};
-static uint8_t dir_negative[N_AXIS] = {0};
+static uint8_t dir_negative[N_AXIS] = {DIR_NEGATIV};
 
 
 void MC_Init(void)
 {
-    int32_t current_position[N_AXIS]; // Copy current state of the system position variable
+    int32_t current_position[N_AXIS] = {0};
 
     for(uint8_t i = 0; i < N_AXIS; i++)
     {
-        dir_negative[i] = 0;
+        dir_negative[i] = DIR_NEGATIV ^ (settings.homing_dir_mask & (1<<i));
     }
 
+    // Copy current state of the system position variable
 	memcpy(current_position, sys_position, sizeof(sys_position));
+
+	// Update target_prev
 	System_ConvertArraySteps2Mpos(target_prev, current_position);
 }
 
@@ -130,9 +137,9 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
         if(target[i] > target_prev[i])
         {
             // Last move negative?
-            if(dir_negative[i] == 1)
+            if(dir_negative[i] == DIR_NEGATIV)
             {
-                dir_negative[i] = 0;
+                dir_negative[i] = DIR_POSITIV;
                 target_prev[i] += settings.backlash[i];
 
                 backlash_update = 1;
@@ -142,9 +149,9 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
         else if(target[i] < target_prev[i])
         {
             // Last move positive?
-            if(dir_negative[i] == 0)
+            if(dir_negative[i] == DIR_POSITIV)
             {
-                dir_negative[i] = 1;
+                dir_negative[i] = DIR_NEGATIV;
                 target_prev[i] -= settings.backlash[i];
 
                 backlash_update = 1;

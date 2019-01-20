@@ -481,9 +481,9 @@ void Report_BuildInfo(char *line)
 	Printf("[OPT:"); // Generate compile-time build option list
     Putc('V');
 
-#ifdef USE_LINE_NUMBERS
+//#ifdef USE_LINE_NUMBERS
 	Putc('N');
-#endif
+//#endif
 #ifdef ENABLE_M7
 	Putc('M');
 #endif

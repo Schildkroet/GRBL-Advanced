@@ -232,7 +232,7 @@ void Limits_GoHome(uint8_t cycle_mask)
 					if(axislock & step_pin[idx]) {
 						if(limit_state & (1 << idx)) {
 #ifdef COREXY
-							if(idx==Z_AXIS) {
+							if(idx == Z_AXIS) {
 								axislock &= ~(step_pin[Z_AXIS]);
 							}
 							else {
@@ -345,6 +345,10 @@ void Limits_GoHome(uint8_t cycle_mask)
 
 		}
 	}
+
+    // Necessary for backlash compensation
+	MC_Init();
+
 	sys.step_control = STEP_CONTROL_NORMAL_OP; // Return step control to normal operation.
 }
 

@@ -69,7 +69,7 @@
 #ifdef MAX_STEP_RATE_HZ
     #define STEP_TIMER_MIN          (uint16_t)(F_TIMER_STEPPER / MAX_STEP_RATE_HZ)
 #else
-    #define STEP_TIMER_MIN          (uint16_t)(50000)
+    #define STEP_TIMER_MIN          (uint16_t)((F_TIMER_STEPPER / 60000))
 #endif
 
 

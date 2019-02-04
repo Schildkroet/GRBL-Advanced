@@ -11,6 +11,7 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 
 ***
 
+### Extras:
 #### Backlash Compensation:
 Backlash compensation enabled by default. You can switch it off in Config.h.
 Edit defaults.h to your needs.
@@ -22,6 +23,10 @@ Edit defaults.h to your needs.
 #### Canned Drill Cycles (G81-G83):
 Added Canned Drill Cycles G81-G83 as experimental features. They are roughly tested and seem to work, but may contain still errors. Use at own risk!
 
+#### Hard Reset
+0x19 (CTRL-Y): Perform a hard reset.
+
+***
 
 ### Build Environment:
 

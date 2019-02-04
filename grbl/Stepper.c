@@ -237,6 +237,9 @@ void Stepper_WakeUp(void)
 		GPIO_ResetBits(GPIO_ENABLE_PORT, GPIO_ENABLE_PIN);
 	}
 
+    // Give steppers some time to wake up
+	Delay_ms(10);
+
 	// Initialize stepper output bits to ensure first ISR call does not step.
 	//st.step_outbits = step_port_invert_mask;
 	st.step_outbits = 0;

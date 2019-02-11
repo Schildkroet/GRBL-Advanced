@@ -29,6 +29,7 @@
 #include "SpindleControl.h"
 #include "CoolantControl.h"
 #include "Protocol.h"
+#include "MotionControl.h"
 
 #include "Print.h"
 
@@ -466,6 +467,7 @@ void Protocol_ExecRtSystem(void)
 					Stepper_Reset();
 					GC_SyncPosition();
 					Planner_SyncPosition();
+					MC_SyncBacklashPosition();
 				}
 
 				if(sys.suspend & SUSPEND_SAFETY_DOOR_AJAR) { // Only occurs when safety door opens during jog.

@@ -25,6 +25,7 @@
 #include "grbl_advance.h"
 
 #include "Print.h"
+#include "FIFO_USART.h"
 
 
 // Declare system global variable structure
@@ -51,6 +52,7 @@ int main(void)
 
     // Init SysTick 1ms
 	SysTick_Init();
+
 
     if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE))
     {
@@ -97,8 +99,9 @@ int main(void)
 		// Print welcome message. Indicates an initialization has occured at power-up or with a reset.
 		Report_InitMessage();
 
-		// Start Grbl-Advanced main loop. Processes program inputs and executes them.
+		//-- Start Grbl-Advanced main loop. Processes program inputs and executes them. --//
 		Protocol_MainLoop();
+		//--------------------------------------------------------------------------------//
 
         // Clear serial buffer after soft reset to prevent undefined behavior
 		FifoUsart_Init();

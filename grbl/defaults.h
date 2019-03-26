@@ -52,23 +52,25 @@
   #define DEFAULT_SYSTEM_INVERT_MASK		0
   #define DEFAULT_STEPPING_INVERT_MASK 		0
   #define DEFAULT_DIRECTION_INVERT_MASK 	0
-  #define DEFAULT_STEPPER_IDLE_LOCK_TIME	50 // msec (0-254, 255 keeps steppers enabled)
-  #define DEFAULT_STATUS_REPORT_MASK 		1 // MPos enabled
-  #define DEFAULT_JUNCTION_DEVIATION 		0.01 // mm
-  #define DEFAULT_ARC_TOLERANCE 			0.001 // mm
-  #define DEFAULT_REPORT_INCHES 			0 // false
-  #define DEFAULT_INVERT_ST_ENABLE 			0 // false
-  #define DEFAULT_INVERT_LIMIT_PINS 		0 // false
-  #define DEFAULT_SOFT_LIMIT_ENABLE 		0 // false
-  #define DEFAULT_HARD_LIMIT_ENABLE 		1  // false
-  #define DEFAULT_INVERT_PROBE_PIN 			0 // false
-  #define DEFAULT_LASER_MODE 				0 // false
-  #define DEFAULT_HOMING_ENABLE 			1  // false
-  #define DEFAULT_HOMING_DIR_MASK 			0 // move positive dir
-  #define DEFAULT_HOMING_FEED_RATE 			50.0 // mm/min
-  #define DEFAULT_HOMING_SEEK_RATE 			500.0 // mm/min
-  #define DEFAULT_HOMING_DEBOUNCE_DELAY 	250 // msec (0-65k)
-  #define DEFAULT_HOMING_PULLOFF 			1.0 // mm
+  #define DEFAULT_STEPPER_IDLE_LOCK_TIME	50      // msec (0-254, 255 keeps steppers enabled)
+  #define DEFAULT_STATUS_REPORT_MASK 		1       // MPos enabled
+  #define DEFAULT_JUNCTION_DEVIATION 		0.01    // mm
+  #define DEFAULT_ARC_TOLERANCE 			0.001   // mm
+  #define DEFAULT_REPORT_INCHES 			0       // false
+  #define DEFAULT_INVERT_ST_ENABLE 			0       // false
+  #define DEFAULT_INVERT_LIMIT_PINS 		0       // false
+  #define DEFAULT_SOFT_LIMIT_ENABLE 		0       // false
+  #define DEFAULT_HARD_LIMIT_ENABLE 		1       // false
+  #define DEFAULT_INVERT_PROBE_PIN 			0       // false
+  #define DEFAULT_LASER_MODE 				0       // false
+  #define DEFAULT_HOMING_ENABLE 			1       // false
+  #define DEFAULT_HOMING_DIR_MASK 			0       // move positive dir
+  #define DEFAULT_HOMING_FEED_RATE 			50.0    // mm/min
+  #define DEFAULT_HOMING_SEEK_RATE 			500.0   // mm/min
+  #define DEFAULT_HOMING_DEBOUNCE_DELAY 	250     // msec (0-65k)
+  #define DEFAULT_HOMING_PULLOFF 			1.0     // mm
+  #define DEFAULT_TOOL_CHANGE_MODE          0       // 0 = Ignore M6; 1 = Manual tool change; 2 = Manual tool change + TLS
+  #define DEFAULT_TOOL_SENSOR_OFFSET        130.0 // mm
 #endif
 
 

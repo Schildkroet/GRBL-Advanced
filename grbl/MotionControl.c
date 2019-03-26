@@ -56,13 +56,8 @@ void MC_Init(void)
 
 void MC_SyncBacklashPosition(void)
 {
-    int32_t current_position[N_AXIS] = {0};
-
-    // Copy current state of the system position variable
-	memcpy(current_position, sys_position, sizeof(sys_position));
-
 	// Update target_prev
-	System_ConvertArraySteps2Mpos(target_prev, current_position);
+	System_ConvertArraySteps2Mpos(target_prev, sys_position);
 }
 
 

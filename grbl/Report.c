@@ -338,10 +338,10 @@ void Report_NgcParams(void)
 		report_util_feedback_line_feed();
 	}
 
-	Printf("[G92:"); // Print G92,G92.1 which are not persistent in memory
+	Printf("[G92:");        // Print G92,G92.1 which are not persistent in memory
 	Report_AxisValue(gc_state.coord_offset);
 	report_util_feedback_line_feed();
-	Printf("[TLO:"); // Print tool length offset value
+	Printf("[TLO:");        // Print tool length offset value
 	PrintFloat_CoordValue(gc_state.tool_length_offset);
 	report_util_feedback_line_feed();
 	Report_ProbeParams(); // Print probe parameters. Not persistent in memory.

@@ -59,6 +59,7 @@
 				</Assembler>
 				<Linker>
 					<Add option="-Wl,--gc-sections" />
+					<Add option="-flto" />
 				</Linker>
 			</Target>
 		</Build>
@@ -71,7 +72,7 @@
 		</Device>
 		<Compiler>
 			<Add option="-mfloat-abi=hard" />
-			<Add option="-std=c99" />
+			<Add option="-std=c11" />
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-fsingle-precision-constant" />
@@ -127,6 +128,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="grbl\MotionControl.h" />
+		<Unit filename="grbl\Nvm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Nvm.h" />
 		<Unit filename="grbl\Planner.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -175,6 +180,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="HAL\GPIO\GPIO.h" />
+		<Unit filename="HAL\I2C\I2C.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\I2C\I2C.h" />
 		<Unit filename="HAL\SPI\SPI.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -327,6 +336,11 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\debug.h" />
+		<Unit filename="Src\M24C0X.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\M24C0X.h" />
+		<Unit filename="Src\Platform.h" />
 		<Unit filename="Src\Print.c">
 			<Option compilerVar="CC" />
 		</Unit>

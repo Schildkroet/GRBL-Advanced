@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2019 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -117,6 +117,10 @@
 // Modal Group G7: Cutter radius compensation mode
 #define CUTTER_COMP_DISABLE 				0 // G40 (Default: Must be zero)
 
+// Modal Group G10: Canned Cycle Return Level
+#define RETRACT_OLD_Z                       0 // G98 (Default: Must be zero)
+#define RETRACT_SPECIFIED_R                 1
+
 // Modal Group G13: Control mode
 #define CONTROL_MODE_EXACT_PATH 			0 // G61 (Default: Must be zero)
 
@@ -134,9 +138,6 @@
 #define TOOL_LENGTH_OFFSET_CANCEL 			0 // G49 (Default: Must be zero)
 #define TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC 	1 // G43.1
 
-// Modal Group G10: Canned Cycle Return Level
-#define RETRACT_OLD_Z                        0 // G98 (Default: Must be zero)
-#define RETRACT_SPECIFIED_R                  1
 
 // Modal Group G12: Active work coordinate system
 // N/A: Stores coordinate system value (54-59) to change to.

@@ -437,7 +437,7 @@ void System_FlagWcoChange(void)
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
 // NOTE: If motor steps and machine position are not in the same coordinate frame, this function
 //   serves as a central place to compute the transformation.
-float System_ConvertAxisSteps2Mpos(int32_t *steps, uint8_t idx)
+float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
 {
 	float pos;
 
@@ -459,7 +459,7 @@ float System_ConvertAxisSteps2Mpos(int32_t *steps, uint8_t idx)
 }
 
 
-void System_ConvertArraySteps2Mpos(float *position, int32_t *steps)
+void System_ConvertArraySteps2Mpos(float *position, const int32_t *steps)
 {
 	uint8_t idx;
 

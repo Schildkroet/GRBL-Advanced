@@ -164,6 +164,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="grbl\System.h" />
+		<Unit filename="grbl\ToolChange.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\ToolChange.h" />
 		<Unit filename="grbl\util.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -220,6 +224,7 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="README.md" />
 		<Unit filename="SPL\inc\misc.h" />
 		<Unit filename="SPL\inc\stm32f4xx_adc.h" />
 		<Unit filename="SPL\inc\stm32f4xx_can.h" />

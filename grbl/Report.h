@@ -43,6 +43,7 @@
 #define STATUS_TRAVEL_EXCEEDED 					15
 #define STATUS_INVALID_JOG_COMMAND 				16
 #define STATUS_SETTING_DISABLED_LASER 			17
+#define STATUS_MACHINE_NOT_HOMED				18
 
 #define STATUS_GCODE_UNSUPPORTED_COMMAND 		20
 #define STATUS_GCODE_MODAL_GROUP_VIOLATION 		21
@@ -115,6 +116,9 @@ void Report_RealtimeStatus(void);
 
 // Prints recorded probe position
 void Report_ProbeParams(void);
+
+// Prints tls position
+void Report_TLSParams(void);
 
 // Prints Grbl NGC parameters (coordinate offsets, probe)
 void Report_NgcParams(void);

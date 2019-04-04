@@ -133,6 +133,12 @@ void Settings_Restore(uint8_t restore_flag) {
 		settings.backlash[Y_AXIS] = DEFAULT_Y_BACKLASH;
 		settings.backlash[Z_AXIS] = DEFAULT_Z_BACKLASH;
 
+		settings.tool_change = DEFAULT_TOOL_CHANGE_MODE;
+		settings.tls_valid = 0;
+		settings.tls_position[X_AXIS] = 0;
+		settings.tls_position[Y_AXIS] = 0;
+		settings.tls_position[Z_AXIS] = 0;
+
 		WriteGlobalSettings();
 	}
 
@@ -326,6 +332,8 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value) {
 			System_FlagWcoChange(); // Make sure WCO is immediately updated.
 			break;
 
+        case 14: settings.tool_change = int_value; break;   // Check for range?
+
 		case 20:
 			if (int_value) {
 				if (BIT_IS_FALSE(settings.flags, BITFLAG_HOMING_ENABLE)) { return(STATUS_SOFT_LIMIT_ERROR); }
@@ -367,6 +375,15 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value) {
 	WriteGlobalSettings();
 
 	return 0;
+}
+
+
+void Settings_StoreTlsPosition(void)
+{
+    memcpy(settings.tls_position, sys_position, sizeof(float)*N_AXIS);
+    settings.tls_valid = 1;
+
+    WriteGlobalSettings();
 }
 
 

@@ -18,6 +18,7 @@
 #include "Stepper.h"
 #include "System.h"
 #include "util.h"
+#include "ToolChange.h"
 
 
 #endif // GRBL_ADVANCE_H_INCLUDED

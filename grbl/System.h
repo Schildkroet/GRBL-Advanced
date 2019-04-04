@@ -39,6 +39,9 @@
 #define EXEC_MOTION_CANCEL  				BIT(6)
 #define EXEC_SLEEP          				BIT(7)
 
+#define EXEC_FEED_DWELL                     BIT(8)
+#define EXEC_TOOL_CHANGE                    BIT(9)
+
 // Alarm executor codes. Valid values (1-255). Zero is reserved.
 #define EXEC_ALARM_HARD_LIMIT           	1
 #define EXEC_ALARM_SOFT_LIMIT           	2
@@ -84,6 +87,9 @@
 #define STATE_SAFETY_DOOR   				BIT(6) // Safety door is ajar. Feed holds and de-energizes system.
 #define STATE_SLEEP         				BIT(7) // Sleep state.
 
+#define STATE_FEED_DWELL                    BIT(8)  // Dwell
+#define STATE_TOOL_CHANGE                   BIT(9)  // Tool change in progress
+
 // Define system suspend flags. Used in various ways to manage suspend states and procedures.
 #define SUSPEND_DISABLE           			0      // Must be zero.
 #define SUSPEND_HOLD_COMPLETE     			BIT(0) // Indicates initial feed hold is complete.
@@ -120,7 +126,7 @@
 
 // Define global system variables
 typedef struct {
-	uint8_t state;               // Tracks the current system state of Grbl.
+	uint16_t state;               // Tracks the current system state of Grbl.
 	uint8_t abort;               // System abort flag. Forces exit back to main loop for reset.
 	uint8_t suspend;             // System suspend bitflag variable that manages holds, cancels, and safety door.
 	uint8_t soft_limit;          // Tracks soft limit errors for the state machine. (boolean)
@@ -137,6 +143,7 @@ typedef struct {
 	uint8_t override_ctrl;     // Tracks override control states.
 #endif
 	float spindle_speed;
+	uint8_t is_homed;
 } System_t;
 
 extern System_t sys;
@@ -146,7 +153,7 @@ extern int32_t sys_position[N_AXIS];      // Real-time machine (aka home) positi
 extern int32_t sys_probe_position[N_AXIS]; // Last probe position in machine coordinates and steps.
 
 extern volatile uint8_t sys_probe_state;   // Probing state value.  Used to coordinate the probing cycle with stepper ISR.
-extern volatile uint8_t sys_rt_exec_state;   // Global realtime executor bitflag variable for state management. See EXEC bitmasks.
+extern volatile uint16_t sys_rt_exec_state;   // Global realtime executor bitflag variable for state management. See EXEC bitmasks.
 extern volatile uint8_t sys_rt_exec_alarm;   // Global realtime executor bitflag variable for setting various alarms.
 extern volatile uint8_t sys_rt_exec_motion_override; // Global realtime executor bitflag variable for motion-based overrides.
 extern volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bitflag variable for spindle/coolant overrides.
@@ -189,8 +196,8 @@ int32_t system_convert_corexy_to_y_axis_steps(int32_t *steps);
 uint8_t System_CheckTravelLimits(float *target);
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
-void System_SetExecStateFlag(uint8_t mask);
-void System_ClearExecStateFlag(uint8_t mask);
+void System_SetExecStateFlag(uint16_t mask);
+void System_ClearExecStateFlag(uint16_t mask);
 void System_SetExecAlarm(uint8_t code);
 void System_ClearExecAlarm(void);
 void System_SetExecMotionOverrideFlag(uint8_t mask);

@@ -231,6 +231,7 @@ void Report_GrblSettings(void) {
 	report_util_float_setting(11, settings.junction_deviation, N_DECIMAL_SETTINGVALUE);
 	report_util_float_setting(12, settings.arc_tolerance, N_DECIMAL_SETTINGVALUE);
 	report_util_uint8_setting(13, BIT_IS_TRUE(settings.flags, BITFLAG_REPORT_INCHES));
+	report_util_uint8_setting(14, settings.tool_change);
 	report_util_uint8_setting(20, BIT_IS_TRUE(settings.flags, BITFLAG_SOFT_LIMIT_ENABLE));
 	report_util_uint8_setting(21, BIT_IS_TRUE(settings.flags, BITFLAG_HARD_LIMIT_ENABLE));
 	report_util_uint8_setting(22, BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE));
@@ -303,6 +304,29 @@ void Report_ProbeParams(void)
 }
 
 
+void Report_TLSParams(void)
+{
+    float print_position[N_AXIS];
+    uint8_t idx = 0;
+
+    // Report in terms of machine position.
+	Printf("[TLS:");
+	System_ConvertArraySteps2Mpos(print_position, settings.tls_position);
+
+	for(idx = 0; idx < 3; idx++) {
+		PrintFloat_CoordValue(print_position[idx]);
+
+		if(idx < (3-1)) {
+			Putc(',');
+		}
+	}
+
+	Putc(':');
+	Printf("%d", settings.tls_valid);
+	report_util_feedback_line_feed();
+}
+
+
 // Prints Grbl NGC parameters (coordinate offsets, probing)
 void Report_NgcParams(void)
 {
@@ -344,7 +368,8 @@ void Report_NgcParams(void)
 	Printf("[TLO:");        // Print tool length offset value
 	PrintFloat_CoordValue(gc_state.tool_length_offset);
 	report_util_feedback_line_feed();
-	Report_ProbeParams(); // Print probe parameters. Not persistent in memory.
+	Report_ProbeParams();   // Print probe parameters. Not persistent in memory.
+	Report_TLSParams();     // Print tls position. Persistent in memory.
 }
 
 
@@ -627,6 +652,14 @@ void Report_RealtimeStatus(void)
 	case STATE_SLEEP:
 		Printf("Sleep");
 		break;
+
+    case STATE_FEED_DWELL:
+        Printf("Dwell");
+        break;
+
+    case STATE_TOOL_CHANGE:
+        Printf("Tool");
+        break;
 
 	default:
 		break;

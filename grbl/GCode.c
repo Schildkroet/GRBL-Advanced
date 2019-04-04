@@ -30,6 +30,7 @@
 #include "MotionControl.h"
 #include "Protocol.h"
 #include "util.h"
+#include "ToolChange.h"
 #include "GCode.h"
 
 #include <math.h>
@@ -135,6 +136,7 @@ uint8_t GC_ExecuteLine(char *line)
 	uint8_t int_value = 0;
 	uint16_t mantissa = 0;
 	float old_xyz[N_AXIS] = {0.0};
+	uint8_t change_tool = 0;
 
 	memcpy(old_xyz, gc_state.position, N_AXIS*sizeof(float));
 
@@ -403,6 +405,10 @@ uint8_t GC_ExecuteLine(char *line)
 					break;
 				}
 				break;
+
+            case 6: // Tool change
+                change_tool = 1;
+                break;
 
 #ifdef ENABLE_M7
 			case 7: case 8: case 9:
@@ -1418,7 +1424,18 @@ uint8_t GC_ExecuteLine(char *line)
 	// [5. Select tool ]: NOT SUPPORTED. Only tracks tool value.
 	gc_state.tool = gc_block.values.t;
 
-	// [6. Change tool ]: NOT SUPPORTED
+	// [6. Change tool ]:
+	if(change_tool && (settings.tool_change > 0))
+    {
+        if(sys.is_homed)
+        {
+            TC_ChangeCurrentTool();
+        }
+        else
+        {
+            return STATUS_MACHINE_NOT_HOMED;
+        }
+    }
 
 	// [7. Spindle control ]:
 	if(gc_state.modal.spindle != gc_block.modal.spindle)
@@ -1585,11 +1602,18 @@ uint8_t GC_ExecuteLine(char *line)
                     delta_y = gc_block.values.xyz[Y_AXIS] - old_xyz[Y_AXIS];
                 }
 
+                if(clear_z < gc_block.values.xyz[Z_AXIS])
+                {
+                    // Error
+                    return STATUS_GCODE_INVALID_TARGET;
+                }
+
                 //-- [G81] --
 
                 // 0. Check if old_z < clear_z
                 if(old_xyz[Z_AXIS] < clear_z)
                 {
+                    // Move old_z to clear_z
                     memcpy(xyz, old_xyz, N_AXIS*sizeof(float));
                     xyz[Z_AXIS] = clear_z;
 

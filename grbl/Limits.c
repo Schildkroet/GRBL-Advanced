@@ -252,7 +252,7 @@ void Limits_GoHome(uint8_t cycle_mask)
 
 			// Exit routines: No time to run protocol_execute_realtime() in this loop.
 			if(sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP)) {
-				uint8_t rt_exec = sys_rt_exec_state;
+				uint16_t rt_exec = sys_rt_exec_state;
 
 				// Homing failure condition: Reset issued during cycle.
 				if(rt_exec & EXEC_RESET) {

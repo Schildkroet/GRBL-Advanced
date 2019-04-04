@@ -129,7 +129,7 @@ void Protocol_MainLoop(void)
 					// Grbl '$' system command
 					Report_StatusMessage(System_ExecuteLine(line));
 				}
-				else if(sys.state & (STATE_ALARM | STATE_JOG)) {
+				else if(sys.state & (STATE_ALARM | STATE_JOG | STATE_TOOL_CHANGE)) {
 					// Everything else is gcode. Block if in alarm or jog mode.
 					Report_StatusMessage(STATUS_SYSTEM_GC_LOCK);
 				}

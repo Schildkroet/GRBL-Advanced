@@ -70,7 +70,7 @@
   #define DEFAULT_HOMING_DEBOUNCE_DELAY 	250     // msec (0-65k)
   #define DEFAULT_HOMING_PULLOFF 			1.0     // mm
   #define DEFAULT_TOOL_CHANGE_MODE          0       // 0 = Ignore M6; 1 = Manual tool change; 2 = Manual tool change + TLS
-  #define DEFAULT_TOOL_SENSOR_OFFSET        130.0 // mm
+  #define DEFAULT_TOOL_SENSOR_OFFSET        100.0 // mm
 #endif
 
 

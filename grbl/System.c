@@ -28,6 +28,7 @@
 #include "Settings.h"
 #include "Stepper.h"
 #include "System.h"
+#include "ToolChange.h"
 #include "System32.h"
 
 
@@ -233,6 +234,30 @@ uint8_t System_ExecuteLine(char *line)
 			break;
 		}
 		break;
+
+    case 'T':
+        // Tool change finished. Continue execution
+        System_ClearExecStateFlag(EXEC_TOOL_CHANGE);
+        sys.state = STATE_IDLE;
+
+		// Check if machine is homed and tls enabled
+        if(sys.is_homed && (settings.tool_change == 2))
+        {
+            TC_ProbeTLS();
+        }
+        break;
+
+    case 'P':
+        if(sys.is_homed)
+        {
+            Settings_StoreTlsPosition();
+        }
+        else
+        {
+            return STATUS_MACHINE_NOT_HOMED;
+        }
+
+        break;
 
 	default:
 		// Block any system command that requires the state as IDLE/ALARM. (i.e. EEPROM, homing)
@@ -517,7 +542,7 @@ uint8_t System_CheckTravelLimits(float *target)
 
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
-void System_SetExecStateFlag(uint8_t mask)
+void System_SetExecStateFlag(uint16_t mask)
 {
 	uint32_t primask = __get_PRIMASK();
 	__disable_irq();
@@ -528,7 +553,7 @@ void System_SetExecStateFlag(uint8_t mask)
 }
 
 
-void System_ClearExecStateFlag(uint8_t mask)
+void System_ClearExecStateFlag(uint16_t mask)
 {
 	uint32_t primask = __get_PRIMASK();
 	__disable_irq();

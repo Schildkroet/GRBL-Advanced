@@ -11,7 +11,7 @@
   * D11: SPINDLE_PWM: PA7
   * D12: Z_LIMIT_BIT: PA6
   * D13: SPINDLE_DIRECTION_BIT: PA5
-  * D14: SPINDLE_ENABLE_BIT: PB9
+  * D14: SPINDLE_ENABLE_BIT: PB7
   * D15: SAFETY_DOOR_ENABLE_BIT: PB8
   *
   * A0: CONTROL_RESET_BIT: PA0
@@ -111,7 +111,7 @@ static void GPIO_InitSpindle(void)
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	/* GPIO Configuration:  */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;

@@ -26,7 +26,7 @@ OBJDUMP		= 	${GCC_BASE}/arm-none-eabi-objdump
 #---------------------------------------------------------------------------------
 TARGET		:=	GRBL_Advanced
 BUILD       :=	build
-SOURCES		:=	./ cmsis/ grbl/ HAL/ HAL/EXTI HAL/FLASH HAL/GPIO HAL/SPI HAL/STM32 HAL/TIM HAL/USART SPL/src Src/
+SOURCES		:=	./ cmsis/ grbl/ HAL/ HAL/EXTI HAL/FLASH HAL/GPIO HAL/I2C HAL/SPI HAL/STM32 HAL/TIM HAL/USART SPL/src Src/
 
 INCLUDES    :=	$(SOURCES) SPL/inc
 

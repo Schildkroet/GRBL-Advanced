@@ -41,6 +41,7 @@
 
 static float target_prev[N_AXIS] = {0.0};
 static uint8_t dir_negative[N_AXIS] = {DIR_NEGATIV};
+static uint8_t backlash_enable = 0;
 
 
 void MC_Init(void)
@@ -51,6 +52,15 @@ void MC_Init(void)
     }
 
     MC_SyncBacklashPosition();
+
+	for(uint8_t i = 0; i < N_AXIS; i++)
+	{
+		// Don't do backlash move, if all axis are 0.0
+		if(settings.backlash[i] > 0.0001)
+		{
+			backlash_enable = 1;
+		}
+	}
 }
 
 
@@ -160,7 +170,7 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
         }
     }
 
-    if(backlash_update)
+    if(backlash_enable && backlash_update)
     {
         // Perform backlash move if necessary
         Planner_BufferLine(target_prev, &pl_backlash);
@@ -185,6 +195,9 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
 			break;
 		}
 	} while(1);
+#else
+	(void)backlash_update;
+	(void)pl_backlash;
 #endif
 
 	// Plan and queue motion into planner buffer

@@ -21,7 +21,7 @@
 			<Cursor1 position="1639" topLine="32" />
 		</Cursor>
 	</File>
-	<File name="grbl\Config.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\Config.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="39003" topLine="548" />
 		</Cursor>
@@ -36,7 +36,7 @@
 			<Cursor1 position="873" topLine="13" />
 		</Cursor>
 	</File>
-	<File name="grbl\defaults.h" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\defaults.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2407" topLine="23" />
 		</Cursor>
@@ -116,12 +116,12 @@
 			<Cursor1 position="842" topLine="3" />
 		</Cursor>
 	</File>
-	<File name="grbl\Report.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\Report.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="7135" topLine="235" />
 		</Cursor>
 	</File>
-	<File name="grbl\Report.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\Report.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1483" topLine="9" />
 		</Cursor>
@@ -156,17 +156,17 @@
 			<Cursor1 position="875" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="grbl\System.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\System.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="7435" topLine="208" />
 		</Cursor>
 	</File>
-	<File name="grbl\System.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\System.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4260" topLine="53" />
 		</Cursor>
 	</File>
-	<File name="grbl\ToolChange.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\ToolChange.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2162" topLine="66" />
 		</Cursor>
@@ -176,7 +176,7 @@
 			<Cursor1 position="31" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="grbl\util.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="grbl\util.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1079" topLine="16" />
 		</Cursor>
@@ -201,7 +201,7 @@
 			<Cursor1 position="1007" topLine="21" />
 		</Cursor>
 	</File>
-	<File name="HAL\GPIO\GPIO.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="HAL\GPIO\GPIO.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="3818" topLine="0" />
 		</Cursor>
@@ -296,7 +296,7 @@
 			<Cursor1 position="781" topLine="12" />
 		</Cursor>
 	</File>
-	<File name="main.c" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="main.c" open="1" top="1" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2887" topLine="53" />
 		</Cursor>

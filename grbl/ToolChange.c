@@ -136,7 +136,7 @@ void TC_ProbeTLS(void)
 
     // Get current position
     System_ConvertArraySteps2Mpos(position, sys_position);
-    position[Z_AXIS] += 2.0;
+    position[Z_AXIS] += 1.5;
 
     // Move up a little bit for slow probing
     pl_data.feed_rate = 200.0;

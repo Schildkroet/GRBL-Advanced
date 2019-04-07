@@ -1589,7 +1589,7 @@ uint8_t GC_ExecuteLine(char *line)
 			else if(gc_state.modal.motion == MOTION_MODE_DRILL || gc_state.modal.motion == MOTION_MODE_DRILL_DWELL || gc_state.modal.motion == MOTION_MODE_DRILL_PECK)
             {
                 float xyz[N_AXIS] = {0.0};
-                float clear_z = gc_block.values.r + gc_state.coord_system[Z_AXIS] + gc_state.coord_offset[Z_AXIS];
+                float clear_z = gc_block.values.r + gc_state.coord_system[Z_AXIS] + gc_state.coord_offset[Z_AXIS] + gc_state.tool_length_offset;
                 float delta_x = 0.0;
                 float delta_y = 0.0;
 
@@ -1608,7 +1608,7 @@ uint8_t GC_ExecuteLine(char *line)
                     return STATUS_GCODE_INVALID_TARGET;
                 }
 
-                //-- [G81] --
+                //-- [G81 - G83] --//
 
                 // 0. Check if old_z < clear_z
                 if(old_xyz[Z_AXIS] < clear_z)
@@ -1647,6 +1647,7 @@ uint8_t GC_ExecuteLine(char *line)
 
                     if(gc_state.modal.motion != MOTION_MODE_DRILL_PECK)
                     {
+						//-- G81 -- G82 --//
                         // 3. Move the Z-axis at the current feed rate to the Z position.
                         pl_data->condition &= ~PL_COND_FLAG_RAPID_MOTION;   // Clear rapid move
                         xyz[Z_AXIS] = gc_block.values.xyz[Z_AXIS];
@@ -1654,7 +1655,7 @@ uint8_t GC_ExecuteLine(char *line)
                     }
                     else
                     {
-                        // G83
+                        //-- G83 --//
                         for(float curr_z = clear_z - gc_block.values.q; curr_z >= gc_block.values.xyz[Z_AXIS] - 0.001; curr_z -= gc_block.values.q)
                         {
                             // Check if target depth exceeds final depth
@@ -1682,18 +1683,20 @@ uint8_t GC_ExecuteLine(char *line)
 
                     if(gc_state.modal.motion == MOTION_MODE_DRILL_DWELL)
                     {
-                        // [G82]
+                        //-- G82 --//
                         MC_Dwell(gc_block.values.p);
                     }
 
                     // 4. The Z-axis does a rapid move to clear Z.
                     if((gc_state.modal.retract == RETRACT_OLD_Z) && clear_z < old_xyz[Z_AXIS])
                     {
+						//-- G98 --//
                         // Retract to OLD_Z
                         xyz[Z_AXIS] = old_xyz[Z_AXIS];
                     }
                     else
                     {
+						//-- G99 --//
                         // Retract to r
                         xyz[Z_AXIS] = clear_z;
                     }

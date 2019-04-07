@@ -40,9 +40,9 @@
 // characters. In future versions, this will be increased, when we know how much extra
 // memory space we can invest into here or we re-write the g-code parser not to have this
 // buffer.
-/*#ifndef LINE_BUFFER_SIZE
+#ifndef LINE_BUFFER_SIZE
   #define LINE_BUFFER_SIZE		256
-#endif*/
+#endif
 
 
 // Define line flags. Includes comment type tracking and line overflow detection.

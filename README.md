@@ -32,6 +32,7 @@ Added support for external EEPROM. Uncomment 'USE_EXT_EEPROM' in Config.h.
 #### Tool change
 * $14=(tool change mode): 0 = Ignore M6; 1 = Manual Tool Change; 2 = Manual Tool Change + TLS
 * $P: Save TLS position
+* $T: Confirm tool change
 
 Uses Dynamic TLO when $14=2
 

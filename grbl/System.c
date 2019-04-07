@@ -241,9 +241,27 @@ uint8_t System_ExecuteLine(char *line)
         sys.state = STATE_IDLE;
 
 		// Check if machine is homed and tls enabled
-        if(sys.is_homed && (settings.tool_change == 2))
+		if(settings.tool_change == 2)
         {
-            TC_ProbeTLS();
+            if(sys.is_homed)
+            {
+                if(settings.tls_valid)
+                {
+                    TC_ProbeTLS();
+                }
+                else
+                {
+                    return STATUS_TLS_NOT_SET;
+                }
+            }
+            else
+            {
+                return STATUS_MACHINE_NOT_HOMED;
+            }
+        }
+        else
+        {
+            return STATUS_SETTING_DISABLED;
         }
         break;
 

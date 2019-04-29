@@ -350,6 +350,7 @@ void Limits_GoHome(uint8_t cycle_mask)
 	MC_Init();
 
 	sys.step_control = STEP_CONTROL_NORMAL_OP; // Return step control to normal operation.
+	sys.is_homed = 1;   // Machine is homed and knows its position
 }
 
 

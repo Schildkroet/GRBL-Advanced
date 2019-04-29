@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2018 Patrick F.
+  Copyright (c)	2018-2019 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -69,9 +69,11 @@ int main(void)
     {
 		// Reset system variables.
 		uint16_t prior_state = sys.state;
+		uint8_t home_state = sys.is_homed;
 
 		System_Clear();
 		sys.state = prior_state;
+		sys.is_homed = home_state;
 
 		Probe_Reset();
 

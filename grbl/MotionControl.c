@@ -578,7 +578,7 @@ void MC_Reset(void)
 				System_SetExecAlarm(EXEC_ALARM_ABORT_CYCLE);
 			}
 
-			Stepper_Disable(); // Force kill steppers. Position has likely been lost.
+			Stepper_Disable(0); // Force kill steppers. Position has likely been lost.
 		}
 	}
 }

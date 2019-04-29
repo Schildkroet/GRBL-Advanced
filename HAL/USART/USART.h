@@ -46,8 +46,8 @@ extern "C" {
 
 void Usart_Init(USART_TypeDef *usart, uint32_t baud);
 
-void Usart_Put(USART_TypeDef *usart, char c);
-void Usart_Write(USART_TypeDef *usart, uint8_t *data, uint8_t len);
+void Usart_Put(USART_TypeDef *usart, bool buffered, char c);
+void Usart_Write(USART_TypeDef *usart, bool buffered, char *data, uint8_t len);
 
 void Usart_TxInt(USART_TypeDef *usart, bool enable);
 void Usart_RxInt(USART_TypeDef *usart, bool enable);

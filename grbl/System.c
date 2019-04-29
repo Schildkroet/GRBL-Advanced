@@ -80,9 +80,9 @@ uint8_t System_GetControlState(void)
 		if(BIT_IS_FALSE(pin, (1<<CONTROL_CYCLE_START_BIT))) {
 			control_state |= CONTROL_PIN_INDEX_CYCLE_START;
 		}
-		if(BIT_IS_FALSE(pin, (1<<CONTROL_SAFETY_DOOR_BIT))) {
+		/*if(BIT_IS_FALSE(pin, (1<<CONTROL_SAFETY_DOOR_BIT))) {
 			control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR;
-		}
+		}*/
 	}
 
 	return control_state;
@@ -335,7 +335,7 @@ uint8_t System_ExecuteLine(char *line)
 
 			if(!sys.abort) {  // Execute startup scripts after successful homing.
 				sys.state = STATE_IDLE; // Set to IDLE when complete.
-				Stepper_Disable(); // Set steppers to the settings idle state before returning.
+				Stepper_Disable(0); // Set steppers to the settings idle state before returning.
 
 				if(line[2] == 0) {
 					System_ExecuteStartup(line);

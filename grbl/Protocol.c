@@ -758,7 +758,7 @@ static void Protocol_ExecRtSuspend(void)
 						// Spindle and coolant should already be stopped, but do it again just to be sure.
 						Spindle_SetState(SPINDLE_DISABLE, 0.0); // De-energize
 						Coolant_SetState(COOLANT_DISABLE); // De-energize
-						Stepper_Disable(); // Disable steppers
+						Stepper_Disable(0); // Disable steppers
 
 						while(!(sys.abort)) {
 							Protocol_ExecRtSystem();

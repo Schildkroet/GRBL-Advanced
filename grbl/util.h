@@ -55,10 +55,12 @@
 #define X_STEP_BIT					0
 #define Y_STEP_BIT					1
 #define Z_STEP_BIT					2
+#define A_STEP_BIT                  3
 
 #define X_DIRECTION_BIT				0
 #define Y_DIRECTION_BIT				1
 #define Z_DIRECTION_BIT				2
+#define A_DIRECTION_BIT             3
 
 #define X_LIMIT_BIT					0
 #define Y_LIMIT_BIT					1

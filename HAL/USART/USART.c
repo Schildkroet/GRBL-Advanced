@@ -156,27 +156,73 @@ void Usart_Init(USART_TypeDef *usart, uint32_t baud)
 	USART_Cmd(usart, ENABLE);
 }
 
-void Usart_Put(USART_TypeDef *usart, char c)
+void Usart_Put(USART_TypeDef *usart, bool buffered, char c)
 {
-	if(usart == STDOUT)
-		FifoUsart_Insert(STDOUT_NUM, USART_DIR_TX, c);
+    uint8_t num = 0;
 
-	// Enable sending via interrupt
-	Usart_TxInt(usart, true);
+    if(usart == USART1)
+    {
+        num = USART1_NUM;
+    }
+    else if(usart == USART2)
+    {
+        num = USART2_NUM;
+    }
+    else if(usart == USART6)
+    {
+        num = USART6_NUM;
+    }
+
+	if(buffered)
+    {
+        FifoUsart_Insert(num, USART_DIR_TX, c);
+
+        // Enable sending via interrupt
+        Usart_TxInt(usart, true);
+    }
+    else
+    {
+        while(USART_GetFlagStatus(usart, USART_FLAG_TC) == RESET);
+		USART_SendData(usart, c);
+    }
 }
 
-void Usart_Write(USART_TypeDef *usart, uint8_t *data, uint8_t len)
+void Usart_Write(USART_TypeDef *usart, bool buffered, char *data, uint8_t len)
 {
 	uint8_t i = 0;
+	uint8_t num = 0;
 
-	while(len--)
-	{
-		if(usart == STDOUT)
-			FifoUsart_Insert(STDOUT_NUM, USART_DIR_TX, data[i++]);
-	}
+    if(usart == USART1)
+    {
+        num = USART1_NUM;
+    }
+    else if(usart == USART2)
+    {
+        num = USART2_NUM;
+    }
+    else if(usart == USART6)
+    {
+        num = USART6_NUM;
+    }
 
-	// Enable sending via interrupt
-	Usart_TxInt(usart, true);
+    if(buffered)
+    {
+        while(len--)
+        {
+            FifoUsart_Insert(num, USART_DIR_TX, data[i++]);
+        }
+
+        // Enable sending via interrupt
+        Usart_TxInt(usart, true);
+    }
+    else
+    {
+		while(len--)
+        {
+            while(USART_GetFlagStatus(usart, USART_FLAG_TC) == RESET);
+            USART_SendData(usart, data[i++]);
+        }
+    }
 }
 
 void Usart_TxInt(USART_TypeDef *usart, bool enable)

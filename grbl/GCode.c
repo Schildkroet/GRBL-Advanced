@@ -1589,7 +1589,7 @@ uint8_t GC_ExecuteLine(char *line)
 			else if(gc_state.modal.motion == MOTION_MODE_DRILL || gc_state.modal.motion == MOTION_MODE_DRILL_DWELL || gc_state.modal.motion == MOTION_MODE_DRILL_PECK)
             {
                 float xyz[N_AXIS] = {0.0};
-                float clear_z = gc_block.values.r + gc_state.coord_system[Z_AXIS] + gc_state.coord_offset[Z_AXIS] + gc_state.tool_length_offset;
+                float clear_z = gc_block.values.r + gc_state.coord_system[Z_AXIS] + gc_state.coord_offset[Z_AXIS];
                 float delta_x = 0.0;
                 float delta_y = 0.0;
 
@@ -1600,6 +1600,10 @@ uint8_t GC_ExecuteLine(char *line)
 
                     delta_x = gc_block.values.xyz[X_AXIS] - old_xyz[X_AXIS];
                     delta_y = gc_block.values.xyz[Y_AXIS] - old_xyz[Y_AXIS];
+                }
+                else
+                {
+                    clear_z += gc_state.tool_length_offset;
                 }
 
                 if(clear_z < gc_block.values.xyz[Z_AXIS])

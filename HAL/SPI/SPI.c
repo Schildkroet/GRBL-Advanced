@@ -167,13 +167,15 @@ uint8_t Spi_ReadByte(SPI_TypeDef *SPIx)
 
 uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data)
 {
+    uint16_t timeout = 0xFFF;
+
 	// Loop while DR register is not empty
 	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
 
 	// Send byte through the SPIx peripheral
 	SPI_I2S_SendData(SPIx, _data);
 
-	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET);
+	while((SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET) && timeout--);
 
 	// Return the byte read from the SPI bus
 	return (uint8_t)SPI_I2S_ReceiveData(SPIx);
@@ -183,6 +185,7 @@ uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data)
 void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint8_t _len)
 {
 	uint8_t i = 0;
+	uint16_t timeout = 0xFFF;
 
 	for(i = 0; i < _len; ++i)
     {
@@ -192,7 +195,7 @@ void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint8_t _len)
 		// Send byte through the SPIx peripheral
 		SPI_I2S_SendData(SPIx, 0xFF);
 
-		while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET);
+		while((SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET) && timeout--);
 
 		_buffer[i] = (uint8_t)SPI_I2S_ReceiveData(SPIx);
 	}
@@ -217,7 +220,8 @@ void Spi_SetPrescaler(SPI_TypeDef *SPIx, uint16_t prescaler)
 {
     SPI_Cmd(SPIx, DISABLE);
 
-    uint16_t tmpreg = SPIx->CR1;
+    // Read CR1 and clear baud control
+    uint16_t tmpreg = SPIx->CR1 & 0xFFC7;
 
     tmpreg |= prescaler;
 

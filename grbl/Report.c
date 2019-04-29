@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2019 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -57,6 +57,7 @@ static void Report_LineFeed(void)
 {
 	Putc('\r');
 	Putc('\n');
+	Print_Flush();
 }
 
 
@@ -121,12 +122,14 @@ void Report_StatusMessage(uint8_t status_code)
 	{
 	case STATUS_OK: // STATUS_OK
 		Printf("ok\r\n");
+		Print_Flush();
 		break;
 
 	default:
 		Printf("error:");
-		Printf("%d", status_code);
-		Report_LineFeed();
+		Printf("%d\r\n", status_code);
+		//Report_LineFeed();
+		Print_Flush();
 	}
 }
 
@@ -138,7 +141,7 @@ void Report_AlarmMessage(uint8_t alarm_code)
 	Printf("%d", alarm_code);
 	Report_LineFeed();
 
-	Delay_ms(300); // Force delay to ensure message clears serial write buffer.
+	Delay_ms(200); // Force delay to ensure message clears serial write buffer.
 }
 
 
@@ -207,12 +210,14 @@ void Report_InitMessage(void)
 {
 	//Printf("\r\nGRBL-Advanced %s ['$' for help]\r\n", GRBL_VERSION);
 	Printf("\r\nGrbl 1.1f ['$' for help]\r\n");
+	Print_Flush();
 }
 
 
 // Grbl help message
 void Report_GrblHelp(void) {
 	Printf("[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $SLP $C $X $H ~ ! ? ctrl-x]\r\n");
+	Print_Flush();
 }
 
 
@@ -284,6 +289,7 @@ void Report_GrblSettings(void) {
 
 		val += AXIS_SETTINGS_INCREMENT;
 	}
+	Print_Flush();
 }
 
 
@@ -370,6 +376,8 @@ void Report_NgcParams(void)
 	report_util_feedback_line_feed();
 	Report_ProbeParams();   // Print probe parameters. Not persistent in memory.
 	Report_TLSParams();     // Print tls position. Persistent in memory.
+
+	Print_Flush();
 }
 
 

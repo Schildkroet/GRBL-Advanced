@@ -59,6 +59,7 @@
 #define CMD_STATUS_REPORT 		'?'
 #define CMD_CYCLE_START 		'~'
 #define CMD_FEED_HOLD 			'!'
+#define CMD_STEPPER_DISABLE     0x17
 
 
 // NOTE: All override realtime commands must be in the extended ASCII character set, starting

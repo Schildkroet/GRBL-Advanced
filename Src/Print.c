@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <string.h>
 #include "Print.h"
 #include "Config.h"
 #include "USART.h"
 #include "FIFO_USART.h"
 #include "Settings.h"
+#include "Platform.h"
 
 
 #define MAX_BUFFER_SIZE     128
+
+
+char buf[512] = {0};
+uint16_t buf_idx = 0;
 
 
 void Print_Init(void)
@@ -31,31 +37,57 @@ int Printf(const char *str, ...)
         i = MAX_BUFFER_SIZE;
     }
 
-#ifdef BUFFERD_OUTPUT
-	while(i)
-	{
-		FifoUsart_Insert(STDOUT_NUM, 1, buffer[idx++]);
-		i--;
-	}
 
-	va_end(vl);
-
-	// Enable sending via interrupt
-	Usart_TxInt(STDOUT, true);
-#else
-    while(i)
+    for(uint8_t j = 0; j < i; j++)
     {
-		while(USART_GetFlagStatus(STDOUT, USART_FLAG_TC) == RESET);
-		USART_SendData(STDOUT, buffer[idx++]);
-		i--;
-	}
+        buf[buf_idx++] = buffer[j];
+    }
+    //Usart_Write(STDOUT, false, buffer, i);
 
-	va_end(vl);
-#endif
+    va_end(vl);
 
     // Return number of sent bytes
 	return idx;
 }
+
+
+int8_t Getc(char *c)
+{
+	if(FifoUsart_Get(STDOUT_NUM, USART_DIR_RX, c) == 0) {
+		return 0;
+	}
+
+	return -1;
+}
+
+
+int Putc(const char c)
+{
+    buf[buf_idx++] = c;
+    //Usart_Put(STDOUT, false, c);
+
+	return 0;
+}
+
+
+void Print_Flush(void)
+{
+#ifdef ETH_IF
+    Pdu_t data;
+
+    data.Data = (uint8_t*)buf;
+    data.Length = buf_idx;
+
+    uint8_t ret = GrIP_Transmit(MSG_DATA_NO_RESPONSE, 0, &data);
+    (void)ret;  // TODO: Handle transmit error
+#else
+    Usart_Write(STDOUT, false, buf, buf_idx);
+#endif
+
+    memset(buf, 0, 512);
+    buf_idx = 0;
+}
+
 
 // Convert float to string by immediately converting to a long integer, which contains
 // more digits than a float. Number of decimal places, which are tracked by a counter,
@@ -108,29 +140,6 @@ void PrintFloat(float n, uint8_t decimal_places)
 	}
 }
 
-int8_t Getc(char *c)
-{
-	if(FifoUsart_Get(STDOUT_NUM, USART_DIR_RX, c) == 0) {
-		return 0;
-	}
-
-	return -1;
-}
-
-int Putc(const char c)
-{
-#ifdef BUFFERD_OUTPUT
-    FifoUsart_Insert(STDOUT_NUM, 1, c);
-
-	// Enable sending via interrupt
-	Usart_TxInt(STDOUT, true);
-#else
-	while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
-	USART_SendData(USART2, c);
-#endif
-
-	return 0;
-}
 
 // Floating value printing handlers for special variables types used in Grbl and are defined
 // in the config.h.
@@ -145,6 +154,7 @@ void PrintFloat_CoordValue(float n)
 		PrintFloat(n, N_DECIMAL_COORDVALUE_MM);
 	}
 }
+
 
 void PrintFloat_RateValue(float n)
 {

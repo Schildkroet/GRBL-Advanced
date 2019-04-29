@@ -250,7 +250,7 @@ void Stepper_WakeUp(void)
 
 
 // Stepper shutdown
-void Stepper_Disable(void)
+void Stepper_Disable(uint8_t ovr_disable)
 {
 	// Disable Stepper Driver Interrupt.
 	TIM_Cmd(TIM9, DISABLE);
@@ -268,6 +268,12 @@ void Stepper_Disable(void)
 		Delay_ms(settings.stepper_idle_lock_time);
 		pin_state = true; // Override. Disable steppers.
 	}
+
+	if(ovr_disable)
+    {
+        // Disable
+        pin_state = true;
+    }
 
 	if(BIT_IS_TRUE(settings.flags, BITFLAG_INVERT_ST_ENABLE)) {
 		pin_state = !pin_state;
@@ -422,7 +428,7 @@ void Stepper_MainISR(void)
 		}
 		else {
 			// Segment buffer empty. Shutdown.
-			Stepper_Disable();
+			Stepper_Disable(0);
 
 			// Ensure pwm is set properly upon completion of rate-controlled motion.
 			if(st.exec_block->is_pwm_rate_adjusted) {
@@ -573,7 +579,7 @@ void Stepper_GenerateStepDirInvertMasks(void)
 void Stepper_Reset(void)
 {
 	// Initialize stepper driver idle state.
-	Stepper_Disable();
+	Stepper_Disable(0);
 
 	// Initialize stepper algorithm variables.
 	memset(&prep, 0, sizeof(Stepper_PrepData_t));

@@ -30,7 +30,7 @@ void Stepper_Init(void);
 void Stepper_WakeUp(void);
 
 // Immediately disables steppers
-void Stepper_Disable(void);
+void Stepper_Disable(uint8_t ovr_disable);
 
 // Main ISR
 void Stepper_MainISR(void);

@@ -26,15 +26,16 @@ Added Canned Drill Cycles G81-G83 as experimental features. They are roughly tes
 #### Hard Reset
 0x19 (CTRL-Y): Perform a hard reset.
 
-#### I2C EEPROM
-Added support for external EEPROM. Uncomment 'USE_EXT_EEPROM' in Config.h.
-
 #### Tool change
 * $14=(tool change mode): 0 = Ignore M6; 1 = Manual Tool Change; 2 = Manual Tool Change + TLS
 * $P: Save TLS position
 * $T: Confirm tool change
 
 Uses Dynamic TLO when $14=2
+
+#### I2C EEPROM
+Added support for external EEPROM (e.g. ST M24C08). Uncomment 'USE_EXT_EEPROM' in Config.h.
+![EEPROM](https://github.com/Schildkroet/GRBL-Advanced/blob/software/eeprom.png?raw=true)
 
 #### Attention
 By default, settings are stored in internal flash memory in last sector. First startup takes about 5-10sec to write all settings.

@@ -31,6 +31,10 @@
 #include "Protocol.h"
 #include "MotionControl.h"
 
+#include "GrIP.h"
+#include "Platform.h"
+#include "ServerTCP.h"
+
 #include "Print.h"
 
 
@@ -254,7 +258,23 @@ void Protocol_AutoCycleStart(void)
 // limit switches, or the main program.
 void Protocol_ExecuteRealtime(void)
 {
+    RX_Packet_t packet;
+
 	Protocol_ExecRtSystem();
+
+#ifdef ETH_IF
+    GrIP_Update();
+    if(GrIP_Receive(&packet))
+    {
+        for(int i = 0; i < packet.RX_Header.Length; i++)
+        {
+            ProcessReceive(packet.Data[i]);
+        }
+    }
+    ServerTCP_Update();
+#else
+    (void)packet;
+#endif
 
 	if(sys.suspend) {
 		Protocol_ExecRtSuspend();

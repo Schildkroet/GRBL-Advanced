@@ -25,7 +25,7 @@
 // USART used for Printf(...)
 #define STDOUT				USART2
 #define STDOUT_NUM			USART2_NUM
-#define STDOUT_BAUD			230400
+//#define STDOUT_BAUD			115200
 
 
 //---- Defines ----//

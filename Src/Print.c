@@ -7,6 +7,7 @@
 #include "USART.h"
 #include "FIFO_USART.h"
 #include "Settings.h"
+#include "GrIP.h"
 #include "Platform.h"
 
 

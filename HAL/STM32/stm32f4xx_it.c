@@ -36,6 +36,8 @@
 #include "Settings.h"
 #include "Config.h"
 #include "MotionControl.h"
+#include "Platform.h"
+
 
 /** @addtogroup Template_Project
   * @{
@@ -65,6 +67,59 @@ static volatile uint32_t gMillis = 0;
 uint32_t millis(void)
 {
 	return gMillis;
+}
+
+
+void ProcessReceive(char c)
+{
+    // Pick off realtime command characters directly from the serial stream. These characters are
+	// not passed into the main buffer, but these set system state flag bits for realtime execution.
+	switch(c)
+	{
+	case CMD_RESET:         MC_Reset(); break; // Call motion control reset routine.
+	case CMD_RESET_HARD:    NVIC_SystemReset();     // Perform hard reset
+	case CMD_STATUS_REPORT: System_SetExecStateFlag(EXEC_STATUS_REPORT);break;
+	case CMD_CYCLE_START:   System_SetExecStateFlag(EXEC_CYCLE_START); break; // Set as true
+	case CMD_FEED_HOLD:     System_SetExecStateFlag(EXEC_FEED_HOLD); break; // Set as true
+	case CMD_STEPPER_DISABLE:     Stepper_Disable(1); break; // Set as true
+
+	default:
+		if(c > 0x7F) { // Real-time control characters are extended ACSII only.
+			switch(c)
+			{
+			case CMD_SAFETY_DOOR: System_SetExecStateFlag(EXEC_SAFETY_DOOR); break; // Set as true
+			case CMD_JOG_CANCEL:
+				if(sys.state & STATE_JOG) { // Block all other states from invoking motion cancel.
+					System_SetExecStateFlag(EXEC_MOTION_CANCEL);
+				}
+				break;
+
+			case CMD_FEED_OVR_RESET: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_RESET); break;
+			case CMD_FEED_OVR_COARSE_PLUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_PLUS); break;
+			case CMD_FEED_OVR_COARSE_MINUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_MINUS); break;
+			case CMD_FEED_OVR_FINE_PLUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_PLUS); break;
+			case CMD_FEED_OVR_FINE_MINUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_MINUS); break;
+			case CMD_RAPID_OVR_RESET: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_RESET); break;
+			case CMD_RAPID_OVR_MEDIUM: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_MEDIUM); break;
+			case CMD_RAPID_OVR_LOW: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_LOW); break;
+			case CMD_SPINDLE_OVR_RESET: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_RESET); break;
+			case CMD_SPINDLE_OVR_COARSE_PLUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_PLUS); break;
+			case CMD_SPINDLE_OVR_COARSE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_MINUS); break;
+			case CMD_SPINDLE_OVR_FINE_PLUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_PLUS); break;
+			case CMD_SPINDLE_OVR_FINE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_MINUS); break;
+			case CMD_SPINDLE_OVR_STOP: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_STOP); break;
+			case CMD_COOLANT_FLOOD_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_FLOOD_OVR_TOGGLE); break;
+#ifdef ENABLE_M7
+            case CMD_COOLANT_MIST_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_MIST_OVR_TOGGLE); break;
+#endif
+			}
+		// Throw away any unfound extended-ASCII character by not passing it to the serial buffer.
+		}
+		else {
+			// Write character to buffer
+			FifoUsart_Insert(USART2_NUM, USART_DIR_RX, c);
+		}
+	}
 }
 
 
@@ -292,52 +347,7 @@ void USART2_IRQHandler(void)
 		/* Read one byte from the receive data register */
 		unsigned char c = (USART_ReceiveData(USART2) & 0xFF);
 
-		// Pick off realtime command characters directly from the serial stream. These characters are
-		// not passed into the main buffer, but these set system state flag bits for realtime execution.
-		switch(c)
-		{
-		case CMD_RESET:         MC_Reset(); break; // Call motion control reset routine.
-		case CMD_RESET_HARD:    NVIC_SystemReset();     // Perform hard reset
-		case CMD_STATUS_REPORT: System_SetExecStateFlag(EXEC_STATUS_REPORT);break;
-		case CMD_CYCLE_START:   System_SetExecStateFlag(EXEC_CYCLE_START); break; // Set as true
-		case CMD_FEED_HOLD:     System_SetExecStateFlag(EXEC_FEED_HOLD); break; // Set as true
-		default:
-			if(c > 0x7F) { // Real-time control characters are extended ACSII only.
-				switch(c)
-				{
-				case CMD_SAFETY_DOOR: System_SetExecStateFlag(EXEC_SAFETY_DOOR); break; // Set as true
-				case CMD_JOG_CANCEL:
-					if(sys.state & STATE_JOG) { // Block all other states from invoking motion cancel.
-						System_SetExecStateFlag(EXEC_MOTION_CANCEL);
-					}
-					break;
-
-				case CMD_FEED_OVR_RESET: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_RESET); break;
-				case CMD_FEED_OVR_COARSE_PLUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_PLUS); break;
-				case CMD_FEED_OVR_COARSE_MINUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_MINUS); break;
-				case CMD_FEED_OVR_FINE_PLUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_PLUS); break;
-				case CMD_FEED_OVR_FINE_MINUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_MINUS); break;
-				case CMD_RAPID_OVR_RESET: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_RESET); break;
-				case CMD_RAPID_OVR_MEDIUM: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_MEDIUM); break;
-				case CMD_RAPID_OVR_LOW: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_LOW); break;
-				case CMD_SPINDLE_OVR_RESET: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_RESET); break;
-				case CMD_SPINDLE_OVR_COARSE_PLUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_PLUS); break;
-				case CMD_SPINDLE_OVR_COARSE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_MINUS); break;
-				case CMD_SPINDLE_OVR_FINE_PLUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_PLUS); break;
-				case CMD_SPINDLE_OVR_FINE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_MINUS); break;
-				case CMD_SPINDLE_OVR_STOP: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_STOP); break;
-				case CMD_COOLANT_FLOOD_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_FLOOD_OVR_TOGGLE); break;
-#ifdef ENABLE_M7
-				case CMD_COOLANT_MIST_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_MIST_OVR_TOGGLE); break;
-#endif
-				}
-			// Throw away any unfound extended-ASCII character by not passing it to the serial buffer.
-			}
-			else {
-				// Write character to buffer
-				FifoUsart_Insert(USART2_NUM, USART_DIR_RX, c);
-			}
-		}
+		ProcessReceive(c);
 	}
 
 	if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET) {

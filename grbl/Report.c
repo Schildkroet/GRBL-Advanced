@@ -409,6 +409,9 @@ void Report_GCodeModes(void)
 	report_util_gcode_modes_G();
 	Printf("%d", 94-gc_state.modal.feed_rate);
 
+	report_util_gcode_modes_G();
+	Printf("%d", 98+gc_state.modal.retract);
+
 	if(gc_state.modal.program_flow) {
 		report_util_gcode_modes_M();
 

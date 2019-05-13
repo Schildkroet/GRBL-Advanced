@@ -221,6 +221,35 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="HAL\USART\USART.h" />
+		<Unit filename="Libraries\CRC\CRC.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\CRC\CRC.h" />
+		<Unit filename="Libraries\Ethernet\Ethernet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\Ethernet.h" />
+		<Unit filename="Libraries\Ethernet\ServerTCP.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\ServerTCP.h" />
+		<Unit filename="Libraries\Ethernet\utility\socket.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\utility\socket.h" />
+		<Unit filename="Libraries\Ethernet\utility\util2.h" />
+		<Unit filename="Libraries\Ethernet\utility\W5500.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\utility\W5500.h" />
+		<Unit filename="Libraries\GrIP\ComIf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\GrIP\ComIf.h" />
+		<Unit filename="Libraries\GrIP\GrIP.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\GrIP\GrIP.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>

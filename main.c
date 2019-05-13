@@ -23,9 +23,15 @@
 
 #include "System32.h"
 #include "grbl_advance.h"
+#include "Ethernet.h"
+#include "GrIP.h"
+#include "ServerTCP.h"
+#include "util2.h"
 
 #include "Print.h"
 #include "FIFO_USART.h"
+#include "ComIf.h"
+#include "Platform.h"
 
 
 // Declare system global variable structure
@@ -38,6 +44,16 @@ volatile uint8_t sys_rt_exec_alarm;   // Global realtime executor bitflag variab
 volatile uint8_t sys_rt_exec_motion_override; // Global realtime executor bitflag variable for motion-based overrides.
 volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bitflag variable for spindle/coolant overrides.
 
+#ifdef ETH_IF
+    uint8_t MAC[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+
+    // IP Address of tcp server
+    IPAddress_t IP = {{192, 168, 1, 20}};
+    IPAddress_t GatewayIP = {{192, 168, 1, 1}};
+    IPAddress_t SubnetMask = {{255, 255, 255, 0}};
+    IPAddress_t MyDns = {{8, 8, 8, 8}};
+#endif
+
 
 int main(void)
 {
@@ -49,6 +65,17 @@ int main(void)
     Settings_Init();
 
     System_ResetPosition();
+
+#ifdef ETH_IF
+    // Initialize W5500
+    Ethernet_Init(MAC, &IP, &MyDns, &GatewayIP, &SubnetMask);
+
+    // Initialize TCP server
+    ServerTCP_Init(ETH_SOCK, ETH_PORT);
+#endif
+
+    // Initialize GrIP protocol
+    GrIP_Init();
 
     // Init SysTick 1ms
 	SysTick_Init();

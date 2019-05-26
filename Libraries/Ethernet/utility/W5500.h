@@ -22,7 +22,7 @@
 #include "util2.h"
 
 
-#define MAX_SOCK_NUM 8
+#define MAX_SOCK_NUM        4   // Max 8
 
 
 #define W5500_SSIZE         2048 // Max Tx buffer size

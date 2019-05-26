@@ -32,6 +32,7 @@
 static uint8_t isFirstTC = 1;
 static int32_t toolOffset = 0;
 static int32_t toolReferenz = 0;
+static float tc_pos[N_AXIS] = {0};
 
 
 void TC_Init(void)
@@ -39,6 +40,8 @@ void TC_Init(void)
     isFirstTC = 1;
     toolOffset = 0;
     toolReferenz = 0;
+
+    memset(tc_pos, 0, sizeof(float)*N_AXIS);
 
     gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_CANCEL;
 	gc_state.tool_length_offset = 0.0;
@@ -62,6 +65,7 @@ void TC_ChangeCurrentTool(void)
     // Don't move XY. Go to Z 0
 	System_ConvertArraySteps2Mpos(position, sys_position);
 	position[Z_AXIS] = 0.0;
+	memcpy(tc_pos, position, sizeof(float)*N_AXIS);
 
     //System_SetExecStateFlag(EXEC_TOOL_CHANGE);
 
@@ -72,7 +76,7 @@ void TC_ChangeCurrentTool(void)
     pl_data.line_number = gc_state.line_number;
 
 	MC_Line(position, &pl_data);
-	Delay_ms(5);
+	Delay_ms(20);
 
 	Spindle_Stop();
 
@@ -175,6 +179,9 @@ void TC_ProbeTLS(void)
     pl_data.condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
 
     MC_Line(position, &pl_data);
+
+    // Move back to initial tc position
+    MC_Line(tc_pos, &pl_data);
 
     // Wait until queue is processed
     Protocol_BufferSynchronize();

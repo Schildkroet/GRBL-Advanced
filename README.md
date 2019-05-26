@@ -37,6 +37,11 @@ Uses Dynamic TLO when $14=2
 Added support for external EEPROM (e.g. ST M24C08). Uncomment 'USE_EXT_EEPROM' in Config.h.
 ![EEPROM](https://github.com/Schildkroet/GRBL-Advanced/blob/software/eeprom.png?raw=true)
 
+#### ETHERNET Support
+GRBL-Advanced can be controlled with USB or ETHERNET. For ETHERNET an additional W5500 Module is required. Then uncomment ETH_IF in Platform.h. The default IP Address is 192.168.1.20.
+Use [Candle 2](https://github.com/Schildkroet/Candle2) as control interface.
+![W5500](https://github.com/Schildkroet/GRBL-Advanced/blob/software/w5500.png?raw=true)
+
 #### Attention
 By default, settings are stored in internal flash memory in last sector. First startup takes about 5-10sec to write all settings.
 
@@ -79,6 +84,7 @@ List of Supported G-Codes in Grbl-Advanced:
   - Feed Rate Modes: G93, G94
   - Unit Modes: G20, G21
   - Distance Modes: G90, G91
+  - Retract Modes: G98, G99
   - Arc IJK Distance Modes: G91.1
   - Plane Select Modes: G17, G18, G19
   - Tool Length Offset Modes: G43.1, G49

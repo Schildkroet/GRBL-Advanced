@@ -49,17 +49,17 @@ void W5500_Init(void)
     GPIO_ResetBits(GPIOA, GPIO_Pin_15);
     Delay_ms(40);
     GPIO_SetBits(GPIOA, GPIO_Pin_15);
-    Delay_ms(25);
+    Delay_ms(40);
 
     W5500_SoftReset();
-    Delay_ms(20);
+    Delay_ms(40);
 
     for(uint8_t i = 0; i < MAX_SOCK_NUM; i++)
     {
         uint8_t cntl_byte = (0x0C + (i<<5));
 
-        Write(0x1E, cntl_byte, 4);     //0x1E - Sn_RXBUF_SIZE
-        Write(0x1F, cntl_byte, 2);     //0x1F - Sn_TXBUF_SIZE
+        Write(0x1E, cntl_byte, 4);     //0x1E - Sn_RXBUF_SIZE - 4k
+        Write(0x1F, cntl_byte, 2);     //0x1F - Sn_TXBUF_SIZE - 2k
     }
 }
 

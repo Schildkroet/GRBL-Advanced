@@ -672,8 +672,8 @@ static void Protocol_ExecRtSuspend(void)
 #endif
 
 	Planner_Block_t *block = Planner_GetCurrentBlock();
-
 	uint8_t restore_condition;
+	RX_Packet_t packet;
 
     float restore_spindle_speed;
     if(block == 0) {
@@ -694,6 +694,20 @@ static void Protocol_ExecRtSuspend(void)
 		if(sys.abort) {
 			return;
 		}
+
+#ifdef ETH_IF
+        GrIP_Update();
+        if(GrIP_Receive(&packet))
+        {
+            for(int i = 0; i < packet.RX_Header.Length; i++)
+            {
+                ProcessReceive(packet.Data[i]);
+            }
+        }
+        ServerTCP_Update();
+#else
+        (void)packet;
+#endif
 
 		// Block until initial hold is complete and the machine has stopped motion.
 		if(sys.suspend & SUSPEND_HOLD_COMPLETE) {

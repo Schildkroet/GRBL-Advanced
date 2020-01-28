@@ -21,7 +21,10 @@ Edit defaults.h to your needs.
 * $142=(Z Backlash [mm])
 
 #### Canned Drill Cycles (G81-G83):
-Added Canned Drill Cycles G81-G83 as experimental features. They are roughly tested and seem to work, but may contain still errors. Use at own risk!
+Added Canned Drill Cycles G81-G83 as additional features. 
+
+#### 5-Axis support
+Added experimental support for rotary axis (5-axis). They are roughly tested amd may contain still errors. Use at own risk!
 
 #### Hard Reset
 0x19 (CTRL-Y): Perform a hard reset.

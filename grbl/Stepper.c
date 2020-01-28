@@ -106,7 +106,7 @@ typedef struct {
 typedef struct {
 	// Used by the bresenham line algorithm
 	// Counter variables for the bresenham line tracer
-	uint32_t counter_x, counter_y, counter_z;
+	uint32_t counter_x, counter_y, counter_z, counter_a, counter_b;
 
 	uint8_t execute_step;     // Flags step execution for each interrupt.
 	uint8_t step_pulse_time;  // Step pulse reset time after step rise
@@ -366,6 +366,26 @@ void Stepper_MainISR(void)
 			GPIO_SetBits(GPIO_STEP_Z_PORT, GPIO_STEP_Z_PIN);
 		}
     }
+    if(st.step_outbits & (1<<A_STEP_BIT)) {
+		if(step_port_invert_mask & (1<<A_STEP_BIT)) {
+			// Low pulse
+			GPIO_ResetBits(GPIO_STEP_A_PORT, GPIO_STEP_A_PIN);
+		}
+		else {
+			// High pulse
+			GPIO_SetBits(GPIO_STEP_A_PORT, GPIO_STEP_A_PIN);
+		}
+    }
+    if(st.step_outbits & (1<<B_STEP_BIT)) {
+		if(step_port_invert_mask & (1<<B_STEP_BIT)) {
+			// Low pulse
+			//GPIO_ResetBits(GPIO_STEP_B_PORT, GPIO_STEP_B_PIN);
+		}
+		else {
+			// High pulse
+			//GPIO_SetBits(GPIO_STEP_B_PORT, GPIO_STEP_B_PIN);
+		}
+    }
 
 	// If there is no step segment, attempt to pop one from the stepper buffer
 	if(st.exec_segment == 0) {
@@ -391,7 +411,7 @@ void Stepper_MainISR(void)
 				st.exec_block = &st_block_buffer[st.exec_block_index];
 
 				// Initialize Bresenham line and distance counters
-				st.counter_x = st.counter_y = st.counter_z = (st.exec_block->step_event_count >> 1);
+				st.counter_x = st.counter_y = st.counter_z = st.counter_a = st.counter_b = (st.exec_block->step_event_count >> 1);
 			}
 
 			st.dir_outbits = st.exec_block->direction_bits ^ dir_port_invert_mask;
@@ -416,11 +436,25 @@ void Stepper_MainISR(void)
 			else {
 				GPIO_ResetBits(GPIO_DIR_Z_PORT, GPIO_DIR_Z_PIN);
 			}
+			if(st.dir_outbits & (1<<A_DIRECTION_BIT)) {
+				GPIO_SetBits(GPIO_DIR_A_PORT, GPIO_DIR_A_PIN);
+			}
+			else {
+				GPIO_ResetBits(GPIO_DIR_A_PORT, GPIO_DIR_A_PIN);
+			}
+			if(st.dir_outbits & (1<<B_DIRECTION_BIT)) {
+				//GPIO_SetBits(GPIO_DIR_B_PORT, GPIO_DIR_B_PIN);
+			}
+			else {
+				//GPIO_ResetBits(GPIO_DIR_B_PORT, GPIO_DIR_B_PIN);
+			}
 
 			// With AMASS enabled, adjust Bresenham axis increment counters according to AMASS level.
 			st.steps[X_AXIS] = st.exec_block->steps[X_AXIS] >> st.exec_segment->amass_level;
 			st.steps[Y_AXIS] = st.exec_block->steps[Y_AXIS] >> st.exec_segment->amass_level;
 			st.steps[Z_AXIS] = st.exec_block->steps[Z_AXIS] >> st.exec_segment->amass_level;
+			st.steps[A_AXIS] = st.exec_block->steps[A_AXIS] >> st.exec_segment->amass_level;
+			st.steps[B_AXIS] = st.exec_block->steps[B_AXIS] >> st.exec_segment->amass_level;
 
 			// Set real-time spindle output as segment is loaded, just prior to the first step.
 			Spindle_SetSpeed(st.exec_segment->spindle_pwm);
@@ -501,6 +535,40 @@ void Stepper_MainISR(void)
         }
 	}
 
+	st.counter_a += st.steps[A_AXIS];
+
+	if(st.counter_a > st.exec_block->step_event_count) {
+		st.step_outbits |= (1<<A_STEP_BIT);
+		st.counter_a -= st.exec_block->step_event_count;
+
+        //if(st.exec_segment->backlash_motion == 0)
+        {
+            if(st.exec_block->direction_bits & (1<<A_DIRECTION_BIT)) {
+                sys_position[A_AXIS]--;
+            }
+            else {
+                sys_position[A_AXIS]++;
+            }
+        }
+	}
+
+	st.counter_b += st.steps[B_AXIS];
+
+	if(st.counter_b > st.exec_block->step_event_count) {
+		st.step_outbits |= (1<<B_STEP_BIT);
+		st.counter_b -= st.exec_block->step_event_count;
+
+        //if(st.exec_segment->backlash_motion == 0)
+        {
+            if(st.exec_block->direction_bits & (1<<B_DIRECTION_BIT)) {
+                sys_position[B_AXIS]--;
+            }
+            else {
+                sys_position[B_AXIS]++;
+            }
+        }
+	}
+
 	// During a homing cycle, lock out and prevent desired axes from moving.
 	if(sys.state == STATE_HOMING) {
 		st.step_outbits &= sys.homing_axis_lock;
@@ -552,6 +620,22 @@ void Stepper_PortResetISR(void)
 	else {
 		GPIO_ResetBits(GPIO_STEP_Z_PORT, GPIO_STEP_Z_PIN);
 	}
+
+	// A
+	if(step_port_invert_mask & (1<<A_STEP_BIT)) {
+		GPIO_SetBits(GPIO_STEP_A_PORT, GPIO_STEP_A_PIN);
+	}
+	else {
+		GPIO_ResetBits(GPIO_STEP_A_PORT, GPIO_STEP_A_PIN);
+	}
+
+	// B
+	if(step_port_invert_mask & (1<<B_STEP_BIT)) {
+		//GPIO_SetBits(GPIO_STEP_B_PORT, GPIO_STEP_B_PIN);
+	}
+	else {
+		//GPIO_ResetBits(GPIO_STEP_B_PORT, GPIO_STEP_B_PIN);
+	}
 }
 
 
@@ -600,11 +684,15 @@ void Stepper_Reset(void)
 	GPIO_ResetBits(GPIO_STEP_X_PORT, GPIO_STEP_X_PIN);
 	GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
 	GPIO_ResetBits(GPIO_STEP_Z_PORT, GPIO_STEP_Z_PIN);
+	GPIO_ResetBits(GPIO_STEP_A_PORT, GPIO_STEP_A_PIN);
+	//GPIO_ResetBits(GPIO_STEP_B_PORT, GPIO_STEP_B_PIN);
 
 	// Reset Direction Pins
 	GPIO_ResetBits(GPIO_DIR_X_PORT, GPIO_DIR_X_PIN);
 	GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
 	GPIO_ResetBits(GPIO_DIR_Z_PORT, GPIO_DIR_Z_PIN);
+	GPIO_ResetBits(GPIO_DIR_A_PORT, GPIO_DIR_A_PIN);
+	//GPIO_ResetBits(GPIO_DIR_B_PORT, GPIO_DIR_B_PIN);
 }
 
 

@@ -461,8 +461,10 @@ uint8_t GC_ExecuteLine(char *line)
 			words (I,J,K,L,P,R) have multiple connotations and/or depend on the issued commands. */
 			switch(letter)
 			{
-			// case 'A': // Not supported
-			// case 'B': // Not supported
+#ifdef USE_MULTI_AXIS
+			case 'A': word_bit = WORD_A; gc_block.values.xyz[A_AXIS] = value; axis_words |= (1<<A_AXIS); break;
+			case 'B': word_bit = WORD_B; gc_block.values.xyz[B_AXIS] = value; axis_words |= (1<<B_AXIS); break;
+#endif
 			// case 'C': // Not supported
 			// case 'D': // Not supported
 			case 'F': word_bit = WORD_F; gc_block.values.f = value; break;
@@ -1199,7 +1201,7 @@ uint8_t GC_ExecuteLine(char *line)
 
 						// Convert IJK values to proper units.
 						if(gc_block.modal.units == UNITS_MODE_INCHES) {
-							for(idx = 0; idx < N_AXIS; idx++) { // Axes indices are consistent, so loop may be used to save flash space.
+							for(idx = 0; idx < N_LINEAR_AXIS; idx++) { // Axes indices are consistent, so loop may be used to save flash space.
 								if(ijk_words & BIT(idx)) {
 									gc_block.values.ijk[idx] *= MM_PER_INCH;
 								}
@@ -1283,7 +1285,7 @@ uint8_t GC_ExecuteLine(char *line)
 	if(axis_command)
     {
 		// Remove axis words.
-		BIT_FALSE(value_words, (BIT(WORD_X)|BIT(WORD_Y)|BIT(WORD_Z)));
+		BIT_FALSE(value_words, (BIT(WORD_X)|BIT(WORD_Y)|BIT(WORD_Z)|BIT(WORD_A)|BIT(WORD_B)));
 	}
 
 	if(value_words)
@@ -1807,7 +1809,6 @@ uint8_t GC_ExecuteLine(char *line)
 
   - Canned cycles
   - Tool radius compensation
-  - A,B,C-axes
   - Evaluation of expressions
   - Variables
   - Override control (TBD)

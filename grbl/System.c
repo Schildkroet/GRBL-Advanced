@@ -324,6 +324,14 @@ uint8_t System_ExecuteLine(char *line)
 					MC_HomigCycle(HOMING_CYCLE_Z);
 					break;
 
+                case 'A':
+					MC_HomigCycle(HOMING_CYCLE_A);
+					break;
+
+                case 'B':
+					MC_HomigCycle(HOMING_CYCLE_B);
+					break;
+
 				default:
 					return STATUS_INVALID_STATEMENT;
 				}

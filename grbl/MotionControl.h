@@ -33,6 +33,8 @@
 #define HOMING_CYCLE_X   				BIT(X_AXIS)
 #define HOMING_CYCLE_Y   				BIT(Y_AXIS)
 #define HOMING_CYCLE_Z   				BIT(Z_AXIS)
+#define HOMING_CYCLE_A   				BIT(A_AXIS)
+#define HOMING_CYCLE_B   				BIT(B_AXIS)
 
 
 void MC_Init(void);

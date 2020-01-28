@@ -141,8 +141,8 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
     pl_backlash.backlash_motion = 1;
     pl_backlash.condition = PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
 
-	// Backlash compensation
-    for(uint8_t i = 0; i < N_AXIS; i++)
+	// Backlash compensation (not for A & B)
+    for(uint8_t i = 0; i < N_LINEAR_AXIS; i++)
     {
         // Move positive?
         if(target[i] > target_prev[i])

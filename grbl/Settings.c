@@ -119,15 +119,26 @@ void Settings_Restore(uint8_t restore_flag) {
 		settings.steps_per_mm[X_AXIS] = DEFAULT_X_STEPS_PER_MM;
 		settings.steps_per_mm[Y_AXIS] = DEFAULT_Y_STEPS_PER_MM;
 		settings.steps_per_mm[Z_AXIS] = DEFAULT_Z_STEPS_PER_MM;
+		settings.steps_per_mm[A_AXIS] = DEFAULT_A_STEPS_PER_DEG;
+		settings.steps_per_mm[B_AXIS] = DEFAULT_B_STEPS_PER_DEG;
+
 		settings.max_rate[X_AXIS] = DEFAULT_X_MAX_RATE;
 		settings.max_rate[Y_AXIS] = DEFAULT_Y_MAX_RATE;
 		settings.max_rate[Z_AXIS] = DEFAULT_Z_MAX_RATE;
+		settings.max_rate[A_AXIS] = DEFAULT_A_MAX_RATE;
+		settings.max_rate[B_AXIS] = DEFAULT_B_MAX_RATE;
+
 		settings.acceleration[X_AXIS] = DEFAULT_X_ACCELERATION;
 		settings.acceleration[Y_AXIS] = DEFAULT_Y_ACCELERATION;
 		settings.acceleration[Z_AXIS] = DEFAULT_Z_ACCELERATION;
+		settings.acceleration[A_AXIS] = DEFAULT_A_ACCELERATION;
+		settings.acceleration[B_AXIS] = DEFAULT_B_ACCELERATION;
+
 		settings.max_travel[X_AXIS] = (-DEFAULT_X_MAX_TRAVEL);
 		settings.max_travel[Y_AXIS] = (-DEFAULT_Y_MAX_TRAVEL);
 		settings.max_travel[Z_AXIS] = (-DEFAULT_Z_MAX_TRAVEL);
+		settings.max_travel[A_AXIS] = (-DEFAULT_A_MAX_TRAVEL);
+		settings.max_travel[B_AXIS] = (-DEFAULT_B_MAX_TRAVEL);
 
 		settings.backlash[X_AXIS] = DEFAULT_X_BACKLASH;
 		settings.backlash[Y_AXIS] = DEFAULT_Y_BACKLASH;
@@ -405,8 +416,10 @@ uint8_t Settings_GetStepPinMask(uint8_t axis_idx)
 {
 	if(axis_idx == X_AXIS) { return (1<<X_STEP_BIT); }
 	if(axis_idx == Y_AXIS) { return (1<<Y_STEP_BIT); }
+	if(axis_idx == Z_AXIS) { return (1<<Z_STEP_BIT); }
+	if(axis_idx == A_AXIS) { return (1<<A_STEP_BIT); }
 
-	return (1<<Z_STEP_BIT);
+	return (1<<B_STEP_BIT);
 }
 
 
@@ -415,8 +428,10 @@ uint8_t Settings_GetDirectionPinMask(uint8_t axis_idx)
 {
 	if(axis_idx == X_AXIS) { return (1<<X_DIRECTION_BIT); }
 	if(axis_idx == Y_AXIS) { return (1<<Y_DIRECTION_BIT); }
+	if(axis_idx == Z_AXIS) { return (1<<Z_DIRECTION_BIT); }
+	if(axis_idx == A_AXIS) { return (1<<A_DIRECTION_BIT); }
 
-	return (1<<Z_DIRECTION_BIT);
+	return (1<<B_DIRECTION_BIT);
 }
 
 
@@ -425,6 +440,8 @@ uint8_t Settings_GetLimitPinMask(uint8_t axis_idx)
 {
 	if(axis_idx == X_AXIS) { return (1<<X_STEP_BIT); }
 	if(axis_idx == Y_AXIS) { return (1<<Y_STEP_BIT); }
+	if(axis_idx == Z_AXIS) { return (1<<Z_STEP_BIT); }
+	if(axis_idx == A_AXIS) { return (1<<A_STEP_BIT); }
 
-	return (1<<Z_STEP_BIT);
+	return (1<<B_STEP_BIT);
 }

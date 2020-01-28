@@ -83,11 +83,16 @@ static void report_util_gcode_modes_M(void)
 static void Report_AxisValue(float *axis_value)
 {
 	uint8_t idx;
+	uint8_t axis_num = N_LINEAR_AXIS;
 
-	for(idx = 0; idx < N_AXIS; idx++) {
+#ifdef USE_MULTI_AXIS
+    axis_num = N_AXIS;
+#endif
+
+	for(idx = 0; idx < axis_num; idx++) {
 		PrintFloat_CoordValue(axis_value[idx]);
 
-		if(idx < (N_AXIS-1)) {
+		if(idx < (axis_num-1)) {
 			Putc(',');
 		}
 	}
@@ -573,6 +578,9 @@ void Report_BuildInfo(char *line)
 #endif
 #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
     Putc('+');
+#endif
+#ifdef USE_MULTI_AXIS
+    Putc('A');
 #endif
 
 	// NOTE: Compiled values, like override increments/max/min values, may be added at some point later.

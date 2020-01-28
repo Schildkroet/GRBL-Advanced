@@ -111,6 +111,8 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
 		position_steps[X_AXIS] = system_convert_corexy_to_x_axis_steps(sys_position);
 		position_steps[Y_AXIS] = system_convert_corexy_to_y_axis_steps(sys_position);
 		position_steps[Z_AXIS] = sys_position[Z_AXIS];
+		position_steps[A_AXIS] = sys_position[A_AXIS];
+		position_steps[B_AXIS] = sys_position[B_AXIS];
 #else
 		memcpy(position_steps, sys_position, sizeof(sys_position));
 #endif

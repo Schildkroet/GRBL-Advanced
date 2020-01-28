@@ -83,7 +83,7 @@ static void GPIO_InitStepper(void)
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	/* GPIO Configuration: A3, D3, D5, D4, D6 */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_10;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
 

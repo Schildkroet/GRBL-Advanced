@@ -26,17 +26,25 @@
 #define GPIO_STEP_X_PORT		GPIOA
 #define GPIO_STEP_Y_PORT		GPIOB
 #define GPIO_STEP_Z_PORT		GPIOB
+#define GPIO_STEP_A_PORT		GPIOB
+#define GPIO_STEP_B_PORT		GPIOB
 #define GPIO_STEP_X_PIN			GPIO_Pin_10
 #define GPIO_STEP_Y_PIN			GPIO_Pin_3
 #define GPIO_STEP_Z_PIN			GPIO_Pin_5
+#define GPIO_STEP_A_PIN			GPIO_Pin_1
+#define GPIO_STEP_B_PIN			GPIO_Pin_14
 
 // Direction Pins
 #define GPIO_DIR_X_PORT			GPIOB
 #define GPIO_DIR_Y_PORT			GPIOB
 #define GPIO_DIR_Z_PORT			GPIOA
+#define GPIO_DIR_A_PORT			GPIOB
+#define GPIO_DIR_B_PORT			GPIOB
 #define GPIO_DIR_X_PIN			GPIO_Pin_4
 #define GPIO_DIR_Y_PIN			GPIO_Pin_10
 #define GPIO_DIR_Z_PIN			GPIO_Pin_8
+#define GPIO_DIR_A_PIN			GPIO_Pin_2
+#define GPIO_DIR_B_PIN			GPIO_Pin_15
 
 // Stepper Enable
 #define GPIO_ENABLE_PORT		GPIOA

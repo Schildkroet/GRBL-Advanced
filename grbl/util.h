@@ -45,22 +45,26 @@
 #define F_CPU						96000000UL
 #define F_TIMER_STEPPER             24000000UL
 
-#define N_AXIS						3
+#define N_AXIS						5
+#define N_LINEAR_AXIS               3
 
 #define X_AXIS						0 // Axis indexing value.
 #define Y_AXIS						1
 #define Z_AXIS						2
 #define A_AXIS						3
+#define B_AXIS						4
 
 #define X_STEP_BIT					0
 #define Y_STEP_BIT					1
 #define Z_STEP_BIT					2
 #define A_STEP_BIT                  3
+#define B_STEP_BIT                  4
 
 #define X_DIRECTION_BIT				0
 #define Y_DIRECTION_BIT				1
 #define Z_DIRECTION_BIT				2
 #define A_DIRECTION_BIT             3
+#define B_DIRECTION_BIT             4
 
 #define X_LIMIT_BIT					0
 #define Y_LIMIT_BIT					1

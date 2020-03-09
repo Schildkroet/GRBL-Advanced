@@ -755,6 +755,8 @@ void Report_RealtimeStatus(void)
 			if (BIT_IS_TRUE(lim_pin_state, BIT(X_AXIS))) { Putc('X'); }
 			if (BIT_IS_TRUE(lim_pin_state, BIT(Y_AXIS))) { Putc('Y'); }
 			if (BIT_IS_TRUE(lim_pin_state, BIT(Z_AXIS))) { Putc('Z'); }
+			if (BIT_IS_TRUE(lim_pin_state, BIT(A_AXIS))) { Putc('A'); }
+			if (BIT_IS_TRUE(lim_pin_state, BIT(B_AXIS))) { Putc('B'); }
 		}
 
 		if(ctrl_pin_state) {

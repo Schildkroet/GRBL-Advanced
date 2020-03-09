@@ -126,8 +126,8 @@ void TC_ProbeTLS(void)
     Protocol_BufferSynchronize();
 
     // Set up fast probing
-    pl_data.feed_rate = 180.0;
-	pl_data.condition = 0; // Set rapid motion condition flag.
+    pl_data.feed_rate = 200.0;
+	pl_data.condition = 0; // Reset rapid motion condition flag.
 
     // Probe TLS fast
     position[Z_AXIS] -= 200.0;
@@ -140,7 +140,7 @@ void TC_ProbeTLS(void)
 
     // Get current position
     System_ConvertArraySteps2Mpos(position, sys_position);
-    position[Z_AXIS] += 1.5;
+    position[Z_AXIS] += 1.8;
 
     // Move up a little bit for slow probing
     pl_data.feed_rate = 200.0;

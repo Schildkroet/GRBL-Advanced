@@ -1661,13 +1661,15 @@ uint8_t GC_ExecuteLine(char *line)
                     }
                     else
                     {
+						uint8_t exit = 0;
                         //-- G83 --//
-                        for(float curr_z = clear_z - gc_block.values.q; curr_z >= gc_block.values.xyz[Z_AXIS] - 0.001; curr_z -= gc_block.values.q)
+                        for(float curr_z = clear_z - gc_block.values.q; exit == 0; curr_z -= gc_block.values.q)
                         {
                             // Check if target depth exceeds final depth
-                            if(curr_z < gc_block.values.xyz[Z_AXIS])
+                            if(curr_z <= gc_block.values.xyz[Z_AXIS])
                             {
                                 curr_z = gc_block.values.xyz[Z_AXIS];
+                                exit = 1;
                             }
 
                             // Move the Z-axis at the current feed rate to the Z position.
@@ -1680,10 +1682,14 @@ uint8_t GC_ExecuteLine(char *line)
                             pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
                             MC_Line(xyz, pl_data);
 
-                            // Rapid move to bottom of hole (backed off a bit)
-                            xyz[Z_AXIS] = curr_z + 0.4;
-                            pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
-                            MC_Line(xyz, pl_data);
+							if(exit == 0)
+							{
+								// Prepare next hole
+								// Rapid move to bottom of hole (backed off a bit)
+								xyz[Z_AXIS] = curr_z + 0.4;
+								pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
+								MC_Line(xyz, pl_data);
+                            }
                         }
                     }
 

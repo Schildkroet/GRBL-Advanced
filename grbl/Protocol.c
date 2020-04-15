@@ -57,7 +57,7 @@
 
 static char line[LINE_BUFFER_SIZE]; // Line to be executed. Zero-terminated.
 static void Protocol_ExecRtSuspend(void);
-
+extern void ProcessReceive(char c);
 
 /*
   GRBL PRIMARY LOOP:
@@ -586,7 +586,7 @@ void Protocol_ExecRtSystem(void)
 				Spindle_SetState(gc_state.modal.spindle, gc_state.spindle_speed);
 			}
 			else {
-				BIT_TRUE(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM); 
+				BIT_TRUE(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM);
 			}
 			sys.report_ovr_counter = 0; // Set to report change immediately
 		}

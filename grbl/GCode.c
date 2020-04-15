@@ -60,7 +60,7 @@
 
 // Declare gc extern struct
 Parser_State_t gc_state;
-Parser_Block_t gc_block;
+static Parser_Block_t gc_block;
 
 
 void GC_Init(void)

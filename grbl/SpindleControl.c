@@ -87,10 +87,12 @@ void Spindle_SetSpeed(uint8_t pwm_value)
 {
 	TIM1->CCR1 = 100 - pwm_value; // Set PWM output level.
 #ifdef SPINDLE_ENABLE_OFF_WITH_ZERO_SPEED
-	if (pwm_value == SPINDLE_PWM_OFF_VALUE) {
+	if (pwm_value == SPINDLE_PWM_OFF_VALUE)
+    {
 		Spindle_Stop();
 	}
-	else {
+	else
+    {
 		TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
   #ifdef INVERT_SPINDLE_ENABLE_PIN
 		GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
@@ -100,11 +102,14 @@ void Spindle_SetSpeed(uint8_t pwm_value)
         spindle_enabled = 1;
 	}
 #else
-	if(pwm_value == SPINDLE_PWM_OFF_VALUE) {
+	if(pwm_value == SPINDLE_PWM_OFF_VALUE)
+	{
+        TIM1->CCR1 = 100;    // Disable PWM. Output voltage is zero.
 		TIM_Cmd(TIM1, DISABLE); // Disable PWM. Output voltage is zero.
 		spindle_enabled = 0;
 	}
-	else {
+	else
+	{
 		TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
 		spindle_enabled = 1;
 	}

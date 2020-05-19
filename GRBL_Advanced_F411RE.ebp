@@ -67,7 +67,7 @@
 			<Add option="$device=cortex-m4" />
 			<Add option="$fpu=fpv4-sp-d16" />
 			<Add option="$lscript=./stm32f411re_flash.ld" />
-			<Add option="$stack=0x0300" />
+			<Add option="$stack=0x0400" />
 			<Add option="$heap=0x0000" />
 		</Device>
 		<Compiler>

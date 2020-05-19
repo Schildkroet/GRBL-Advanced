@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<EmBitz_project_file>
+	<EmBitzVersion release="1.11" revision="0" />
+	<FileVersion major="1" minor="0" />
+	<Project>
+		<Option title="GRBL_Advanced" />
+		<Option pch_mode="2" />
+		<Option compiler="armgcc_eb" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin\Debug\GRBL_Advanced.elf" />
+				<Option object_output="obj\Debug\" />
+				<Option type="0" />
+				<Option compiler="armgcc_eb" />
+				<Option projectDeviceOptionsRelation="0" />
+				<Compiler>
+					<Add option="-g3" />
+					<Add option="-O0" />
+					<Add option="-Wall" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+				</Compiler>
+				<Cpp>
+					<Add option="-g3" />
+					<Add option="-O0" />
+					<Add option="-Wall" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+				</Cpp>
+				<Assembler>
+					<Add option="-Wa,--gdwarf-2" />
+				</Assembler>
+				<Linker>
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-eb_use_semi" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin\Release\GRBL_Advanced.elf" />
+				<Option object_output="obj\Release\" />
+				<Option type="0" />
+				<Option create_hex="1" />
+				<Option compiler="armgcc_eb" />
+				<Option projectDeviceOptionsRelation="0" />
+				<Compiler>
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-O2" />
+					<Add option="-g1" />
+				</Compiler>
+				<Cpp>
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-O2" />
+					<Add option="-g2" />
+				</Cpp>
+				<Assembler>
+					<Add option="-Wa,--no-warn" />
+				</Assembler>
+				<Linker>
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-flto" />
+				</Linker>
+			</Target>
+		</Build>
+		<Device>
+			<Add option="$device=cortex-m4" />
+			<Add option="$fpu=fpv4-sp-d16" />
+			<Add option="$lscript=./stm32f446re_flash.ld" />
+			<Add option="$stack=0x0400" />
+			<Add option="$heap=0x0000" />
+		</Device>
+		<Compiler>
+			<Add option="-mfloat-abi=hard" />
+			<Add option="-std=c11" />
+			<Add option="-Wextra" />
+			<Add option="-Wall" />
+			<Add option="-fsingle-precision-constant" />
+			<Add option="-fno-strict-aliasing" />
+			<Add symbol="ARM_MATH_CM4" />
+			<Add symbol="__FPU_USED" />
+			<Add symbol="STM32F446RE" />
+			<Add symbol="STM32F446xx" />
+			<Add symbol="USE_STDPERIPH_DRIVER" />
+			<Add directory=".\inc" />
+			<Add directory=".\src" />
+			<Add directory=".\cmsis" />
+			<Add directory=".\SPL\inc" />
+			<Add directory=".\SPL\src" />
+		</Compiler>
+		<Linker>
+			<Add option="-eb_lib=n" />
+			<Add option="-eb_start_files" />
+			<Add option="-flto" />
+			<Add option="-lm" />
+		</Linker>
+		<ExtraCommands>
+			<Add after="arm-none-eabi-objcopy -O binary ${PROJECT_DIR}${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}.elf ${PROJECT_DIR}${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}.bin" />
+			<Mode before="0" />
+			<Mode after="1" />
+		</ExtraCommands>
+		<Unit filename="cmsis\arm_common_tables.h" />
+		<Unit filename="cmsis\arm_math.h" />
+		<Unit filename="cmsis\core_cm4.h" />
+		<Unit filename="cmsis\core_cm4_simd.h" />
+		<Unit filename="cmsis\core_cmFunc.h" />
+		<Unit filename="cmsis\core_cmInstr.h" />
+		<Unit filename="grbl\Config.h" />
+		<Unit filename="grbl\CoolantControl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\CoolantControl.h" />
+		<Unit filename="grbl\defaults.h" />
+		<Unit filename="grbl\GCode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\GCode.h" />
+		<Unit filename="grbl\grbl_advance.h" />
+		<Unit filename="grbl\Jog.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Jog.h" />
+		<Unit filename="grbl\Limits.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Limits.h" />
+		<Unit filename="grbl\MotionControl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\MotionControl.h" />
+		<Unit filename="grbl\Nvm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Nvm.h" />
+		<Unit filename="grbl\Planner.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Planner.h" />
+		<Unit filename="grbl\Probe.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Probe.h" />
+		<Unit filename="grbl\Protocol.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Protocol.h" />
+		<Unit filename="grbl\Report.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Report.h" />
+		<Unit filename="grbl\Settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Settings.h" />
+		<Unit filename="grbl\SpindleControl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\SpindleControl.h" />
+		<Unit filename="grbl\Stepper.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\Stepper.h" />
+		<Unit filename="grbl\System.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\System.h" />
+		<Unit filename="grbl\ToolChange.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\ToolChange.h" />
+		<Unit filename="grbl\util.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="grbl\util.h" />
+		<Unit filename="HAL\EXTI\EXTI.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\EXTI\EXTI.h" />
+		<Unit filename="HAL\FLASH\eeprom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\FLASH\eeprom.h" />
+		<Unit filename="HAL\GPIO\GPIO.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\GPIO\GPIO.h" />
+		<Unit filename="HAL\I2C\I2C.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\I2C\I2C.h" />
+		<Unit filename="HAL\SPI\SPI.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\SPI\SPI.h" />
+		<Unit filename="HAL\STM32\startup_stm32f4xx.S">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\STM32\stm32f4xx.h" />
+		<Unit filename="HAL\STM32\stm32f4xx_conf.h" />
+		<Unit filename="HAL\STM32\stm32f4xx_it.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\STM32\stm32f4xx_it.h" />
+		<Unit filename="HAL\STM32\system_stm32f4xx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\STM32\system_stm32f4xx.h" />
+		<Unit filename="HAL\System32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\System32.h" />
+		<Unit filename="HAL\TIM\TIM.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\TIM\TIM.h" />
+		<Unit filename="HAL\USART\FIFO_USART.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\USART\FIFO_USART.h" />
+		<Unit filename="HAL\USART\USART.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="HAL\USART\USART.h" />
+		<Unit filename="Libraries\CRC\CRC.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\CRC\CRC.h" />
+		<Unit filename="Libraries\Ethernet\Ethernet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\Ethernet.h" />
+		<Unit filename="Libraries\Ethernet\ServerTCP.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\ServerTCP.h" />
+		<Unit filename="Libraries\Ethernet\utility\socket.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\utility\socket.h" />
+		<Unit filename="Libraries\Ethernet\utility\util2.h" />
+		<Unit filename="Libraries\Ethernet\utility\W5500.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Ethernet\utility\W5500.h" />
+		<Unit filename="Libraries\GrIP\ComIf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\GrIP\ComIf.h" />
+		<Unit filename="Libraries\GrIP\GrIP.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\GrIP\GrIP.h" />
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="README.md" />
+		<Unit filename="SPL\inc\misc.h" />
+		<Unit filename="SPL\inc\stm32f4xx_adc.h" />
+		<Unit filename="SPL\inc\stm32f4xx_can.h" />
+		<Unit filename="SPL\inc\stm32f4xx_crc.h" />
+		<Unit filename="SPL\inc\stm32f4xx_cryp.h" />
+		<Unit filename="SPL\inc\stm32f4xx_dac.h" />
+		<Unit filename="SPL\inc\stm32f4xx_dbgmcu.h" />
+		<Unit filename="SPL\inc\stm32f4xx_dcmi.h" />
+		<Unit filename="SPL\inc\stm32f4xx_dma.h" />
+		<Unit filename="SPL\inc\stm32f4xx_exti.h" />
+		<Unit filename="SPL\inc\stm32f4xx_flash.h" />
+		<Unit filename="SPL\inc\stm32f4xx_gpio.h" />
+		<Unit filename="SPL\inc\stm32f4xx_hash.h" />
+		<Unit filename="SPL\inc\stm32f4xx_i2c.h" />
+		<Unit filename="SPL\inc\stm32f4xx_iwdg.h" />
+		<Unit filename="SPL\inc\stm32f4xx_pwr.h" />
+		<Unit filename="SPL\inc\stm32f4xx_rcc.h" />
+		<Unit filename="SPL\inc\stm32f4xx_rng.h" />
+		<Unit filename="SPL\inc\stm32f4xx_rtc.h" />
+		<Unit filename="SPL\inc\stm32f4xx_sdio.h" />
+		<Unit filename="SPL\inc\stm32f4xx_spi.h" />
+		<Unit filename="SPL\inc\stm32f4xx_syscfg.h" />
+		<Unit filename="SPL\inc\stm32f4xx_tim.h" />
+		<Unit filename="SPL\inc\stm32f4xx_usart.h" />
+		<Unit filename="SPL\inc\stm32f4xx_wwdg.h" />
+		<Unit filename="SPL\src\misc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_adc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_can.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_crc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_cryp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_cryp_aes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_cryp_des.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_cryp_tdes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_dac.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_dbgmcu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_dcmi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_dma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_exti.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_flash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_hash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_hash_md5.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_hash_sha1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_iwdg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_pwr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_rcc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_rng.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_sdio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_spi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_syscfg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_tim.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_usart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPL\src\stm32f4xx_wwdg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\debug.h" />
+		<Unit filename="Src\M24C0X.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\M24C0X.h" />
+		<Unit filename="Src\Platform.h" />
+		<Unit filename="Src\Print.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\Print.h" />
+		<Unit filename="stm32f411re_flash.ld" />
+		<Extensions>
+			<code_completion />
+			<debugger>
+				<target_debugging_settings target="Debug" active_interface="ST-link">
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="400" options="2" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_RESET_TYPE" opt_value="System" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
+							<option opt_id="ID_ALL_MODE_DEBUG" opt_value="0" />
+							<option opt_id="ID_DEV_ADDR" opt_value="" />
+							<option opt_id="ID_VERBOSE_LEVEL" opt_value="3" />
+						</family_options>
+					</debug_interface>
+				</target_debugging_settings>
+				<target_debugging_settings target="Release" active_interface="ST-link">
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="400" options="10" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_RESET_TYPE" opt_value="System" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
+							<option opt_id="ID_ALL_MODE_DEBUG" opt_value="0" />
+							<option opt_id="ID_DEV_ADDR" opt_value="" />
+							<option opt_id="ID_VERBOSE_LEVEL" opt_value="3" />
+						</family_options>
+					</debug_interface>
+				</target_debugging_settings>
+			</debugger>
+			<envvars />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+		</Extensions>
+	</Project>
+</EmBitz_project_file>

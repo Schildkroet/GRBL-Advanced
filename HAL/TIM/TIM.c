@@ -22,7 +22,7 @@
 
 /**
  * Timer 1
- * Outputs ~10 KHz on D11
+ * Outputs 10 KHz on D11
  * Used for Variable Spindle PWM
  **/
 void TIM1_Init(void)
@@ -34,8 +34,14 @@ void TIM1_Init(void)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 
 	/* Time base configuration */
-	TIM_TimeBaseStructure.TIM_Period = 100-1;		// ~10 KHz
-	TIM_TimeBaseStructure.TIM_Prescaler = 48;		// 2 MHz
+	TIM_TimeBaseStructure.TIM_Period = TIM1_INIT-1;		// ~10 KHz
+#ifdef STM32F411xE
+	TIM_TimeBaseStructure.TIM_Prescaler = 48-1;		// 2 MHz
+#elif STM32F446xx
+    TIM_TimeBaseStructure.TIM_Prescaler = 84-1;		// 2 MHz
+#else
+    #warning No Timer clock set for stepper spindle pwm
+#endif
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -77,7 +83,13 @@ void TIM9_Init(void)
 
 	/* Time base configuration */
 	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;
+#ifdef STM32F411xE
 	TIM_TimeBaseStructure.TIM_Prescaler = 4-1;		// 24 MHz
+#elif STM32F446xx
+    TIM_TimeBaseStructure.TIM_Prescaler = 7-1;		// 24 MHz
+#else
+    #warning No Timer clock set for stepper interrupt
+#endif
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 

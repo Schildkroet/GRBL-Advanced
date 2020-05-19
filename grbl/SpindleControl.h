@@ -32,7 +32,7 @@
 #define SPINDLE_STATE_CW       		BIT(0)
 #define SPINDLE_STATE_CCW      		BIT(1)
 
-#define SPINDLE_PWM_MAX_VALUE     	100 // Don't change. 328p fast PWM mode fixes top value as 255.
+#define SPINDLE_PWM_MAX_VALUE     	200 // Don't change.
 #ifndef SPINDLE_PWM_MIN_VALUE
     #define SPINDLE_PWM_MIN_VALUE   1   // Must be greater than zero.
 #endif

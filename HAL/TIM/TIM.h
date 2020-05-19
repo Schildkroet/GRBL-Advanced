@@ -19,6 +19,9 @@
 #define TIM_H_INCLUDED
 
 
+#define TIM1_INIT       200
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

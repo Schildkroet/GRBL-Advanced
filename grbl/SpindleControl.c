@@ -52,7 +52,7 @@ void Spindle_Init(void)
 // Called by spindle_init(), spindle_set_speed(), spindle_set_state(), and mc_reset().
 void Spindle_Stop(void)
 {
-	TIM1->CCR1 = 100; // Disable PWM. Output voltage is zero.
+	TIM1->CCR1 = TIM1_INIT; // Disable PWM. Output voltage is zero.
 	spindle_enabled = 0;
 
 #ifdef INVERT_SPINDLE_ENABLE_PIN
@@ -85,7 +85,7 @@ uint8_t Spindle_GetState(void)
 // and stepper ISR. Keep routine small and efficient.
 void Spindle_SetSpeed(uint8_t pwm_value)
 {
-	TIM1->CCR1 = 100 - pwm_value; // Set PWM output level.
+	TIM1->CCR1 = TIM1_INIT - pwm_value; // Set PWM output level.
 #ifdef SPINDLE_ENABLE_OFF_WITH_ZERO_SPEED
 	if (pwm_value == SPINDLE_PWM_OFF_VALUE)
     {
@@ -104,7 +104,7 @@ void Spindle_SetSpeed(uint8_t pwm_value)
 #else
 	if(pwm_value == SPINDLE_PWM_OFF_VALUE)
 	{
-        TIM1->CCR1 = 100;    // Disable PWM. Output voltage is zero.
+        TIM1->CCR1 = TIM1_INIT;    // Disable PWM. Output voltage is zero.
 		TIM_Cmd(TIM1, DISABLE); // Disable PWM. Output voltage is zero.
 		spindle_enabled = 0;
 	}

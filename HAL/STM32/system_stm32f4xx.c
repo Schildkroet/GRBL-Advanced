@@ -152,15 +152,33 @@
 /******************************************************************************/
 
 /************************* PLL Parameters *************************************/
-/* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
-#define PLL_M      8
-#define PLL_N      384
+#ifdef STM32F411xE
+    /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
+    #define PLL_M       8
+    #define PLL_N       384
 
-/* SYSCLK = PLL_VCO / PLL_P */
-#define PLL_P      4
+    /* SYSCLK = PLL_VCO / PLL_P */
+    #define PLL_P       4
 
-/* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
-#define PLL_Q      8
+    /* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
+    #define PLL_Q       8
+
+#elif STM32F446xx
+    /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
+    #define PLL_M       16
+    #define PLL_N       336
+
+    /* SYSCLK = PLL_VCO / PLL_P */
+    #define PLL_P       2
+
+    /* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
+    #define PLL_Q       4
+
+#else
+    #warning No clock configuration
+#endif
+
+#define PLL_M_HSI   16
 
 /******************************************************************************/
 
@@ -179,10 +197,16 @@
 /** @addtogroup STM32F4xx_System_Private_Variables
   * @{
   */
+#ifdef STM32F411xE
+    uint32_t SystemCoreClock = 96000000;
+#elif STM32F446xx
+    uint32_t SystemCoreClock = 168000000;
+#else
+ #warning No SystemCoreClock defined
+ uint32_t SystemCoreClock = 96000000;
+#endif
 
-  uint32_t SystemCoreClock = 96000000;
-
-  __I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+__I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
 /**
   * @}
@@ -387,8 +411,7 @@ static void SetSysClock(void)
     RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
 
     /* Configure the main PLL */
-    RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
-                   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
+    RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) | (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
 
     /* Enable the main PLL */
     RCC->CR |= RCC_CR_PLLON;
@@ -399,7 +422,11 @@ static void SetSysClock(void)
     }
 
     /* Configure Flash prefetch, Instruction cache, Data cache and wait state */
+#ifdef STM32F411xE
     FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS;
+#elif STM32F446xx
+    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS;
+#endif
 
     /* Select the main PLL as system clock source */
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
@@ -414,7 +441,7 @@ static void SetSysClock(void)
   { /* If HSE fails to start-up, the application will have wrong clock
          configuration. User can add here some code to deal with this error */
 		/* Configure the main PLL, RC internal source */
-		RCC->PLLCFGR = (PLL_M<<1) | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) | (PLL_Q << 24);
+		RCC->PLLCFGR = PLL_M_HSI | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) | (PLL_Q << 24);
 
 		/* Enable the main PLL */
 		RCC->CR |= RCC_CR_PLLON;
@@ -423,7 +450,11 @@ static void SetSysClock(void)
 		while ((RCC->CR & RCC_CR_PLLRDY) == 0);
 
 		/* Configure Flash prefetch, Instruction cache, Data cache and wait state */
-		FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS;
+#ifdef STM32F411xE
+        FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS;
+#elif STM32F446xx
+        FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS;
+#endif
   }
 
 }

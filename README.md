@@ -57,9 +57,16 @@ By default, settings are stored in internal flash memory in last sector. First s
 ### Hardware:
 
 * [STM32 Nucleo F411RE](http://www.st.com/en/evaluation-tools/nucleo-f411re.html)
-* STM32F411RET6 in LQFP64 package
+* STM32F411RE in LQFP64 package
 * ARM®32-bit Cortex®-M4 CPU with FPU
 * 96 MHz CPU frequency
+* 512 KB Flash
+* 128 KB SRAM
+
+* [STM32 Nucleo F446RE](https://www.st.com/en/evaluation-tools/nucleo-f446re.html)
+* STM32F446RE in LQFP64 package
+* ARM®32-bit Cortex®-M4 CPU with FPU
+* 168 MHz CPU frequency
 * 512 KB Flash
 * 128 KB SRAM
 

@@ -145,7 +145,7 @@
  #endif /* HSE_VALUE */
 #elif defined (STM32F412xG) || defined(STM32F413_423xx) || defined(STM32F446xx)
  #if !defined  (HSE_VALUE)
-  #define HSE_VALUE    ((uint32_t)8000000) /*!< Value of the External oscillator in Hz */
+  #define HSE_VALUE    ((uint32_t)16000000) /*!< Value of the External oscillator in Hz */
  #endif /* HSE_VALUE */
 #endif /* STM32F40_41xxx || STM32F427_437xx || STM32F429_439xx || STM32F401xx || STM32F411xE || STM32F469_479xx */
 /**

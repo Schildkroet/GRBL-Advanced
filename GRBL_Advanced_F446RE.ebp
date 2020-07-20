@@ -217,10 +217,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="HAL\USART\FIFO_USART.h" />
-		<Unit filename="HAL\USART\USART.c">
+		<Unit filename="HAL\USART\Usart.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="HAL\USART\USART.h" />
+		<Unit filename="HAL\USART\Usart.h" />
 		<Unit filename="Libraries\CRC\CRC.c">
 			<Option compilerVar="CC" />
 		</Unit>

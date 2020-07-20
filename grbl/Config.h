@@ -399,7 +399,7 @@
 // correction with expensive sin() and cos() calcualtions. This parameter maybe decreased if there
 // are issues with the accuracy of the arc generations, or increased if arc execution is getting
 // bogged down by too many trig calculations.
-#define N_ARC_CORRECTION			6 // Integer (1-255)
+#define N_ARC_CORRECTION			4 // Integer (1-255)
 
 
 // The arc G2/3 g-code standard is problematic by definition. Radius-based arcs have horrible numerical

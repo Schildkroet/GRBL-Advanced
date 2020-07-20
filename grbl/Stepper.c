@@ -69,7 +69,7 @@
 #ifdef MAX_STEP_RATE_HZ
     #define STEP_TIMER_MIN          (uint16_t)(F_TIMER_STEPPER / MAX_STEP_RATE_HZ)
 #else
-    #define STEP_TIMER_MIN          (uint16_t)((F_TIMER_STEPPER / 60000))
+    #define STEP_TIMER_MIN          (uint16_t)((F_TIMER_STEPPER / 90000))
 #endif
 
 
@@ -395,7 +395,7 @@ void Stepper_MainISR(void)
 			st.exec_segment = &segment_buffer[segment_buffer_tail];
 
 			// Initialize step segment timing per step and load number of steps to execute.
-			// Limit ISR to 50 KHz
+			// Limit ISR frequency
 			if(st.exec_segment->cycles_per_tick < STEP_TIMER_MIN) {
 				st.exec_segment->cycles_per_tick = STEP_TIMER_MIN;
 			}

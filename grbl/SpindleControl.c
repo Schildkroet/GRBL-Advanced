@@ -173,6 +173,12 @@ void Spindle_SetState(uint8_t state, float rpm)
 			GPIO_SetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
 		}
 
+	#ifdef INVERT_SPINDLE_ENABLE_PIN
+		GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+  	#else
+		GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+  	#endif
+
 		// NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
 		if(settings.flags & BITFLAG_LASER_MODE) {
 			if(state == SPINDLE_ENABLE_CCW) {

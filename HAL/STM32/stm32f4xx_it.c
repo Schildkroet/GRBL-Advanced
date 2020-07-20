@@ -28,7 +28,7 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
-#include "USART.h"
+#include "Usart.h"
 #include "FIFO_USART.h"
 #include "Limits.h"
 #include "Stepper.h"

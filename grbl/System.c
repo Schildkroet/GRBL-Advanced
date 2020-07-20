@@ -490,7 +490,7 @@ void System_FlagWcoChange(void)
 //   serves as a central place to compute the transformation.
 float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
 {
-	float pos;
+	float pos = 0.0;
 
 #ifdef COREXY
 	if(idx == X_AXIS) {
@@ -503,7 +503,11 @@ float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
 		pos = steps[idx]/settings.steps_per_mm[idx];
 	}
 #else
-	pos = steps[idx]/settings.steps_per_mm[idx];
+	if(settings.steps_per_mm[idx] != 0)
+    {
+        pos = steps[idx] / settings.steps_per_mm[idx];
+    }
+
 #endif
 
 	return pos;

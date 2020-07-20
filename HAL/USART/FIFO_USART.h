@@ -20,7 +20,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "USART.h"
+#include "Usart.h"
 
 
 /* Queue structure */

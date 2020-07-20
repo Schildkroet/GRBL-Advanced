@@ -4,7 +4,7 @@
 #include <string.h>
 #include "Print.h"
 #include "Config.h"
-#include "USART.h"
+#include "Usart.h"
 #include "FIFO_USART.h"
 #include "Settings.h"
 #include "GrIP.h"

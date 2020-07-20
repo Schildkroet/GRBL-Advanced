@@ -48,7 +48,7 @@ void MC_Init(void)
 {
     for(uint8_t i = 0; i < N_AXIS; i++)
     {
-        dir_negative[i] = DIR_NEGATIV ^ (settings.homing_dir_mask & (1<<i));
+        dir_negative[i] = (settings.homing_dir_mask >> i) & 0x1;
     }
 
     MC_SyncBacklashPosition();
@@ -351,6 +351,8 @@ void MC_Dwell(float seconds)
 // executing the homing cycle. This prevents incorrect buffered plans after homing.
 void MC_HomigCycle(uint8_t cycle_mask)
 {
+    Stepper_WakeUp();
+
 	// Check and abort homing cycle, if hard limits are already enabled. Helps prevent problems
 	// with machines with limits wired on both ends of travel to one limit pin.
 	// TODO: Move the pin-specific LIMIT_PIN call to limits.c as a function.

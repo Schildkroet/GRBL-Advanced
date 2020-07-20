@@ -29,6 +29,9 @@
 #include "defaults.h"
 
 
+#define TOOL_SENSOR_OFFSET        70.0  // mm
+
+
 static uint8_t isFirstTC = 1;
 static int32_t toolOffset = 0;
 static int32_t toolReferenz = 0;
@@ -119,7 +122,7 @@ void TC_ProbeTLS(void)
 	MC_Line(position, &pl_data);
 
     // Move down with offset (for tool)
-	position[Z_AXIS] = (settings.tls_position[Z_AXIS] / settings.steps_per_mm[Z_AXIS]) + 90.0;
+	position[Z_AXIS] = (settings.tls_position[Z_AXIS] / settings.steps_per_mm[Z_AXIS]) + TOOL_SENSOR_OFFSET;
 	MC_Line(position, &pl_data);
 
 	// Wait until queue is processed

@@ -1,4 +1,4 @@
-![GitHub Logo](https://github.com/Schildkroet/GRBL-Advanced/blob/software/en.nucleo-F4.jpg?raw=true)
+![GitHub Logo](https://github.com/Schildkroet/GRBL-Advanced/blob/software/doc/en.nucleo-F4.jpg?raw=true)
 
 ***
 Grbl-Advanced is a no-compromise, high performance, low cost alternative for CNC milling. This version of Grbl-Advanced runs on a STM32F411 Nucleo Board.
@@ -38,12 +38,12 @@ Uses Dynamic TLO when $14=2
 
 #### I2C EEPROM
 Added support for external EEPROM (e.g. ST M24C08). Uncomment 'USE_EXT_EEPROM' in Config.h.
-![EEPROM](https://github.com/Schildkroet/GRBL-Advanced/blob/software/eeprom.png?raw=true)
+![EEPROM](https://github.com/Schildkroet/GRBL-Advanced/blob/software/doc/eeprom.png?raw=true)
 
 #### ETHERNET Support
 GRBL-Advanced can be controlled with USB or ETHERNET. For ETHERNET an additional W5500 Module is required. Then uncomment ETH_IF in Platform.h. The default IP Address is 192.168.1.20.
 Use [Candle 2](https://github.com/Schildkroet/Candle2) as control interface.
-![W5500](https://github.com/Schildkroet/GRBL-Advanced/blob/software/w5500.png?raw=true)
+![W5500](https://github.com/Schildkroet/GRBL-Advanced/blob/software/doc/w5500.png?raw=true)
 
 #### Attention
 By default, settings are stored in internal flash memory in last sector. First startup takes about 5-10sec to write all settings.
@@ -62,7 +62,7 @@ By default, settings are stored in internal flash memory in last sector. First s
 * 96 MHz CPU frequency
 * 512 KB Flash
 * 128 KB SRAM
----
+
 * [STM32 Nucleo F446RE](https://www.st.com/en/evaluation-tools/nucleo-f446re.html)
 * STM32F446RE in LQFP64 package
 * ARM®32-bit Cortex®-M4 CPU with FPU
@@ -81,8 +81,16 @@ By default, settings are stored in internal flash memory in last sector. First s
 * Flash HEX created in bin/Release
 
 #### Linux
-* Install Build Essentials, [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm) and [texane st-util](https://github.com/texane/stlink)
-* Run 'make' and 'make flash' in Terminal
+* Download [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm)) and unpack it to /opt. In makefile update path to toolchain.
+* Run following commands:
+```
+sudo apt install build-essential stlink-tools
+```
+* Clone repository and run following commands:
+```
+make clean
+make all flash
+```
 
 ***
 

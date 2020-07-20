@@ -1798,6 +1798,9 @@ uint8_t GC_ExecuteLine(char *line)
 				Spindle_SetState(SPINDLE_DISABLE, 0.0);
 				Coolant_SetState(COOLANT_DISABLE);
 			}
+            // Reset tool change - May not be in accordance with LinuxCNC
+			TC_Init();
+
 			Report_FeedbackMessage(MESSAGE_PROGRAM_END);
 		}
 

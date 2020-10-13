@@ -67,8 +67,7 @@ uint8_t System_GetControlState(void)
 					(GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_8)<<CONTROL_SAFETY_DOOR_BIT));
 
 	// Invert control pins if necessary
-	//pin ^= CONTROL_MASK & settings.system_flags;
-	pin ^= CONTROL_MASK;
+	pin ^= CONTROL_MASK & settings.system_flags;
 
 	if(pin) {
 		if(BIT_IS_FALSE(pin, (1<<CONTROL_RESET_BIT))) {

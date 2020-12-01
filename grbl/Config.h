@@ -4,7 +4,7 @@
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 #define CONFIG_H
 
 
-#define GRBL_VERSION 		"1.1"
-#define GRBL_VERSION_BUILD 	__DATE__
+#define GRBL_VERSION 		    "1.1"
+#define GRBL_VERSION_BUILD 	    __DATE__
 
 
 // Define CPU pin map and default settings.

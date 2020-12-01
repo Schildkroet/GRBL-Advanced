@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with Grbl-Advanced.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <ctype.h>
+#include <string.h>
 #include "Config.h"
 #include "Protocol.h"
 #include "System.h"
@@ -117,6 +119,38 @@ uint8_t Read_Float(char *line, uint8_t *char_counter, float *float_ptr)
 	*char_counter = ptr - line - 1; // Set char_counter to next statement
 
 	return(true);
+}
+
+// Search a float in a string and return it as string
+uint8_t ExtractFloat(char *line, int start_idx, char *float_char)
+{
+    unsigned int i = 0;
+
+    for(i = start_idx; i < strlen(line); i++)
+    {
+        // Search for start of float (digit or '-')
+        if(!isdigit((unsigned char)line[i]) && (line[i] != '-'))
+        {
+            continue;
+        }
+        else
+        {
+            // Start of float found
+            int j = 0;
+
+            do
+            {
+                float_char[j++] = line[i++];
+            } while(isdigit((unsigned char)line[i]) || line[i] == '.');    // Read float
+
+            float_char[j] = '\0';
+
+            break;
+        }
+    }
+
+    // Return position after float in string
+    return i;
 }
 
 // Non-blocking delay function used for general operation and suspend features.

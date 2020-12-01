@@ -2,7 +2,7 @@
   ToolChange.h - Changing tool
   Part of Grbl-Advanced
 
-  Copyright (c)	2018-2019 Patrick F.
+  Copyright (c)	2018-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 void TC_Init(void);
 void TC_ChangeCurrentTool(void);
 void TC_ProbeTLS(void);
+void TC_ApplyToolOffset(void);
 
 
 #endif /* TOOLCHANGE_H_INCLUDED */

@@ -73,6 +73,12 @@ int Putc(const char c)
 
 void Print_Flush(void)
 {
+    if(buf_idx == 0)
+    {
+        // No data to send
+        return;
+    }
+
 #ifdef ETH_IF
     Pdu_t data;
 

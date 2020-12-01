@@ -4,7 +4,7 @@
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 
 static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversions.
 static uint8_t spindle_enabled = 0;
+static uint8_t spindle_dir_cw = 1;
 
 
 void Spindle_Init(void)
@@ -42,6 +43,7 @@ void Spindle_Init(void)
     TIM1_Init();
 
     pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
+    spindle_dir_cw = 1;
 
 	Spindle_Stop();
 }
@@ -68,13 +70,14 @@ uint8_t Spindle_GetState(void)
     // Check if PWM is enabled.
 	if(spindle_enabled)
     {
-		/*if(SPINDLE_DIRECTION_PORT & (1<<SPINDLE_DIRECTION_BIT)) {
+		if(spindle_dir_cw == 0)
+		{
 			return SPINDLE_STATE_CCW;
 		}
-		else {
+		else
+        {
 			return SPINDLE_STATE_CW;
-		}*/
-		return SPINDLE_STATE_CW;
+		}
 	}
 
 	return SPINDLE_STATE_DISABLE;
@@ -168,9 +171,11 @@ void Spindle_SetState(uint8_t state, float rpm)
 	else {
 		if(state == SPINDLE_ENABLE_CW) {
 			GPIO_ResetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
+			spindle_dir_cw = 1;
 		}
 		else {
 			GPIO_SetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
+			spindle_dir_cw = 0;
 		}
 
 	#ifdef INVERT_SPINDLE_ENABLE_PIN

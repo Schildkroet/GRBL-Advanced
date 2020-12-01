@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -89,6 +89,7 @@
 #define MESSAGE_RESTORE_DEFAULTS 		9
 #define MESSAGE_SPINDLE_RESTORE 		10
 #define MESSAGE_SLEEP_MODE 				11
+#define MESSAGE_INVALID_TOOL            12
 
 
 // Prints system status messages.
@@ -120,6 +121,9 @@ void Report_ProbeParams(void);
 
 // Prints tls position
 void Report_TLSParams(void);
+
+// Print tool table
+void Report_ToolParams(uint8_t tool_nr);
 
 // Prints Grbl NGC parameters (coordinate offsets, probe)
 void Report_NgcParams(void);

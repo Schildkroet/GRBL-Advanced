@@ -59,7 +59,7 @@ uint8_t M24C0X_ReadByte(uint16_t addr)
     if(addr > UINT8_MAX)
     {
         // If address is bigger than 255 (8 Bit), upper address bits (A8, A9, A10) are coded into slave address (up to 2KB, bigger EEPROMs use 2 Bytes for addressing)
-        slave_adr |=  0x07 & (addr>>8);
+        slave_adr |=  0x0E & (addr>>7);
     }
 
     return I2C_ReadByte(M24C0X_I2C, slave_adr, addr);
@@ -73,7 +73,7 @@ uint8_t M24C0X_WriteByte(uint16_t addr, uint8_t data)
     if(addr > UINT8_MAX)
     {
         // If address is bigger than 255 (8 Bit), upper address bits (A8, A9, A10) are coded into slave address (up to 2KB, bigger EEPROMs use 2 Bytes for addressing)
-        slave_adr |=  0x07 & (addr>>8);
+        slave_adr |=  0x0E & (addr>>7);
     }
 
     M24C0X_WriteProtection(WP_DISABLE);
@@ -93,10 +93,11 @@ uint8_t M24C0X_ReadByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
     if(addr > UINT8_MAX)
     {
         // If address is bigger than 255 (8 Bit), upper address bits (A8, A9, A10) are coded into slave address (up to 2KB, bigger EEPROMs use 2 Bytes for addressing)
-        slave_adr |=  0x07 & (addr>>8);
+        slave_adr |=  0x0E & (addr>>7);
     }
 
     I2C_ReadByteArray(M24C0X_I2C, slave_adr, addr, pData, len);
+
     return 1;
 }
 
@@ -104,7 +105,7 @@ uint8_t M24C0X_ReadByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
 uint8_t M24C0X_WriteByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
 {
     uint8_t ret = 0;
-    uint8_t bytes2write = len;
+    uint16_t bytes2write = len;
     uint16_t remainingBytes = len;
     uint16_t bytesWritten = 0;
     uint8_t timeout = 0;
@@ -122,7 +123,7 @@ uint8_t M24C0X_WriteByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
         if(addr > UINT8_MAX)
         {
             // If address is bigger than 255 (8 Bit), upper address bits (A8, A9, A10) are coded into slave address (up to 2KB, bigger EEPROMs use 2 Bytes for addressing)
-            slave_adr |=  0x07 & (addr>>8);
+            slave_adr |=  0x0E & (addr>>7);
         }
 
         // We can write max M24C0X_PAGE_SIZE bytes per write
@@ -170,15 +171,15 @@ uint8_t M24C0X_WriteByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
 static void M24C0X_WriteProtection(uint8_t enable)
 {
 	__ASM("nop");
-	__ASM("nop");
 
     if(enable)
     {
-        for(uint8_t i = 0; i < 110; i++) __ASM("nop");
+        for(volatile uint8_t i = 0; i < 110; i++) __ASM("nop");
         GPIO_SetBits(GPIOB, GPIO_Pin_12);
     }
     else
     {
+        for(volatile uint8_t i = 0; i < 20; i++) __ASM("nop");
         GPIO_ResetBits(GPIOB, GPIO_Pin_12);
     }
     __ASM("nop");

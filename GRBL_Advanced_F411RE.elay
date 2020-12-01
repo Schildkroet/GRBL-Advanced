@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <EmBitz_layout_file>
 	<ActiveTarget name="Release" />
+	<File name="grbl\Config.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1831" topLine="36" />
+		</Cursor>
+	</File>
+	<File name="grbl\Nvm.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1604" topLine="44" />
+		</Cursor>
+	</File>
+	<File name="grbl\Settings.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6104" topLine="204" />
+		</Cursor>
+	</File>
 	<File name="grbl\SpindleControl.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1446" topLine="18" />
@@ -9,6 +24,21 @@
 	<File name="grbl\SpindleControl.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1220" topLine="12" />
+		</Cursor>
+	</File>
+	<File name="HAL\FLASH\eeprom.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="821" topLine="14" />
+		</Cursor>
+	</File>
+	<File name="HAL\STM32\stm32f4xx.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7911" topLine="129" />
+		</Cursor>
+	</File>
+	<File name="HAL\STM32\system_stm32f4xx.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="8208" topLine="150" />
 		</Cursor>
 	</File>
 	<File name="HAL\TIM\TIM.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -23,7 +53,12 @@
 	</File>
 	<File name="main.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="900" topLine="0" />
+			<Cursor1 position="1190" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\Platform.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="719" topLine="9" />
 		</Cursor>
 	</File>
 </EmBitz_layout_file>

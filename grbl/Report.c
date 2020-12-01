@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017-2019 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -133,7 +133,6 @@ void Report_StatusMessage(uint8_t status_code)
 	default:
 		Printf("error:");
 		Printf("%d\r\n", status_code);
-		//Report_LineFeed();
 		Print_Flush();
 	}
 }
@@ -204,6 +203,10 @@ void Report_FeedbackMessage(uint8_t message_code)
 	case MESSAGE_SLEEP_MODE:
 		Printf("Sleeping");
 		break;
+
+    case MESSAGE_INVALID_TOOL:
+        Printf("Invalid Tool Number");
+        break;
 	}
 
 	report_util_feedback_line_feed();
@@ -214,7 +217,7 @@ void Report_FeedbackMessage(uint8_t message_code)
 void Report_InitMessage(void)
 {
 	//Printf("\r\nGRBL-Advanced %s ['$' for help]\r\n", GRBL_VERSION);
-	Printf("\r\nGrbl 1.1f ['$' for help]\r\n");
+	Printf("\r\nGrbl 1.1f [Advanced Edition | '$' for help]\r\n");
 	Print_Flush();
 }
 
@@ -222,6 +225,7 @@ void Report_InitMessage(void)
 // Grbl help message
 void Report_GrblHelp(void) {
 	Printf("[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $SLP $C $X $H ~ ! ? ctrl-x]\r\n");
+	Printf("[GRBL-Advanced by Schildkroet]\r\n");
 	Print_Flush();
 }
 
@@ -254,6 +258,7 @@ void Report_GrblSettings(void) {
 	report_util_float_setting(31, settings.rpm_min, N_DECIMAL_RPMVALUE);
 
 	report_util_uint8_setting(32, BIT_IS_TRUE(settings.flags,BITFLAG_LASER_MODE));
+	report_util_uint8_setting(33, BIT_IS_TRUE(settings.flags2,BITFLAG_LATHE_MODE));
 
 	Delay_ms(5);
 
@@ -338,11 +343,26 @@ void Report_TLSParams(void)
 }
 
 
+void Report_ToolParams(uint8_t tool_nr)
+{
+    Printf("[TOOL%d:", tool_nr);
+    ToolParams_t params = {};
+    TT_GetToolParams(tool_nr, &params);
+
+    PrintFloat_CoordValue(params.x_offset);Putc(':');
+    PrintFloat_CoordValue(params.y_offset);Putc(':');
+    PrintFloat_CoordValue(params.z_offset);Putc(':');
+    PrintFloat_CoordValue(params.reserved);
+    report_util_feedback_line_feed();
+}
+
+
 // Prints Grbl NGC parameters (coordinate offsets, probing)
 void Report_NgcParams(void)
 {
 	float coord_data[N_AXIS];
 	uint8_t coord_select;
+
 
 	for(coord_select = 0; coord_select <= SETTING_INDEX_NCOORD; coord_select++) {
 		if(!(Settings_ReadCoordData(coord_select,coord_data))) {

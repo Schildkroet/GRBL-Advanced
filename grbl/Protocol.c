@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -510,7 +510,7 @@ void Protocol_ExecRtSystem(void)
 	if(rt_exec) {
 		System_ClearExecMotionOverride(); // Clear all motion override flags.
 
-		uint8_t new_f_override =  sys.f_override;
+		uint8_t new_f_override = sys.f_override;
 
 		if(rt_exec & EXEC_FEED_OVR_RESET) {
 			new_f_override = DEFAULT_FEED_OVERRIDE;

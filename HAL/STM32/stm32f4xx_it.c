@@ -39,6 +39,8 @@
 #include "Platform.h"
 
 
+#define TIM3_RESET_VALUE        300
+
 /** @addtogroup Template_Project
   * @{
   */
@@ -59,6 +61,13 @@ extern void System_PinChangeISR(void);
 // Counter for milliseconds
 static volatile uint32_t gMillis = 0;
 
+// TIM3
+uint16_t uhIC3ReadValue1 = 0;
+uint16_t uhIC3ReadValue2 = 0;
+uint16_t uhCaptureNumber = 0;
+uint32_t uwCapture = 0;
+uint32_t uwTIM3Freq = 0;
+uint16_t TIM3_ResetCnt = TIM3_RESET_VALUE;
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
@@ -234,7 +243,7 @@ void SysTick_Handler(void)
 	uint8_t limits = Limits_GetState();
 	if(limits) {
 		// X-Y-Z Limit
-		if((DebounceCounterLimits == 0) && settings.system_flags & BITFLAG_ENABLE_LIMITS) {
+		if((DebounceCounterLimits == 0) && settings.flags & BITFLAG_HARD_LIMIT_ENABLE) {
 			DebounceCounterLimits = 20;
 			Limit_PinChangeISR();
 		}
@@ -257,6 +266,11 @@ void SysTick_Handler(void)
 	}
 
 	gMillis++;
+
+	if(--TIM3_ResetCnt == 0)
+    {
+        uwTIM3Freq = 0;
+    }
 }
 
 
@@ -287,6 +301,47 @@ void TIM1_BRK_TIM9_IRQHandler(void)
 
 		TIM_ClearITPendingBit(TIM9, TIM_IT_Update);
 	}
+}
+
+
+void TIM3_IRQHandler(void)
+{
+    if(TIM_GetITStatus(TIM3, TIM_IT_CC4) == SET)
+    {
+        /* Clear TIM3 Capture compare interrupt pending bit */
+        TIM_ClearITPendingBit(TIM3, TIM_IT_CC4);
+        if(uhCaptureNumber == 0)
+        {
+            /* Get the Input Capture value */
+            uhIC3ReadValue1 = TIM_GetCapture4(TIM3);
+            uhCaptureNumber = 1;
+        }
+        else if(uhCaptureNumber == 1)
+        {
+            /* Get the Input Capture value */
+            uhIC3ReadValue2 = TIM_GetCapture4(TIM3);
+
+            /* Capture computation */
+            if (uhIC3ReadValue2 > uhIC3ReadValue1)
+            {
+                uwCapture = (uhIC3ReadValue2 - uhIC3ReadValue1);
+            }
+            else if (uhIC3ReadValue2 < uhIC3ReadValue1)
+            {
+                uwCapture = ((0xFFFF - uhIC3ReadValue1) + uhIC3ReadValue2);
+            }
+            else
+            {
+                uwCapture = 0;
+            }
+
+            /* Frequency computation */
+            uwTIM3Freq = (uint32_t) SystemCoreClock / uwCapture;
+            uhCaptureNumber = 0;
+        }
+
+        TIM3_ResetCnt = TIM3_RESET_VALUE;
+    }
 }
 
 

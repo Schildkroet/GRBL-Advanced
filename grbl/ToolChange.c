@@ -2,7 +2,7 @@
   ToolChange.c - Changing tool
   Part of Grbl-Advanced
 
-  Copyright (c)	2018-2019 Patrick F.
+  Copyright (c)	2018-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
 #include "System32.h"
 #include "SpindleControl.h"
 #include "Settings.h"
+#include "Config.h"
+#include "ToolTable.h"
 #include "defaults.h"
 
 
@@ -65,9 +67,9 @@ void TC_ChangeCurrentTool(void)
     // Wait until queue is processed
     Protocol_BufferSynchronize();
 
-    // Don't move XY. Go to Z 0
+    // Move TOOL_LENGTH_OFFSET_AXIS to 0
 	System_ConvertArraySteps2Mpos(position, sys_position);
-	position[Z_AXIS] = 0.0;
+	position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
 	memcpy(tc_pos, position, sizeof(float)*N_AXIS);
 
     //System_SetExecStateFlag(EXEC_TOOL_CHANGE);
@@ -109,7 +111,7 @@ void TC_ProbeTLS(void)
 
 	// Move to XY position of TLS
 	System_ConvertArraySteps2Mpos(position, settings.tls_position);
-	position[Z_AXIS] = 0.0;
+	position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
 
     // Set-up planer
     pl_data.feed_rate = 0.0;
@@ -122,7 +124,7 @@ void TC_ProbeTLS(void)
 	MC_Line(position, &pl_data);
 
     // Move down with offset (for tool)
-	position[Z_AXIS] = (settings.tls_position[Z_AXIS] / settings.steps_per_mm[Z_AXIS]) + TOOL_SENSOR_OFFSET;
+	position[TOOL_LENGTH_OFFSET_AXIS] = (settings.tls_position[TOOL_LENGTH_OFFSET_AXIS] / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS]) + TOOL_SENSOR_OFFSET;
 	MC_Line(position, &pl_data);
 
 	// Wait until queue is processed
@@ -133,7 +135,7 @@ void TC_ProbeTLS(void)
 	pl_data.condition = 0; // Reset rapid motion condition flag.
 
     // Probe TLS fast
-    position[Z_AXIS] -= 200.0;
+    position[TOOL_LENGTH_OFFSET_AXIS] -= 200.0;
     uint8_t ret = MC_ProbeCycle(position, &pl_data, flags);
     if(ret != GC_PROBE_FOUND)
     {
@@ -143,7 +145,7 @@ void TC_ProbeTLS(void)
 
     // Get current position
     System_ConvertArraySteps2Mpos(position, sys_position);
-    position[Z_AXIS] += 1.8;
+    position[TOOL_LENGTH_OFFSET_AXIS] += 1.8;
 
     // Move up a little bit for slow probing
     pl_data.feed_rate = 200.0;
@@ -151,7 +153,7 @@ void TC_ProbeTLS(void)
 
     // Probe TLS slow
     pl_data.feed_rate = 12.0;
-    position[Z_AXIS] -= 200;
+    position[TOOL_LENGTH_OFFSET_AXIS] -= 200;
     ret = MC_ProbeCycle(position, &pl_data, flags);
     if(ret != GC_PROBE_FOUND)
     {
@@ -163,22 +165,22 @@ void TC_ProbeTLS(void)
     {
         // Save first tool as reference
         isFirstTC = 0;
-        toolReferenz = sys_probe_position[Z_AXIS];
+        toolReferenz = sys_probe_position[TOOL_LENGTH_OFFSET_AXIS];
     }
     else
     {
         // Calculate tool offset
-        toolOffset = sys_probe_position[Z_AXIS] - toolReferenz;
+        toolOffset = sys_probe_position[TOOL_LENGTH_OFFSET_AXIS] - toolReferenz;
 
         // Apply offset as dynamic tool length offset
         gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
-        gc_state.tool_length_offset = toolOffset / settings.steps_per_mm[Z_AXIS];
+        gc_state.tool_length_offset = toolOffset / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS];
     }
 
     Delay_ms(5);
 
     // Move Z up
-    position[Z_AXIS] = 0.0;
+    position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
     pl_data.condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
 
     MC_Line(position, &pl_data);
@@ -190,4 +192,35 @@ void TC_ProbeTLS(void)
     Protocol_BufferSynchronize();
 
     GC_SyncPosition();
+}
+
+
+void TC_ApplyToolOffset(void)
+{
+    ToolParams_t params = {};
+
+    TT_GetToolParams(gc_state.tool, &params);
+
+    // Apply offset as dynamic tool length offset
+    gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
+
+    switch(TOOL_LENGTH_OFFSET_AXIS)
+    {
+    case X_AXIS:
+        gc_state.tool_length_offset = params.x_offset;
+        break;
+
+    case Y_AXIS:
+        gc_state.tool_length_offset = params.y_offset;
+        break;
+
+    case Z_AXIS:
+        gc_state.tool_length_offset = params.z_offset;
+        break;
+
+    default:
+        // Axis not valid
+        gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_CANCEL;
+        break;
+    }
 }

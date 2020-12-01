@@ -29,12 +29,15 @@ Added experimental support for rotary axis (5-axis). They are roughly tested amd
 #### Hard Reset
 0x19 (CTRL-Y): Perform a hard reset.
 
-#### Tool change
-* $14=(tool change mode): 0 = Ignore M6; 1 = Manual Tool Change; 2 = Manual Tool Change + TLS
+#### Tools
+* $14=(tool change mode): 0 = Ignore M6; 1 = Manual Tool Change; 2 = Manual Tool Change + TLS; 3 = Tool Table
 * $P: Save TLS position
 * $T: Confirm tool change
+* $Tx: Print parameters of Tool Nr x (Supports Tool Nr 0-19)
+* $Tx=[0.0:0.0:0.0:0.0] (Save new parameters of Tool x: X, Y, Z, Reserved)
+* $RST=T: Reset all tool tables saved in EEPROM
 
-Uses Dynamic TLO when $14=2
+Uses Dynamic TLO when $14 = (2 or 3)
 
 #### I2C EEPROM
 Added support for external EEPROM (e.g. ST M24C08). Uncomment 'USE_EXT_EEPROM' in Config.h.

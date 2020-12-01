@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2018-2019 Patrick F.
+  Copyright (c)	2018-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -49,13 +49,13 @@
 // NOTE: Max line number is defined by the g-code standard to be 99999. It seems to be an
 // arbitrary value, and some GUIs may require more. So we increased it based on a max safe
 // value when converting a float (7.2 digit precision)s to an integer.
-#define MAX_LINE_NUMBER 				10000000
-#define MAX_TOOL_NUMBER 				255 // Limited by max unsigned 8-bit value
+#define MAX_LINE_NUMBER 				    10000000
+#define MAX_TOOL_NUMBER 				    255 // Limited by max unsigned 8-bit value
 
-#define AXIS_COMMAND_NONE 				0
-#define AXIS_COMMAND_NON_MODAL 			1
-#define AXIS_COMMAND_MOTION_MODE 		2
-#define AXIS_COMMAND_TOOL_LENGTH_OFFSET 3 // *Undefined but required
+#define AXIS_COMMAND_NONE 				    0
+#define AXIS_COMMAND_NON_MODAL 			    1
+#define AXIS_COMMAND_MOTION_MODE 		    2
+#define AXIS_COMMAND_TOOL_LENGTH_OFFSET     3 // *Undefined but required
 
 
 // Declare gc extern struct
@@ -129,7 +129,7 @@ uint8_t GC_ExecuteLine(char *line)
      perform initial error-checks for command word modal group violations, for any repeated
      words, and for negative values set for the value words F, N, P, T, and S. */
 
-	uint8_t word_bit = 0; // Bit-value for assigning tracking variables
+	uint16_t word_bit = 0; // Bit-value for assigning tracking variables
 	uint8_t char_counter = 0;
 	char letter = 0;
 	float value = 0.0;
@@ -187,6 +187,32 @@ uint8_t GC_ExecuteLine(char *line)
 			// Determine 'G' command and its modal group
 			switch(int_value)
 			{
+            case 7:
+                // Lathe Diameter Mode
+                if(settings.flags2 & BITFLAG_LATHE_MODE)
+                {
+                    word_bit = MODAL_GROUP_G12;
+                    gc_block.modal.lathe_mode = LATHE_DIAMETER_MODE;
+                }
+                else
+                {
+                    return STATUS_GCODE_UNSUPPORTED_COMMAND;
+                }
+                break;
+
+            case 8:
+                // Lathe Radius Mode (default)
+                if(settings.flags2 & BITFLAG_LATHE_MODE)
+                {
+                    word_bit = MODAL_GROUP_G12;
+                    gc_block.modal.lathe_mode = LATHE_RADIUS_MODE;
+                }
+                else
+                {
+                    return STATUS_GCODE_UNSUPPORTED_COMMAND;
+                }
+                break;
+
 			case 10: case 28: case 30: case 92:
 				// Check for G10/28/30/92 being called with G0/1/2/3/38 on same block.
 				// * G43.1 is also an axis command but is not explicitly defined this way.
@@ -216,6 +242,60 @@ uint8_t GC_ExecuteLine(char *line)
 				}
 				break;
 
+            case 33:
+                // Spindle Synchronized Motion
+                if(settings.flags2 & BITFLAG_LATHE_MODE)
+                {
+                    word_bit = MODAL_GROUP_G1;
+                    gc_block.modal.motion = int_value;
+                    axis_command = AXIS_COMMAND_MOTION_MODE;
+                }
+                else
+                {
+                    return STATUS_GCODE_UNSUPPORTED_COMMAND;
+                }
+                break;
+
+            case 76:
+                // Threading Cycle
+                if(settings.flags2 & BITFLAG_LATHE_MODE)
+                {
+                    word_bit = MODAL_GROUP_G1;
+                    gc_block.modal.motion = int_value;
+                    axis_command = AXIS_COMMAND_MOTION_MODE;
+                }
+                else
+                {
+                    return STATUS_GCODE_UNSUPPORTED_COMMAND;
+                }
+                break;
+
+            case 96:
+                // Constant Surface Speed
+                if(settings.flags2 & BITFLAG_LATHE_MODE)
+                {
+                    word_bit = MODAL_GROUP_G14;
+                    gc_state.modal.spindle_mode = SPINDLE_SURFACE_MODE;
+                }
+                else
+                {
+                    return STATUS_GCODE_UNSUPPORTED_COMMAND;
+                }
+                break;
+
+            case 97:
+                // RPM Mode (default)
+                if(settings.flags2 & BITFLAG_LATHE_MODE)
+                {
+                    word_bit = MODAL_GROUP_G14;
+                    gc_state.modal.spindle_mode = SPINDLE_RPM_MODE;
+                }
+                else
+                {
+                    return STATUS_GCODE_UNSUPPORTED_COMMAND;
+                }
+                break;
+
 			case 0: case 1: case 2: case 3: case 38:
 				// Check for G0/1/2/3/38 being called with G10/28/30/92 on same block.
 				// * G43.1 is also an axis command but is not explicitly defined this way.
@@ -244,9 +324,8 @@ uint8_t GC_ExecuteLine(char *line)
 
             case 81: case 82: case 83:  // Canned drilling cycles
                 word_bit = MODAL_GROUP_G1;
-                //gc_block.modal.motion = MOTION_MODE_DRILL;
                 gc_block.modal.motion = int_value;
-
+                axis_command = AXIS_COMMAND_MOTION_MODE;
                 break;
 
             // Set retract mode
@@ -466,9 +545,10 @@ uint8_t GC_ExecuteLine(char *line)
 			case 'B': word_bit = WORD_B; gc_block.values.xyz[B_AXIS] = value; axis_words |= (1<<B_AXIS); break;
 #endif
 			// case 'C': // Not supported
-			// case 'D': // Not supported
+			case 'D': word_bit = WORD_D; gc_block.values.d = int_value; break;  // Maybe float?
 			case 'F': word_bit = WORD_F; gc_block.values.f = value; break;
-			// case 'H': // Not supported
+			case 'H': word_bit = WORD_H; gc_block.values.h = int_value; break;
+            case 'E': word_bit = WORD_E; gc_block.values.e = value; break;
 			case 'I': word_bit = WORD_I; gc_block.values.ijk[X_AXIS] = value; ijk_words |= (1<<X_AXIS); break;
 			case 'J': word_bit = WORD_J; gc_block.values.ijk[Y_AXIS] = value; ijk_words |= (1<<Y_AXIS); break;
 			case 'K': word_bit = WORD_K; gc_block.values.ijk[Z_AXIS] = value; ijk_words |= (1<<Z_AXIS); break;
@@ -502,7 +582,7 @@ uint8_t GC_ExecuteLine(char *line)
 
 			// Check for invalid negative values for words F, N, P, T, and S.
 			// NOTE: Negative value check is done here simply for code-efficiency.
-			if(BIT(word_bit) & (BIT(WORD_F)|BIT(WORD_N)|BIT(WORD_P)|BIT(WORD_T)|BIT(WORD_S)))
+			if(BIT(word_bit) & (BIT(WORD_D)|BIT(WORD_F)|BIT(WORD_N)|BIT(WORD_P)|BIT(WORD_T)|BIT(WORD_S)))
             {
 				if(value < 0.0)
 				{
@@ -650,7 +730,26 @@ uint8_t GC_ExecuteLine(char *line)
 	// bit_false(value_words,bit(WORD_T)); // NOTE: Single-meaning value word. Set at end of error-checking.
 
 	// [6. Change tool ]: N/A
-	// [7. Spindle control ]: N/A
+	// [7. Spindle control ]:
+	if(BIT_IS_TRUE(command_words, BIT(MODAL_GROUP_G14)) && (gc_block.modal.motion == SPINDLE_SURFACE_MODE))
+    {
+        if(BIT_IS_FALSE(value_words, BIT(WORD_S)))
+		{
+			// [S word missing]
+			return STATUS_GCODE_VALUE_WORD_MISSING;
+		}
+		BIT_FALSE(value_words, BIT(WORD_S));
+
+		if(BIT_IS_TRUE(value_words, BIT(WORD_D)))
+		{
+			if(gc_block.values.d == 0)
+            {
+                return STATUS_INVALID_STATEMENT;
+            }
+		}
+		BIT_FALSE(value_words, BIT(WORD_D));
+    }
+
 	// [8. Coolant control ]: N/A
 	// [9. Override control ]: Not supported except for a Grbl-only parking motion override control.
 #ifdef ENABLE_PARKING_OVERRIDE_CONTROL
@@ -789,7 +888,7 @@ uint8_t GC_ExecuteLine(char *line)
 
 	// [16. Set path control mode ]: N/A. Only G61. G61.1 and G64 NOT SUPPORTED.
 	// [17. Set distance mode ]: N/A. Only G91.1. G90.1 NOT SUPPORTED.
-	// [18. Set retract mode ]: NOT SUPPORTED.
+	// [18. Set retract mode ]:
 
 	// [19. Remaining non-modal actions ]: Check go to predefined position, set G10, or set axis offsets.
 	// NOTE: We need to separate the non-modal commands that are axis word-using (G10/G28/G30/G92), as these
@@ -1264,6 +1363,63 @@ uint8_t GC_ExecuteLine(char *line)
                 }
                 BIT_FALSE(value_words, BIT(WORD_L));
                 break;
+
+            case MOTION_MODE_SPINDLE_SYNC:
+                if(BIT_IS_FALSE(value_words, BIT(WORD_K)))
+                {
+                    // [K word missing]
+                    return STATUS_GCODE_VALUE_WORD_MISSING;
+                }
+                BIT_FALSE(value_words, BIT(WORD_K));
+
+                if(BIT_IS_FALSE(value_words, (BIT(WORD_X) | BIT(WORD_Y) | BIT(WORD_Z))))
+                {
+                    // [axis word missing]
+                    return STATUS_GCODE_NO_AXIS_WORDS;
+                }
+
+                break;
+
+			case MOTION_MODE_THREADING:
+                if(BIT_IS_FALSE(value_words, BIT(WORD_P)))
+                {
+                    // [P word missing]
+                    return STATUS_GCODE_VALUE_WORD_MISSING;
+                }
+                BIT_FALSE(value_words, BIT(WORD_P));
+
+                if(BIT_IS_FALSE(value_words, BIT(WORD_Z)))
+                {
+                    // [axis word missing]
+                    return STATUS_GCODE_NO_AXIS_WORDS;
+                }
+
+                if(BIT_IS_FALSE(value_words, (BIT(WORD_I) | BIT(WORD_J) | BIT(WORD_K))))
+                {
+                    // [IJK word missing]
+                    return STATUS_GCODE_VALUE_WORD_MISSING;
+                }
+                BIT_FALSE(value_words, (BIT(WORD_I) | BIT(WORD_J) | BIT(WORD_K)));
+
+                // [Optional]
+                if(BIT_IS_TRUE(value_words, BIT(WORD_R)))
+                {
+                    if(gc_block.values.r < 1.0)
+                    {
+                        return STATUS_BAD_NUMBER_FORMAT;
+                    }
+                }
+
+                if(BIT_IS_TRUE(value_words, BIT(WORD_L)))
+                {
+                    if(gc_block.values.l > 3)
+                    {
+                        return STATUS_BAD_NUMBER_FORMAT;
+                    }
+                }
+
+                BIT_FALSE(value_words, (BIT(WORD_R) | BIT(WORD_Q) | BIT(WORD_H) | BIT(WORD_E) | BIT(WORD_L)));
+                break;
 			}
 		}
 	}
@@ -1304,6 +1460,11 @@ uint8_t GC_ExecuteLine(char *line)
 	Planner_LineData_t plan_data;
 	Planner_LineData_t *pl_data = &plan_data;
 	memset(pl_data, 0, sizeof(Planner_LineData_t)); // Zero pl_data struct
+
+	if((settings.flags2 & BITFLAG_LATHE_MODE) && gc_block.modal.lathe_mode == LATHE_DIAMETER_MODE)
+    {
+        gc_block.values.xyz[X_AXIS] /= 2;
+    }
 
 	// Intercept jog commands and complete error checking for valid jog commands and execute.
 	// NOTE: G-code parser state is not updated, except the position to ensure sequential jog
@@ -1718,6 +1879,14 @@ uint8_t GC_ExecuteLine(char *line)
                 }
                 // Update position
                 memcpy(gc_block.values.xyz, xyz, N_AXIS*sizeof(float));
+            }
+            else if(gc_state.modal.motion == MOTION_MODE_SPINDLE_SYNC)
+            {
+
+            }
+            else if(gc_state.modal.motion == MOTION_MODE_THREADING)
+            {
+
             }
 			else
 			{

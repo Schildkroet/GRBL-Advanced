@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017-2019 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 // and are similar/identical to other g-code interpreters by manufacturers (Haas,Fanuc,Mazak,etc).
 // NOTE: Modal group define values must be sequential and starting from zero.
 #define MODAL_GROUP_G0 		0   // [G4,G10,G28,G28.1,G30,G30.1,G53,G92,G92.1] Non-modal
-#define MODAL_GROUP_G1 		1   // [G0,G1,G2,G3,G38.2,G38.3,G38.4,G38.5,G80] Motion
+#define MODAL_GROUP_G1 		1   // [G0,G1,G2,G3,G33,G38.2,G38.3,G38.4,G38.5,G76,G80,G81,G82,G83] Motion
 #define MODAL_GROUP_G2 		2   // [G17,G18,G19] Plane selection
 #define MODAL_GROUP_G3 		3   // [G90,G91] Distance mode
 #define MODAL_GROUP_G4 		4   // [G91.1] Arc IJK distance mode
@@ -46,6 +46,8 @@
 #define MODAL_GROUP_G13 	10  // [G61] Control mode
 
 #define MODAL_GROUP_G10     11  // [G98, G99] Canned Cycles Return Mode
+#define MODAL_GROUP_G14     12  // [G96, G97] Spindle Speed Mode
+#define MODAL_GROUP_G15     13  // [G7, G8] Lathe Diameter Mode
 
 #define MODAL_GROUP_M4 		11  // [M0,M1,M2,M30] Stopping
 #define MODAL_GROUP_M7 		12  // [M3,M4,M5] Spindle turning
@@ -86,6 +88,8 @@
 #define MOTION_MODE_DRILL                   81  // G81
 #define MOTION_MODE_DRILL_DWELL             82  // G82
 #define MOTION_MODE_DRILL_PECK              83  // G83
+#define MOTION_MODE_SPINDLE_SYNC            33  // G33
+#define MOTION_MODE_THREADING               76  // G76
 
 // Modal Group G2: Plane select
 #define PLANE_SELECT_XY 					0 // G17 (Default: Must be zero)
@@ -138,9 +142,17 @@
 #define TOOL_LENGTH_OFFSET_CANCEL 			0 // G49 (Default: Must be zero)
 #define TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC 	1 // G43.1
 
-
 // Modal Group G12: Active work coordinate system
 // N/A: Stores coordinate system value (54-59) to change to.
+
+// Modal Group G12: Lathe Mode
+#define LATHE_RADIUS_MODE                   0
+#define LATHE_DIAMETER_MODE                 1
+
+// Modal Group G14: Spindle Control Mode
+#define SPINDLE_RPM_MODE                    0
+#define SPINDLE_SURFACE_MODE                1
+
 
 // Define parameter word mapping.
 #define WORD_F		0
@@ -159,6 +171,9 @@
 #define WORD_Q      13
 #define WORD_A      14
 #define WORD_B      15
+#define WORD_D      16
+#define WORD_H      17
+#define WORD_E      18
 
 // Define g-code parser position updating flags
 #define GC_UPDATE_POS_TARGET	0 // Must be zero
@@ -191,7 +206,8 @@
 
 
 // NOTE: When this struct is zeroed, the above defines set the defaults for the system.
-typedef struct {
+typedef struct
+{
 	uint8_t motion;          // {G0,G1,G2,G3,G38.2,G80}
 	uint8_t feed_rate;       // {G93,G94}
 	uint8_t units;           // {G20,G21}
@@ -207,9 +223,16 @@ typedef struct {
 	uint8_t coolant;         // {M7,M8,M9}
 	uint8_t spindle;         // {M3,M4,M5}
 	uint8_t override;        // {M56}
+	uint8_t lathe_mode;      // {G7,G8}
+	uint8_t spindle_mode;    // {G96,G97}
 } GC_Modal_t;
 
-typedef struct {
+
+typedef struct
+{
+    uint16_t d;
+    uint8_t h;
+    float e;
 	float f;         // Feed
 	float ijk[N_AXIS];    // I,J,K Axis arc offsets
 	uint8_t l;       // G10 or canned cycles parameters
@@ -222,13 +245,16 @@ typedef struct {
 	float xyz[N_AXIS];    // X,Y,Z Translational axes
 } GC_Values_t;
 
-typedef struct {
+
+typedef struct
+{
 	GC_Modal_t modal;
 
 	float spindle_speed;          	// RPM
 	float feed_rate;              	// Millimeters/min
-	uint8_t tool;                 	// Tracks tool number. NOT USED.
+	uint8_t tool;                 	// Tracks tool number.
 	int32_t line_number;          	// Last line number sent
+	float spindle_limit;
 
 	float position[N_AXIS];       	// Where the interpreter considers the tool to be at this point in the code
 	float coord_system[N_AXIS];    	// Current work coordinate system (G54+). Stores offset from absolute machine
@@ -238,7 +264,9 @@ typedef struct {
 	float tool_length_offset;      	// Tracks tool length offset value when enabled.
 } Parser_State_t;
 
-typedef struct {
+
+typedef struct
+{
 	uint8_t non_modal_command;
 	GC_Modal_t modal;
 	GC_Values_t values;

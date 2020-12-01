@@ -59,7 +59,6 @@ int main(void)
 {
 	// Init formatted output
 	Print_Init();
-
     System_Init();
     Stepper_Init();
     Settings_Init();
@@ -79,7 +78,6 @@ int main(void)
 
     // Init SysTick 1ms
 	SysTick_Init();
-
 
     if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE))
     {

@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,11 +24,12 @@
 
 #include <stdint.h>
 #include "util.h"
+#include "ToolTable.h"
 
 
 // Version of the EEPROM data. Will be used to migrate existing data from older versions of Grbl
 // when firmware is upgraded. Always stored in byte 0 of eeprom
-#define SETTINGS_VERSION 					5  // NOTE: Check settings_reset() when moving to next version.
+#define SETTINGS_VERSION 					7  // NOTE: Check settings_reset() when moving to next version.
 
 
 // Define bit flag masks for the boolean settings in settings.system_flags
@@ -49,6 +50,9 @@
 #define BITFLAG_INVERT_LIMIT_PINS 			BIT(6)
 #define BITFLAG_INVERT_PROBE_PIN   			BIT(7)
 
+// Define bit flag masks for the boolean settings in settings.flag2.
+#define BITFLAG_LATHE_MODE       			BIT(0)
+
 // Define status reporting boolean enable bit flags in settings.status_report_mask
 #define BITFLAG_RT_STATUS_POSITION_TYPE     BIT(0)
 #define BITFLAG_RT_STATUS_BUFFER_STATE      BIT(1)
@@ -58,12 +62,14 @@
 #define SETTINGS_RESTORE_PARAMETERS 		BIT(1)
 #define SETTINGS_RESTORE_STARTUP_LINES 		BIT(2)
 #define SETTINGS_RESTORE_BUILD_INFO 		BIT(3)
+#define SETTINGS_RESTORE_TOOLS       		BIT(4)
 
 // Define EEPROM memory address location values for Grbl settings and parameters
 // NOTE: The Atmega328p has 1KB EEPROM. The upper half is reserved for parameters and
 // the startup script. The lower half contains the global settings and space for future
 // developments.
 #define EEPROM_ADDR_GLOBAL         			1U
+#define EEPROM_ADDR_TOOLTABLE               180U
 #define EEPROM_ADDR_PARAMETERS     			512U
 #define EEPROM_ADDR_STARTUP_BLOCK  			768U
 #define EEPROM_ADDR_BUILD_INFO     			942U
@@ -89,7 +95,8 @@
 
 #pragma pack(push, 1) // exact fit - no padding
 // Global persistent settings (Stored from byte EEPROM_ADDR_GLOBAL onwards); 111 Bytes
-typedef struct {
+typedef struct
+{
 	// Axis settings
 	float steps_per_mm[N_AXIS];
 	float max_rate[N_AXIS];
@@ -119,6 +126,7 @@ typedef struct {
 	float rpm_min;
 
 	uint8_t flags;  // Contains default boolean settings
+	uint8_t flags2;
 
 	uint8_t homing_dir_mask;
 	float homing_feed_rate;
@@ -146,6 +154,14 @@ void Settings_StoreTlsPosition(void);
 
 // Stores the protocol line variable as a startup line in EEPROM
 void Settings_StoreStartupLine(uint8_t n, char *line);
+
+// Stores tool table in EEPROM
+void Settings_StoreToolTable(ToolTable_t *table);
+
+void Settings_StoreToolParams(uint8_t tool_nr, ToolParams_t *params);
+
+// Read tool table
+uint8_t Settings_ReadToolTable(ToolTable_t *table);
 
 // Reads an EEPROM startup line to the protocol line variable
 uint8_t Settings_ReadStartupLine(uint8_t n, char *line);

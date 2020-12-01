@@ -66,6 +66,69 @@ void TIM1_Init(void)
 
 
 /**
+ * Timer 2
+ * Used for Encoder
+ **/
+void TIM2_Init(void)
+{
+
+}
+
+
+/**
+ * Timer 3
+ * Used for Input capture
+ **/
+void TIM3_Init(void)
+{
+    TIM_ICInitTypeDef  TIM_ICInitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;
+    NVIC_InitTypeDef NVIC_InitStructure;
+
+
+    /* TIM3 clock enable */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
+    /* GPIOC clock enable */
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+    /* TIM1 channel 4 pin (PC.9) configuration */
+    GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_9;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    /* Connect TIM pins to AF2 */
+    GPIO_PinAFConfig(GPIOC, GPIO_PinSource9, GPIO_AF_TIM3);
+
+
+    /* Enable the TIM1 global Interrupt */
+    NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+
+    TIM_ICInitStructure.TIM_Channel = TIM_Channel_4;
+    TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+    TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+    TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV2;
+    TIM_ICInitStructure.TIM_ICFilter = 0x02;
+
+    TIM_ICInit(TIM3, &TIM_ICInitStructure);
+
+    /* Enable the CC2 Interrupt Request */
+    TIM_ITConfig(TIM3, TIM_IT_CC4, ENABLE);
+
+    /* TIM enable counter */
+    TIM_Cmd(TIM3, ENABLE);
+}
+
+
+/**
  * Timer 9
  * Base clock: 24 MHz
  * Used for Stepper Interrupt

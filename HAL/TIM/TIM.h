@@ -28,6 +28,8 @@ extern "C" {
 
 
 void TIM1_Init(void);
+void TIM2_Init(void);
+void TIM3_Init(void);
 void TIM9_Init(void);
 
 

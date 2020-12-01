@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,7 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with Grbl-Advanced.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "Config.h"
 #include "GCode.h"
 #include "GPIO.h"
@@ -235,22 +238,37 @@ uint8_t System_ExecuteLine(char *line)
 		break;
 
     case 'T':
-        // Tool change finished. Continue execution
-        System_ClearExecStateFlag(EXEC_TOOL_CHANGE);
-        sys.state = STATE_IDLE;
-
-		// Check if machine is homed and tls enabled
-		if(settings.tool_change == 2)
+        if(line[++char_counter] == 0)
         {
+            // Tool change finished. Continue execution
+            System_ClearExecStateFlag(EXEC_TOOL_CHANGE);
+            sys.state = STATE_IDLE;
+
+            // Check if machine is homed
             if(sys.is_homed)
             {
-                if(settings.tls_valid)
+                // Change tool with probing
+                if(settings.tool_change == 2)
                 {
-                    TC_ProbeTLS();
+                    // Check if TLS is valid
+                    if(settings.tls_valid)
+                    {
+                        // Probe new tool
+                        TC_ProbeTLS();
+                    }
+                    else
+                    {
+                        return STATUS_TLS_NOT_SET;
+                    }
+                }
+                else if(settings.tool_change == 3)
+                {
+                    // Change tool with tool table
+                    TC_ApplyToolOffset();
                 }
                 else
                 {
-                    return STATUS_TLS_NOT_SET;
+                    return STATUS_SETTING_DISABLED;
                 }
             }
             else
@@ -260,7 +278,57 @@ uint8_t System_ExecuteLine(char *line)
         }
         else
         {
-            return STATUS_SETTING_DISABLED;
+            // Print tool params
+            char c;
+            ToolParams_t params = {};
+            char num[4] = {};
+            uint8_t idx = 0;
+
+            do
+            {
+                c = line[char_counter++];
+                num[idx++] = c;
+            } while(isdigit(c) && idx < 3);
+            num[idx] = '\0';
+
+            if(c == '=')
+            {
+                // Save params of new tool
+                char tmp_float[10];
+                int t = 0;
+                float value_f[4] = {};
+
+                // Read floats [x.x:x.x:x.x:x.x]
+                for(int i = 0; i < 4; i++)
+                {
+                    t = ExtractFloat(&line[char_counter], t, tmp_float);
+
+                    // Check if float was found
+                    if(strlen(tmp_float) > 0)
+                    {
+                        // Convert string to float
+                        sscanf(tmp_float, "%f", &value_f[i]);
+                        tmp_float[0] = '\0';
+                    }
+                    else
+                    {
+                        // Couldn't find a float value
+                        break;
+                    }
+                }
+
+                params.x_offset = value_f[0];
+                params.y_offset = value_f[1];
+                params.z_offset = value_f[2];
+                params.reserved = value_f[3];
+
+                // Store tool params
+                TT_SaveToolParams(atoi(num), &params);
+            }
+            else
+            {
+                Report_ToolParams(atoi(num));
+            }
         }
         break;
 
@@ -393,13 +461,17 @@ uint8_t System_ExecuteLine(char *line)
 #ifdef ENABLE_RESTORE_EEPROM_CLEAR_PARAMETERS
 			case '#':
 				Settings_Restore(SETTINGS_RESTORE_PARAMETERS);
-			break;
+                break;
 #endif
 #ifdef ENABLE_RESTORE_EEPROM_WIPE_ALL
 			case '*':
 				Settings_Restore(SETTINGS_RESTORE_ALL);
-			break;
+                break;
 #endif
+            case 'T':
+                TT_Reset();
+                break;
+
 			default:
 				return STATUS_INVALID_STATEMENT;
 			}

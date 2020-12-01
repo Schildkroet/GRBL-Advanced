@@ -4,7 +4,7 @@
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -127,7 +127,8 @@ void Limit_PinChangeISR(void) // DEFAULT: Limit pin change interrupt process.
 // TODO: Move limit pin-specific calls to a general function for portability.
 void Limits_GoHome(uint8_t cycle_mask)
 {
-	if(sys.abort) {
+	if(sys.abort)
+    {
 		// Block if system reset has been issued.
 		return;
 	}

@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -401,7 +401,7 @@ void Stepper_MainISR(void)
 			}
 
 			TIM9->ARR = st.exec_segment->cycles_per_tick;
-			TIM9->CCR1 = (uint16_t)(st.exec_segment->cycles_per_tick * 0.75);
+			TIM9->CCR1 = (uint16_t)(st.exec_segment->cycles_per_tick * 0.6);
 			st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.
 
 			// If the new segment starts a new planner block, initialize stepper variables and counters.

@@ -26,7 +26,7 @@ uint8_t EE_ReadByteArray(uint8_t *DataOut, uint16_t VirtAddress, uint16_t size)
 
 	for(; size > 0; size--) {
 		data = EE_ReadByte(VirtAddress++);
-		checksum = (checksum << 1) || (checksum >> 7);
+		checksum = (checksum << 1) | (checksum >> 7);
 		checksum += data;
 		*(DataOut++) = data;
 	}
@@ -44,7 +44,7 @@ void EE_WriteByteArray(uint16_t VirtAddress, uint8_t *DataIn, uint16_t size)
 	unsigned char checksum = 0;
 
 	for(; size > 0; size--) {
-		checksum = (checksum << 1) || (checksum >> 7);
+		checksum = (checksum << 1) | (checksum >> 7);
 		checksum += *DataIn;
 		EE_WriteByte(VirtAddress++, *(DataIn++));
 	}

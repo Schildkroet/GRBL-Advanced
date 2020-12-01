@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017 Patrick F.
+  Copyright (c)	2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -90,6 +90,7 @@ void WriteGlobalSettings(void)
 void Settings_Restore(uint8_t restore_flag) {
 	if(restore_flag & SETTINGS_RESTORE_DEFAULTS) {
 		settings.system_flags = DEFAULT_SYSTEM_INVERT_MASK;
+		settings.flags2 = DEFAULT_LATHE_MODE;
 		settings.stepper_idle_lock_time = DEFAULT_STEPPER_IDLE_LOCK_TIME;
 		settings.step_invert_mask = DEFAULT_STEPPING_INVERT_MASK;
 		settings.dir_invert_mask = DEFAULT_DIRECTION_INVERT_MASK;
@@ -181,6 +182,11 @@ void Settings_Restore(uint8_t restore_flag) {
 		Nvm_WriteByte(EEPROM_ADDR_BUILD_INFO+1 , 0); // Checksum
 		Nvm_Update();
 	}
+
+	if(restore_flag & SETTINGS_RESTORE_TOOLS)
+    {
+        TT_Reset();
+    }
 }
 
 
@@ -197,6 +203,28 @@ uint8_t Settings_ReadStartupLine(uint8_t n, char *line)
 	}
 
 	return true;
+}
+
+
+void Settings_StoreToolTable(ToolTable_t *table)
+{
+    Nvm_Write(EEPROM_ADDR_TOOLTABLE, (uint8_t*)table, sizeof(ToolTable_t));
+}
+
+
+void Settings_StoreToolParams(uint8_t tool_nr, ToolParams_t *params)
+{
+    Nvm_Write(EEPROM_ADDR_TOOLTABLE+(tool_nr*sizeof(ToolParams_t)), (uint8_t*)params, sizeof(ToolParams_t));
+}
+
+
+uint8_t Settings_ReadToolTable(ToolTable_t *table)
+{
+    if(!(Nvm_Read((uint8_t*)table, EEPROM_ADDR_TOOLTABLE, sizeof(ToolTable_t)))) {
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -301,7 +329,7 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value) {
 		switch(parameter)
 		{
 		case 0:
-			settings.system_flags = int_value;
+			//settings.system_flags = int_value;
 			break;
 
 		case 1:
@@ -374,9 +402,14 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value) {
 		case 30: settings.rpm_max = value; Spindle_Init(); break; // Re-initialize spindle rpm calibration
 		case 31: settings.rpm_min = value; Spindle_Init(); break; // Re-initialize spindle rpm calibration
 		case 32:
-				if (int_value) { settings.flags |= BITFLAG_LASER_MODE; }
-				else { settings.flags &= ~BITFLAG_LASER_MODE; }
+            if (int_value) { settings.flags |= BITFLAG_LASER_MODE; }
+            else { settings.flags &= ~BITFLAG_LASER_MODE; }
 			break;
+
+        case 33:
+            if (int_value) { settings.flags2 |= BITFLAG_LATHE_MODE; }
+            else { settings.flags2 &= ~BITFLAG_LATHE_MODE; }
+            break;
 
 		default:
 			return(STATUS_INVALID_STATEMENT);
@@ -408,6 +441,9 @@ void Settings_Init(void)
 		Settings_Restore(SETTINGS_RESTORE_ALL); // Force restore all EEPROM data.
 		Report_GrblSettings();
 	}
+
+    // Read tool table
+	TT_Init();
 }
 
 

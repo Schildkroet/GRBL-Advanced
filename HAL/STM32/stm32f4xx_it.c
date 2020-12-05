@@ -243,7 +243,7 @@ void SysTick_Handler(void)
 	uint8_t limits = Limits_GetState();
 	if(limits) {
 		// X-Y-Z Limit
-		if((DebounceCounterLimits == 0) && settings.flags & BITFLAG_HARD_LIMIT_ENABLE) {
+		if((DebounceCounterLimits == 0) && settings.system_flags & BITFLAG_ENABLE_LIMITS) {
 			DebounceCounterLimits = 20;
 			Limit_PinChangeISR();
 		}

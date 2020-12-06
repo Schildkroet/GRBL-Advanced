@@ -24,7 +24,7 @@ Edit defaults.h to your needs.
 Added Canned Drill Cycles G81-G83 as additional features. 
 
 #### 5-Axis support
-Added experimental support for rotary axis (5-axis). They are roughly tested amd may contain still errors. Use at own risk!
+Added experimental support for rotary axis (5-axis). They are roughly tested and may contain still errors. Use at own risk!
 
 #### Hard Reset
 0x19 (CTRL-Y): Perform a hard reset.
@@ -84,7 +84,7 @@ By default, settings are stored in internal flash memory in last sector. First s
 * Flash HEX created in bin/Release
 
 #### Linux
-* Download [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm)) and unpack it to /opt. In makefile update path to toolchain.
+* Download [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm) and unpack it to /opt. In makefile update path to toolchain.
 * Run following commands:
 ```
 sudo apt install build-essential stlink-tools

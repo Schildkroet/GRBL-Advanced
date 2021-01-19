@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017-2020 Patrick F.
+  Copyright (c) 2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,93 +27,96 @@
 
 
 #ifndef M_PI
-	#define M_PI		3.14159265358979323846
+    #define M_PI        3.14159265358979323846
 #endif // M_PI
 
 
 // Bit field and masking macros
-#define BIT(n) 						(1 << n)
-#define BIT_TRUE_ATOMIC(x,mask) 	BIT_TRUE(x,mask)
-#define BIT_FALSE_ATOMIC(x,mask) 	BIT_FALSE(x,mask)
-#define BIT_TOGGLE_ATOMIC(x,mask) 	(x) ^= (mask)
-#define BIT_TRUE(x,mask) 			(x) |= (mask)
-#define BIT_FALSE(x,mask) 			(x) &= ~(mask)
-#define BIT_IS_TRUE(x,mask) 		((x & mask) != 0)
-#define BIT_IS_FALSE(x,mask) 		((x & mask) == 0)
+#define BIT(n)                      (1 << n)
+#define BIT_TRUE_ATOMIC(x,mask)     BIT_TRUE(x,mask)
+#define BIT_FALSE_ATOMIC(x,mask)    BIT_FALSE(x,mask)
+#define BIT_TOGGLE_ATOMIC(x,mask)   (x) ^= (mask)
+#define BIT_TRUE(x,mask)            (x) |= (mask)
+#define BIT_FALSE(x,mask)           (x) &= ~(mask)
+#define BIT_IS_TRUE(x,mask)         ((x & mask) != 0)
+#define BIT_IS_FALSE(x,mask)        ((x & mask) == 0)
 
 
-#define F_CPU						96000000UL
+#define F_CPU                       96000000UL
 #define F_TIMER_STEPPER             24000000UL
 
-#define N_AXIS						5
+#define N_AXIS                      5
 #define N_LINEAR_AXIS               3
 
-#define X_AXIS						0 // Axis indexing value.
-#define Y_AXIS						1
-#define Z_AXIS						2
-#define A_AXIS						3
-#define B_AXIS						4
+#define X_AXIS                      0 // Axis indexing value.
+#define Y_AXIS                      1
+#define Z_AXIS                      2
+#define A_AXIS                      3
+#define B_AXIS                      4
 
-#define X_STEP_BIT					0
-#define Y_STEP_BIT					1
-#define Z_STEP_BIT					2
+#define X_STEP_BIT                  0
+#define Y_STEP_BIT                  1
+#define Z_STEP_BIT                  2
 #define A_STEP_BIT                  3
 #define B_STEP_BIT                  4
 
-#define X_DIRECTION_BIT				0
-#define Y_DIRECTION_BIT				1
-#define Z_DIRECTION_BIT				2
+#define X_DIRECTION_BIT             0
+#define Y_DIRECTION_BIT             1
+#define Z_DIRECTION_BIT             2
 #define A_DIRECTION_BIT             3
 #define B_DIRECTION_BIT             4
 
-#define X_LIMIT_BIT					0
-#define Y_LIMIT_BIT					1
-#define Z_LIMIT_BIT					2
-#define LIMIT_MASK					((1<<X_LIMIT_BIT) | (1<<Y_LIMIT_BIT) | (1<<Z_LIMIT_BIT))
+#define X1_LIMIT_BIT                0
+#define Y1_LIMIT_BIT                1
+#define Z1_LIMIT_BIT                2
+#define X2_LIMIT_BIT                3
+#define Y2_LIMIT_BIT                4
+#define Z2_LIMIT_BIT                5
+#define LIMIT_MASK                  ((1<<X1_LIMIT_BIT) | (1<<Y1_LIMIT_BIT) | (1<<Z1_LIMIT_BIT) | (1<<X2_LIMIT_BIT) | (1<<Y2_LIMIT_BIT) | (1<<Z2_LIMIT_BIT))
 
-#define SPINDLE_ENABLE_BIT			0
-#define SPINDLE_DIRECTION_BIT		1
+#define SPINDLE_ENABLE_BIT          0
+#define SPINDLE_DIRECTION_BIT       1
 
-#define CONTROL_RESET_BIT			0
-#define CONTROL_FEED_HOLD_BIT		1
-#define CONTROL_CYCLE_START_BIT		2
-#define CONTROL_SAFETY_DOOR_BIT		3
-#define CONTROL_MASK				((1<<CONTROL_RESET_BIT) | (1<<CONTROL_FEED_HOLD_BIT) | (1<<CONTROL_CYCLE_START_BIT) | (1<<CONTROL_SAFETY_DOOR_BIT))
+#define CONTROL_RESET_BIT           0
+#define CONTROL_FEED_HOLD_BIT       1
+#define CONTROL_CYCLE_START_BIT     2
+#define CONTROL_SAFETY_DOOR_BIT     3
+#define CONTROL_MASK                ((1<<CONTROL_RESET_BIT) | (1<<CONTROL_FEED_HOLD_BIT) | (1<<CONTROL_CYCLE_START_BIT) | (1<<CONTROL_SAFETY_DOOR_BIT))
 
 
-#define DELAY_MODE_DWELL       		0
-#define DELAY_MODE_SYS_SUSPEND 		1
+#define DELAY_MODE_DWELL            0
+#define DELAY_MODE_SYS_SUSPEND      1
 
 
 // CoreXY motor assignments. DO NOT ALTER.
 // NOTE: If the A and B motor axis bindings are changed, this effects the CoreXY equations.
 #ifdef COREXY
- #define A_MOTOR					X_AXIS // Must be X_AXIS
- #define B_MOTOR					Y_AXIS // Must be Y_AXIS
+#define A_MOTOR                    X_AXIS // Must be X_AXIS
+#define B_MOTOR                    Y_AXIS // Must be Y_AXIS
 #endif
 
 
 // Conversions
-#define MM_PER_INCH 				(25.40)
-#define INCH_PER_MM 				(0.0393701)
-#define TICKS_PER_MICROSECOND 		(24UL)
+#define MM_PER_INCH                 (25.40)
+#define INCH_PER_MM                 (0.0393701)
+#define TICKS_PER_MICROSECOND       (24UL)
 
 
-#define SOME_LARGE_VALUE 			1.0E+38
+#define SOME_LARGE_VALUE            1.0E+38
 
 
-#define ACCEL_TICKS_PER_SECOND 		100
+#define ACCEL_TICKS_PER_SECOND      100
 
 
-#define max(a,b) 					(((a) > (b)) ? (a) : (b))
-#define min(a,b) 					(((a) < (b)) ? (a) : (b))
+#define max(a,b)                    (((a) > (b)) ? (a) : (b))
+#define min(a,b)                    (((a) < (b)) ? (a) : (b))
 
 
-#define clear_vector(a) 			(memset(a,0,sizeof(a)))
-#define clear_vector_f(a)			(memset(a, 0.0, sizeof(a)))
-#define	copy_vector(d,s) 			(memcpy(d,s,sizeof(d)))
+#define clear_vector(a)                 (memset(a,0,sizeof(a)))
+#define clear_vector_f(a)               (memset(a, 0.0, sizeof(a)))
+#define copy_vector(d,s)                (memcpy(d,s,sizeof(d)))
 
-#define isequal_position_vector(a,b) !(memcmp(a, b, sizeof(float)*N_AXIS))
+#define isequal_position_vector(a,b)    !(memcmp(a, b, sizeof(float)*N_AXIS))
 
 
 // Read a floating point value from a string. Line points to the input buffer, char_counter

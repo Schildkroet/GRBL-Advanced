@@ -38,14 +38,14 @@ void M24C0X_Init(void)
 
     // Initialize write protection pin
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
 
     // Enable write protection
-	GPIO_SetBits(GPIOB, GPIO_Pin_12);
+    GPIO_SetBits(GPIOB, GPIO_Pin_12);
 
     I2C_Mode_t mode = {I2C_SPEED, I2C_Mode_I2C, I2C_Ack_Enable};
     I2C_Initialize(M24C0X_I2C, &mode);
@@ -170,7 +170,7 @@ uint8_t M24C0X_WriteByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
 
 static void M24C0X_WriteProtection(uint8_t enable)
 {
-	__ASM("nop");
+    __ASM("nop");
 
     if(enable)
     {

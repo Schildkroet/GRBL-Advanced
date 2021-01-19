@@ -2,7 +2,7 @@
   System32.h - System Header
   Part of STM32F4_HAL
 
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   STM32F4_HAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,16 +27,18 @@ extern "C" {
 #endif
 
 
-typedef struct {
-	uint8_t Hours;
-	uint8_t Minutes;
-	uint8_t Seconds;
+typedef struct
+{
+    uint8_t Hours;
+    uint8_t Minutes;
+    uint8_t Seconds;
 } Time_t;
 
-typedef struct {
-	uint16_t Year;
-	uint8_t Month;
-	uint8_t Day;
+typedef struct
+{
+    uint16_t Year;
+    uint8_t Month;
+    uint8_t Day;
 } Date_t;
 
 

@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 
 void Coolant_Init(void)
 {
-	GPIO_InitGPIO(GPIO_COOLANT);
-	Coolant_Stop();
+    GPIO_InitGPIO(GPIO_COOLANT);
+    Coolant_Stop();
 }
 
 
@@ -38,17 +38,17 @@ void Coolant_Init(void)
 void Coolant_Stop(void)
 {
 #ifdef INVERT_COOLANT_FLOOD_PIN
-	GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+    GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #else
-	GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+    GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #endif
 
 #ifdef ENABLE_M7
-  #ifdef INVERT_COOLANT_MIST_PIN
-	GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-  #else
-	GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-  #endif
+#ifdef INVERT_COOLANT_MIST_PIN
+    GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+#else
+    GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+#endif
 #endif
 }
 
@@ -56,27 +56,32 @@ void Coolant_Stop(void)
 // Returns current coolant output state. Overrides may alter it from programmed state.
 uint8_t Coolant_GetState(void)
 {
-	uint8_t cl_state = COOLANT_STATE_DISABLE;
-	// TODO: Check if reading works
+    uint8_t cl_state = COOLANT_STATE_DISABLE;
+
+    // TODO: Check if reading works
 #ifdef INVERT_COOLANT_FLOOD_PIN
-	if(!GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN)) {
+    if(!GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN))
+    {
 #else
-	if(GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN)) {
+    if(GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN))
+    {
 #endif
-		cl_state |= COOLANT_STATE_FLOOD;
-	}
+        cl_state |= COOLANT_STATE_FLOOD;
+    }
 
 #ifdef ENABLE_M7
-  #ifdef INVERT_COOLANT_MIST_PIN
-	if(!GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN)) {
-  #else
-	if(GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN)) {
-  #endif
-		cl_state |= COOLANT_STATE_MIST;
-	}
+#ifdef INVERT_COOLANT_MIST_PIN
+    if(!GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
+    {
+#else
+    if(GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
+    {
+#endif
+        cl_state |= COOLANT_STATE_MIST;
+    }
 #endif
 
-	return cl_state;
+    return cl_state;
 }
 
 
@@ -86,19 +91,22 @@ uint8_t Coolant_GetState(void)
 // parser program end, and g-code parser coolant_sync().
 void Coolant_SetState(uint8_t mode)
 {
-	if(sys.abort) {
-		// Block during abort.
-		return;
-	}
+    if(sys.abort)
+    {
+        // Block during abort.
+        return;
+    }
 
-    if (mode & COOLANT_FLOOD_ENABLE) {
+    if (mode & COOLANT_FLOOD_ENABLE)
+    {
 #ifdef INVERT_COOLANT_FLOOD_PIN
         GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #else
         GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #endif
     }
-    else {
+    else
+    {
 #ifdef INVERT_COOLANT_FLOOD_PIN
         GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #else
@@ -107,13 +115,16 @@ void Coolant_SetState(uint8_t mode)
     }
 
 #ifdef ENABLE_M7
-    if (mode & COOLANT_MIST_ENABLE) {
+    if (mode & COOLANT_MIST_ENABLE)
+    {
 #ifdef INVERT_COOLANT_MIST_PIN
         GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #else
         GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #endif
-    } else {
+    }
+    else
+    {
 #ifdef INVERT_COOLANT_MIST_PIN
         GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #else
@@ -122,7 +133,7 @@ void Coolant_SetState(uint8_t mode)
     }
 #endif
 
-	sys.report_ovr_counter = 0; // Set to report change immediately
+    sys.report_ovr_counter = 0; // Set to report change immediately
 }
 
 
@@ -130,10 +141,11 @@ void Coolant_SetState(uint8_t mode)
 // if an abort or check-mode is active.
 void Coolant_Sync(uint8_t mode)
 {
-	if(sys.state == STATE_CHECK_MODE) {
-		return;
-	}
+    if(sys.state == STATE_CHECK_MODE)
+    {
+        return;
+    }
 
-	Protocol_BufferSynchronize(); // Ensure coolant turns on when specified in program.
-	Coolant_SetState(mode);
+    Protocol_BufferSynchronize(); // Ensure coolant turns on when specified in program.
+    Coolant_SetState(mode);
 }

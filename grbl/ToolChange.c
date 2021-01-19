@@ -2,7 +2,7 @@
   ToolChange.c - Changing tool
   Part of Grbl-Advanced
 
-  Copyright (c)	2018-2020 Patrick F.
+  Copyright (c) 2018-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ void TC_Init(void)
     memset(tc_pos, 0, sizeof(float)*N_AXIS);
 
     gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_CANCEL;
-	gc_state.tool_length_offset = 0.0;
+    gc_state.tool_length_offset = 0.0;
 }
 
 
@@ -61,16 +61,16 @@ void TC_ChangeCurrentTool(void)
 
     if(sys.state == STATE_CHECK_MODE)
     {
-		return;
-	}
+        return;
+    }
 
     // Wait until queue is processed
     Protocol_BufferSynchronize();
 
     // Move TOOL_LENGTH_OFFSET_AXIS to 0
-	System_ConvertArraySteps2Mpos(position, sys_position);
-	position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
-	memcpy(tc_pos, position, sizeof(float)*N_AXIS);
+    System_ConvertArraySteps2Mpos(position, sys_position);
+    position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
+    memcpy(tc_pos, position, sizeof(float)*N_AXIS);
 
     //System_SetExecStateFlag(EXEC_TOOL_CHANGE);
 
@@ -80,12 +80,12 @@ void TC_ChangeCurrentTool(void)
     pl_data.spindle_speed = 0;
     pl_data.line_number = gc_state.line_number;
 
-	MC_Line(position, &pl_data);
-	Delay_ms(20);
+    MC_Line(position, &pl_data);
+    Delay_ms(20);
 
-	Spindle_Stop();
+    Spindle_Stop();
 
-	// Wait until queue is processed
+    // Wait until queue is processed
     Protocol_BufferSynchronize();
 
     // Wait until move is finished
@@ -106,33 +106,33 @@ void TC_ProbeTLS(void)
 
     if(sys.state == STATE_CHECK_MODE || settings.tls_valid == 0)
     {
-		return;
-	}
+        return;
+    }
 
-	// Move to XY position of TLS
-	System_ConvertArraySteps2Mpos(position, settings.tls_position);
-	position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
+    // Move to XY position of TLS
+    System_ConvertArraySteps2Mpos(position, settings.tls_position);
+    position[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
 
     // Set-up planer
     pl_data.feed_rate = 0.0;
-	pl_data.condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
+    pl_data.condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
     pl_data.backlash_motion = 0;
     pl_data.spindle_speed = 0;
     pl_data.line_number = gc_state.line_number;
 
     // Move to X/Y position of TLS
-	MC_Line(position, &pl_data);
+    MC_Line(position, &pl_data);
 
     // Move down with offset (for tool)
-	position[TOOL_LENGTH_OFFSET_AXIS] = (settings.tls_position[TOOL_LENGTH_OFFSET_AXIS] / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS]) + TOOL_SENSOR_OFFSET;
-	MC_Line(position, &pl_data);
+    position[TOOL_LENGTH_OFFSET_AXIS] = (settings.tls_position[TOOL_LENGTH_OFFSET_AXIS] / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS]) + TOOL_SENSOR_OFFSET;
+    MC_Line(position, &pl_data);
 
-	// Wait until queue is processed
+    // Wait until queue is processed
     Protocol_BufferSynchronize();
 
     // Set up fast probing
     pl_data.feed_rate = 200.0;
-	pl_data.condition = 0; // Reset rapid motion condition flag.
+    pl_data.condition = 0; // Reset rapid motion condition flag.
 
     // Probe TLS fast
     position[TOOL_LENGTH_OFFSET_AXIS] -= 200.0;

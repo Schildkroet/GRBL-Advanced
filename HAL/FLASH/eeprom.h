@@ -23,7 +23,11 @@
 #include "stm32f4xx.h"
 
 
-#define EEPROM_SIZE				1024
+#ifdef USE_EXT_EEPROM
+    #define EEPROM_SIZE			1
+#else
+    #define EEPROM_SIZE			1024
+#endif
 
 /* Device voltage range supposed to be [2.7V to 3.6V], the operation will be done by word  */
 #define VOLTAGE_RANGE			(uint8_t)VoltageRange_3

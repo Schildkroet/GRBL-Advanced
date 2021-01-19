@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 
 // System motion line numbers must be zero.
-#define JOG_LINE_NUMBER		0
+#define JOG_LINE_NUMBER     0
 
 
 // Sets up valid jog motion received from g-code parser, checks for soft-limits, and executes the jog.

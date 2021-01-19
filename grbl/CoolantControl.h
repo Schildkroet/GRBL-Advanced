@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,12 +25,12 @@
 #include <stdint.h>
 
 
-#define COOLANT_NO_SYNC     	false
-#define COOLANT_FORCE_SYNC  	true
+#define COOLANT_NO_SYNC             false
+#define COOLANT_FORCE_SYNC          true
 
-#define COOLANT_STATE_DISABLE   0  // Must be zero
-#define COOLANT_STATE_FLOOD     BIT(0)
-#define COOLANT_STATE_MIST      BIT(1)
+#define COOLANT_STATE_DISABLE       0  // Must be zero
+#define COOLANT_STATE_FLOOD         BIT(0)
+#define COOLANT_STATE_MIST          BIT(1)
 
 
 // Initializes coolant control pins.

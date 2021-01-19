@@ -57,8 +57,8 @@ volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bit
 
 int main(void)
 {
-	// Init formatted output
-	Print_Init();
+    // Init formatted output
+    Print_Init();
     System_Init();
     Stepper_Init();
     Settings_Init();
@@ -77,63 +77,63 @@ int main(void)
     GrIP_Init();
 
     // Init SysTick 1ms
-	SysTick_Init();
+    SysTick_Init();
 
     if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE))
     {
-		sys.state = STATE_ALARM;
+        sys.state = STATE_ALARM;
     }
     else
     {
-		sys.state = STATE_IDLE;
+        sys.state = STATE_IDLE;
     }
 
-	// Grbl-Advanced initialization loop upon power-up or a system abort. For the latter, all processes
-	// will return to this loop to be cleanly re-initialized.
-	while(1)
+    // Grbl-Advanced initialization loop upon power-up or a system abort. For the latter, all processes
+    // will return to this loop to be cleanly re-initialized.
+    while(1)
     {
-		// Reset system variables.
-		uint16_t prior_state = sys.state;
-		uint8_t home_state = sys.is_homed;
+        // Reset system variables.
+        uint16_t prior_state = sys.state;
+        uint8_t home_state = sys.is_homed;
 
-		System_Clear();
-		sys.state = prior_state;
-		sys.is_homed = home_state;
+        System_Clear();
+        sys.state = prior_state;
+        sys.is_homed = home_state;
 
-		Probe_Reset();
+        Probe_Reset();
 
-		sys_probe_state = 0;
-		sys_rt_exec_state = 0;
-		sys_rt_exec_alarm = 0;
-		sys_rt_exec_motion_override = 0;
-		sys_rt_exec_accessory_override = 0;
+        sys_probe_state = 0;
+        sys_rt_exec_state = 0;
+        sys_rt_exec_alarm = 0;
+        sys_rt_exec_motion_override = 0;
+        sys_rt_exec_accessory_override = 0;
 
-		// Reset Grbl-Advanced primary systems.
-		GC_Init();
-		Planner_Init();
-		MC_Init();
-		TC_Init();
+        // Reset Grbl-Advanced primary systems.
+        GC_Init();
+        Planner_Init();
+        MC_Init();
+        TC_Init();
 
-		Coolant_Init();
-		Limits_Init();
-		Probe_Init();
-		Spindle_Init();
-		Stepper_Reset();
+        Coolant_Init();
+        Limits_Init();
+        Probe_Init();
+        Spindle_Init();
+        Stepper_Reset();
 
-		// Sync cleared gcode and planner positions to current system position.
-		Planner_SyncPosition();
-		GC_SyncPosition();
+        // Sync cleared gcode and planner positions to current system position.
+        Planner_SyncPosition();
+        GC_SyncPosition();
 
-		// Print welcome message. Indicates an initialization has occured at power-up or with a reset.
-		Report_InitMessage();
+        // Print welcome message. Indicates an initialization has occured at power-up or with a reset.
+        Report_InitMessage();
 
-		//-- Start Grbl-Advanced main loop. Processes program inputs and executes them. --//
-		Protocol_MainLoop();
-		//--------------------------------------------------------------------------------//
+        //-- Start Grbl-Advanced main loop. Processes program inputs and executes them. --//
+        Protocol_MainLoop();
+        //--------------------------------------------------------------------------------//
 
         // Clear serial buffer after soft reset to prevent undefined behavior
-		FifoUsart_Init();
-	}
+        FifoUsart_Init();
+    }
 
     return 0;
 }

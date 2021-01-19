@@ -4,7 +4,7 @@
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017-2020 Patrick F.
+  Copyright (c) 2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@ static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversi
 static uint8_t spindle_enabled = 0;
 static uint8_t spindle_dir_cw = 1;
 
+extern uint32_t uwTIM3Freq;
+
 
 void Spindle_Init(void)
 {
@@ -45,7 +47,7 @@ void Spindle_Init(void)
     pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
     spindle_dir_cw = 1;
 
-	Spindle_Stop();
+    Spindle_Stop();
 }
 
 
@@ -54,8 +56,8 @@ void Spindle_Init(void)
 // Called by spindle_init(), spindle_set_speed(), spindle_set_state(), and mc_reset().
 void Spindle_Stop(void)
 {
-	TIM1->CCR1 = TIM1_INIT; // Disable PWM. Output voltage is zero.
-	spindle_enabled = 0;
+    TIM1->CCR1 = TIM1_INIT; // Disable PWM. Output voltage is zero.
+    spindle_enabled = 0;
 
 #ifdef INVERT_SPINDLE_ENABLE_PIN
     GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
@@ -68,19 +70,19 @@ void Spindle_Stop(void)
 uint8_t Spindle_GetState(void)
 {
     // Check if PWM is enabled.
-	if(spindle_enabled)
+    if(spindle_enabled)
     {
-		if(spindle_dir_cw == 0)
-		{
-			return SPINDLE_STATE_CCW;
-		}
-		else
+        if(spindle_dir_cw == 0)
         {
-			return SPINDLE_STATE_CW;
-		}
-	}
+            return SPINDLE_STATE_CCW;
+        }
+        else
+        {
+            return SPINDLE_STATE_CW;
+        }
+    }
 
-	return SPINDLE_STATE_DISABLE;
+    return SPINDLE_STATE_DISABLE;
 }
 
 
@@ -88,69 +90,81 @@ uint8_t Spindle_GetState(void)
 // and stepper ISR. Keep routine small and efficient.
 void Spindle_SetSpeed(uint8_t pwm_value)
 {
-	TIM1->CCR1 = TIM1_INIT - pwm_value; // Set PWM output level.
+    TIM1->CCR1 = TIM1_INIT - pwm_value; // Set PWM output level.
 #ifdef SPINDLE_ENABLE_OFF_WITH_ZERO_SPEED
-	if (pwm_value == SPINDLE_PWM_OFF_VALUE)
+    if (pwm_value == SPINDLE_PWM_OFF_VALUE)
     {
-		Spindle_Stop();
-	}
-	else
+        Spindle_Stop();
+    }
+    else
     {
-		TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
-  #ifdef INVERT_SPINDLE_ENABLE_PIN
-		GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-  #else
-		GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-  #endif
-        spindle_enabled = 1;
-	}
+        TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
+#ifdef INVERT_SPINDLE_ENABLE_PIN
+        GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
 #else
-	if(pwm_value == SPINDLE_PWM_OFF_VALUE)
-	{
-        TIM1->CCR1 = TIM1_INIT;    // Disable PWM. Output voltage is zero.
-		TIM_Cmd(TIM1, DISABLE); // Disable PWM. Output voltage is zero.
-		spindle_enabled = 0;
-	}
-	else
-	{
-		TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
-		spindle_enabled = 1;
-	}
+        GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
 #endif
+        spindle_enabled = 1;
+    }
+#else
+    if(pwm_value == SPINDLE_PWM_OFF_VALUE)
+    {
+        TIM1->CCR1 = TIM1_INIT;    // Disable PWM. Output voltage is zero.
+        TIM_Cmd(TIM1, DISABLE); // Disable PWM. Output voltage is zero.
+        spindle_enabled = 0;
+    }
+    else
+    {
+        TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
+        spindle_enabled = 1;
+    }
+#endif
+}
+
+
+uint16_t Spindle_GetRPM(void)
+{
+    // 4 impulses per revolution
+    return (uint16_t)(uwTIM3Freq / 4);
 }
 
 
 // Called by spindle_set_state() and step segment generator. Keep routine small and efficient.
 uint8_t Spindle_ComputePwmValue(float rpm) // 328p PWM register is 8-bit.
 {
-	uint8_t pwm_value;
+    uint8_t pwm_value;
 
-	rpm *= (0.010*sys.spindle_speed_ovr); // Scale by spindle speed override value.
+    rpm *= (0.010*sys.spindle_speed_ovr); // Scale by spindle speed override value.
 
-	// Calculate PWM register value based on rpm max/min settings and programmed rpm.
-	if((settings.rpm_min >= settings.rpm_max) || (rpm >= settings.rpm_max)) {
-		// No PWM range possible. Set simple on/off spindle control pin state.
-		sys.spindle_speed = settings.rpm_max;
-		pwm_value = SPINDLE_PWM_MAX_VALUE;
-	}
-	else if(rpm <= settings.rpm_min) {
-		if(rpm == 0.0) { // S0 disables spindle
-			sys.spindle_speed = 0.0;
-			pwm_value = SPINDLE_PWM_OFF_VALUE;
-		}
-		else { // Set minimum PWM output
-			sys.spindle_speed = settings.rpm_min;
-			pwm_value = SPINDLE_PWM_MIN_VALUE;
-		}
-	}
-	else {
-		// Compute intermediate PWM value with linear spindle speed model.
-		// NOTE: A nonlinear model could be installed here, if required, but keep it VERY light-weight.
-		sys.spindle_speed = rpm;
-		pwm_value = floor((rpm-settings.rpm_min)*pwm_gradient) + SPINDLE_PWM_MIN_VALUE;
-	}
+    // Calculate PWM register value based on rpm max/min settings and programmed rpm.
+    if((settings.rpm_min >= settings.rpm_max) || (rpm >= settings.rpm_max))
+    {
+        // No PWM range possible. Set simple on/off spindle control pin state.
+        sys.spindle_speed = settings.rpm_max;
+        pwm_value = SPINDLE_PWM_MAX_VALUE;
+    }
+    else if(rpm <= settings.rpm_min)
+    {
+        if(rpm == 0.0)   // S0 disables spindle
+        {
+            sys.spindle_speed = 0.0;
+            pwm_value = SPINDLE_PWM_OFF_VALUE;
+        }
+        else   // Set minimum PWM output
+        {
+            sys.spindle_speed = settings.rpm_min;
+            pwm_value = SPINDLE_PWM_MIN_VALUE;
+        }
+    }
+    else
+    {
+        // Compute intermediate PWM value with linear spindle speed model.
+        // NOTE: A nonlinear model could be installed here, if required, but keep it VERY light-weight.
+        sys.spindle_speed = rpm;
+        pwm_value = floor((rpm-settings.rpm_min)*pwm_gradient) + SPINDLE_PWM_MIN_VALUE;
+    }
 
-	return pwm_value;
+    return pwm_value;
 }
 
 
@@ -159,43 +173,50 @@ uint8_t Spindle_ComputePwmValue(float rpm) // 328p PWM register is 8-bit.
 // sleep, and spindle stop override.
 void Spindle_SetState(uint8_t state, float rpm)
 {
-	if(sys.abort) {
-		// Block during abort.
-		return;
-	}
+    if(sys.abort)
+    {
+        // Block during abort.
+        return;
+    }
 
-	if(state == SPINDLE_DISABLE) { // Halt or set spindle direction and rpm.
-		sys.spindle_speed = 0.0;
-		Spindle_Stop();
-	}
-	else {
-		if(state == SPINDLE_ENABLE_CW) {
-			GPIO_ResetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
-			spindle_dir_cw = 1;
-		}
-		else {
-			GPIO_SetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
-			spindle_dir_cw = 0;
-		}
+    if(state == SPINDLE_DISABLE)   // Halt or set spindle direction and rpm.
+    {
+        sys.spindle_speed = 0.0;
+        Spindle_Stop();
+    }
+    else
+    {
+        if(state == SPINDLE_ENABLE_CW)
+        {
+            GPIO_ResetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
+            spindle_dir_cw = 1;
+        }
+        else
+        {
+            GPIO_SetBits(GPIO_SPINDLE_DIR_PORT, GPIO_SPINDLE_DIR_PIN);
+            spindle_dir_cw = 0;
+        }
 
-	#ifdef INVERT_SPINDLE_ENABLE_PIN
-		GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-  	#else
-		GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-  	#endif
+#ifdef INVERT_SPINDLE_ENABLE_PIN
+        GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+#else
+        GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+#endif
 
-		// NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
-		if(settings.flags & BITFLAG_LASER_MODE) {
-			if(state == SPINDLE_ENABLE_CCW) {
-				// TODO: May need to be rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
-				rpm = 0.0;
-			}
-		}
+        // NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
+        if(settings.flags & BITFLAG_LASER_MODE)
+        {
+            if(state == SPINDLE_ENABLE_CCW)
+            {
+                // TODO: May need to be rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
+                rpm = 0.0;
+            }
+        }
 
-		Spindle_SetSpeed(Spindle_ComputePwmValue(rpm));
-	}
+        Spindle_SetSpeed(Spindle_ComputePwmValue(rpm));
+    }
 
-	sys.report_ovr_counter = 0; // Set to report change immediately
+    sys.report_ovr_counter = 0; // Set to report change immediately
 }
 
 
@@ -203,11 +224,12 @@ void Spindle_SetState(uint8_t state, float rpm)
 // if an abort or check-mode is active.
 void Spindle_Sync(uint8_t state, float rpm)
 {
-	if(sys.state == STATE_CHECK_MODE) {
-		return;
-	}
+    if(sys.state == STATE_CHECK_MODE)
+    {
+        return;
+    }
 
-	Protocol_BufferSynchronize(); // Empty planner buffer to ensure spindle is set when programmed.
-	Spindle_SetState(state, rpm);
+    Protocol_BufferSynchronize(); // Empty planner buffer to ensure spindle is set when programmed.
+    Spindle_SetState(state, rpm);
 }
 

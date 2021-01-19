@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,27 +30,31 @@
 // Sets up valid jog motion received from g-code parser, checks for soft-limits, and executes the jog.
 uint8_t Jog_Execute(Planner_LineData_t *pl_data, Parser_Block_t *gc_block)
 {
-	// Initialize planner data struct for jogging motions.
-	// NOTE: Spindle and coolant are allowed to fully function with overrides during a jog.
-	pl_data->feed_rate = gc_block->values.f;
-	pl_data->condition |= PL_COND_FLAG_NO_FEED_OVERRIDE;
-	pl_data->line_number = gc_block->values.n;
+    // Initialize planner data struct for jogging motions.
+    // NOTE: Spindle and coolant are allowed to fully function with overrides during a jog.
+    pl_data->feed_rate = gc_block->values.f;
+    pl_data->condition |= PL_COND_FLAG_NO_FEED_OVERRIDE;
+    pl_data->line_number = gc_block->values.n;
 
-	if(BIT_IS_TRUE(settings.flags, BITFLAG_SOFT_LIMIT_ENABLE)) {
-		if(System_CheckTravelLimits(gc_block->values.xyz)) {
-			return STATUS_TRAVEL_EXCEEDED;
-		}
-	}
+    if(BIT_IS_TRUE(settings.flags, BITFLAG_SOFT_LIMIT_ENABLE))
+    {
+        if(System_CheckTravelLimits(gc_block->values.xyz))
+        {
+            return STATUS_TRAVEL_EXCEEDED;
+        }
+    }
 
-	// Valid jog command. Plan, set state, and execute.
-	MC_Line(gc_block->values.xyz, pl_data);
-	if(sys.state == STATE_IDLE) {
-		if (Planner_GetCurrentBlock() != 0) { // Check if there is a block to execute.
-			sys.state = STATE_JOG;
-			Stepper_PrepareBuffer();
-			Stepper_WakeUp();  // NOTE: Manual start. No state machine required.
-		}
-	}
+    // Valid jog command. Plan, set state, and execute.
+    MC_Line(gc_block->values.xyz, pl_data);
+    if(sys.state == STATE_IDLE)
+    {
+        if (Planner_GetCurrentBlock() != 0)   // Check if there is a block to execute.
+        {
+            sys.state = STATE_JOG;
+            Stepper_PrepareBuffer();
+            Stepper_WakeUp();  // NOTE: Manual start. No state machine required.
+        }
+    }
 
-	return STATUS_OK;
+    return STATUS_OK;
 }

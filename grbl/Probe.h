@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@
 
 
 // Values that define the probing state machine.
-#define PROBE_OFF     	0 // Probing disabled or not in use. (Must be zero.)
-#define PROBE_ACTIVE  	1 // Actively watching the input pin.
+#define PROBE_OFF           0 // Probing disabled or not in use. (Must be zero.)
+#define PROBE_ACTIVE        1 // Actively watching the input pin.
 
 // Probe pin initialization routine.
 void Probe_Init(void);

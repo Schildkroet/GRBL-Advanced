@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c)	2017 Patrick F.
+  Copyright (c) 2017 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,16 +32,16 @@ static uint8_t probe_invert_mask;
 // Probe pin initialization routine.
 void Probe_Init(void)
 {
-	GPIO_InitGPIO(GPIO_PROBE);
+    GPIO_InitGPIO(GPIO_PROBE);
 
-	Probe_ConfigureInvertMask(false); // Initialize invert mask.*/
+    Probe_ConfigureInvertMask(false); // Initialize invert mask.*/
 }
 
 
 void Probe_Reset(void)
 {
-	// Clear probe position.
-	memset(sys_probe_position, 0 , sizeof(sys_probe_position));
+    // Clear probe position.
+    memset(sys_probe_position, 0 , sizeof(sys_probe_position));
 }
 
 
@@ -50,20 +50,23 @@ void Probe_Reset(void)
 // and the probing cycle modes for toward-workpiece/away-from-workpiece.
 void Probe_ConfigureInvertMask(uint8_t is_probe_away)
 {
-	probe_invert_mask = 0; // Initialize as zero.
+    probe_invert_mask = 0; // Initialize as zero.
 
-	if(BIT_IS_FALSE(settings.flags, BITFLAG_INVERT_PROBE_PIN)) {
-		probe_invert_mask ^= 1;
-	}
-	if(is_probe_away) {
-		probe_invert_mask ^= 1;
-	}
+    if(BIT_IS_FALSE(settings.flags, BITFLAG_INVERT_PROBE_PIN))
+    {
+        probe_invert_mask ^= 1;
+    }
+    if(is_probe_away)
+    {
+        probe_invert_mask ^= 1;
+    }
 }
 
 
 // Returns the probe pin state. Triggered = true. Called by gcode parser and probe state monitor.
-uint8_t Probe_GetState(void) {
-	return (GPIO_ReadInputDataBit(GPIO_PROBE_PORT, GPIO_PROBE_PIN) ^ probe_invert_mask);
+uint8_t Probe_GetState(void)
+{
+    return (GPIO_ReadInputDataBit(GPIO_PROBE_PORT, GPIO_PROBE_PIN) ^ probe_invert_mask);
 }
 
 
@@ -72,9 +75,10 @@ uint8_t Probe_GetState(void) {
 // NOTE: This function must be extremely efficient as to not bog down the stepper ISR.
 void Probe_StateMonitor(void)
 {
-	if(Probe_GetState()) {
-		sys_probe_state = PROBE_OFF;
-		memcpy(sys_probe_position, sys_position, sizeof(sys_position));
-		BIT_TRUE(sys_rt_exec_state, EXEC_MOTION_CANCEL);
-	}
+    if(Probe_GetState())
+    {
+        sys_probe_state = PROBE_OFF;
+        memcpy(sys_probe_position, sys_position, sizeof(sys_position));
+        BIT_TRUE(sys_rt_exec_state, EXEC_MOTION_CANCEL);
+    }
 }

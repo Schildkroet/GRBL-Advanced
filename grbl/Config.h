@@ -4,7 +4,7 @@
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c)	2017-2020 Patrick F.
+  Copyright (c) 2017-2020 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 #define CONFIG_H
 
 
-#define GRBL_VERSION 		    "1.1"
-#define GRBL_VERSION_BUILD 	    __DATE__
+#define GRBL_VERSION            "1.1i"
+#define GRBL_VERSION_BUILD      __DATE__
 
 
 // Define CPU pin map and default settings.
@@ -38,10 +38,9 @@
 // If doing so, simply comment out these two defines and see instructions below.
 #define DEFAULTS_GENERIC
 
-
 // Serial baud rate
-#define BAUD_RATE	115200
-//#define BAUD_RATE	230400
+#define BAUD_RATE   115200
+//#define BAUD_RATE 230400
 
 
 // Uncomment to use external I2C EEPROM
@@ -57,12 +56,12 @@
 // used, if they are available per user setup. Also, extended ASCII codes (>127), which are never in
 // g-code programs, maybe selected for interface programs.
 // NOTE: If changed, manually update help message in report.c.
-#define CMD_RESET 				0x18 // ctrl-x.
-#define CMD_RESET_HARD			0x19 // ctrl-y.
-#define CMD_STATUS_REPORT 		'?'
-#define CMD_CYCLE_START 		'~'
-#define CMD_FEED_HOLD 			'!'
-#define CMD_STEPPER_DISABLE     0x17
+#define CMD_RESET                   0x18 // ctrl-x.
+#define CMD_RESET_HARD              0x19 // ctrl-y.
+#define CMD_STATUS_REPORT           '?'
+#define CMD_CYCLE_START             '~'
+#define CMD_FEED_HOLD               '!'
+#define CMD_STEPPER_DISABLE         0x17
 
 
 // NOTE: All override realtime commands must be in the extended ASCII character set, starting
@@ -73,32 +72,32 @@
 // #define CMD_STATUS_REPORT 0x81
 // #define CMD_CYCLE_START 0x82
 // #define CMD_FEED_HOLD 0x83
-#define CMD_SAFETY_DOOR 				0x84
-#define CMD_JOG_CANCEL  				0x85
-#define CMD_DEBUG_REPORT 				0x86	// Only when DEBUG enabled, sends debug report in '{}' braces.
-#define CMD_FEED_OVR_RESET 				0x90	// Restores feed override value to 100%.
-#define CMD_FEED_OVR_COARSE_PLUS 		0x91
-#define CMD_FEED_OVR_COARSE_MINUS 		0x92
-#define CMD_FEED_OVR_FINE_PLUS  		0x93
-#define CMD_FEED_OVR_FINE_MINUS  		0x94
-#define CMD_RAPID_OVR_RESET 			0x95	// Restores rapid override value to 100%.
-#define CMD_RAPID_OVR_MEDIUM 			0x96
-#define CMD_RAPID_OVR_LOW 				0x97
-//#define CMD_RAPID_OVR_EXTRA_LOW 		0x98 	// *NOT SUPPORTED*
-#define CMD_SPINDLE_OVR_RESET 			0x99	// Restores spindle override value to 100%.
-#define CMD_SPINDLE_OVR_COARSE_PLUS 	0x9A
-#define CMD_SPINDLE_OVR_COARSE_MINUS 	0x9B
-#define CMD_SPINDLE_OVR_FINE_PLUS 		0x9C
-#define CMD_SPINDLE_OVR_FINE_MINUS 		0x9D
-#define CMD_SPINDLE_OVR_STOP 0x9E
-#define CMD_COOLANT_FLOOD_OVR_TOGGLE 	0xA0
-#define CMD_COOLANT_MIST_OVR_TOGGLE 	0xA1
+#define CMD_SAFETY_DOOR                     0x84
+#define CMD_JOG_CANCEL                      0x85
+#define CMD_DEBUG_REPORT                    0x86    // Only when DEBUG enabled, sends debug report in '{}' braces.
+#define CMD_FEED_OVR_RESET                  0x90    // Restores feed override value to 100%.
+#define CMD_FEED_OVR_COARSE_PLUS            0x91
+#define CMD_FEED_OVR_COARSE_MINUS           0x92
+#define CMD_FEED_OVR_FINE_PLUS              0x93
+#define CMD_FEED_OVR_FINE_MINUS             0x94
+#define CMD_RAPID_OVR_RESET                 0x95    // Restores rapid override value to 100%.
+#define CMD_RAPID_OVR_MEDIUM                0x96
+#define CMD_RAPID_OVR_LOW                   0x97
+//#define CMD_RAPID_OVR_EXTRA_LOW           0x98    // *NOT SUPPORTED*
+#define CMD_SPINDLE_OVR_RESET               0x99    // Restores spindle override value to 100%.
+#define CMD_SPINDLE_OVR_COARSE_PLUS         0x9A
+#define CMD_SPINDLE_OVR_COARSE_MINUS        0x9B
+#define CMD_SPINDLE_OVR_FINE_PLUS           0x9C
+#define CMD_SPINDLE_OVR_FINE_MINUS          0x9D
+#define CMD_SPINDLE_OVR_STOP                0x9E
+#define CMD_COOLANT_FLOOD_OVR_TOGGLE        0xA0
+#define CMD_COOLANT_MIST_OVR_TOGGLE         0xA1
 
 
 // If homing is enabled, homing init lock sets Grbl into an alarm state upon power up. This forces
 // the user to perform the homing cycle (or override the locks) before doing anything else. This is
 // mainly a safety feature to remind the user to home, since position is unknown to Grbl.
-#define HOMING_INIT_LOCK	// Comment to disable
+#define HOMING_INIT_LOCK    // Comment to disable
 
 
 // Define the homing cycle patterns with bitmasks. The homing cycle first performs a search mode
@@ -116,21 +115,21 @@
 // on separate pin, but homed in one cycle. Also, it should be noted that the function of hard limits
 // will not be affected by pin sharing.
 // NOTE: Defaults are set for a traditional 3-axis CNC machine. Z-axis first to clear, followed by X & Y.
-#define HOMING_CYCLE_0 		    (1<<Z_AXIS)                // REQUIRED: First move Z to clear workspace.
-#define HOMING_CYCLE_1 		    ((1<<X_AXIS)|(1<<Y_AXIS))  // OPTIONAL: Then move X,Y at the same time.
+#define HOMING_CYCLE_0          (1<<Z_AXIS)                // REQUIRED: First move Z to clear workspace.
+#define HOMING_CYCLE_1          ((1<<X_AXIS)|(1<<Y_AXIS))  // OPTIONAL: Then move X,Y at the same time.
 // #define HOMING_CYCLE_2                         // OPTIONAL: Uncomment and add axes mask to enable
 
 // NOTE: The following are two examples to setup homing for 2-axis machines.
-//#define HOMING_CYCLE_0 	((1<<X_AXIS)|(1<<Y_AXIS))  // NOT COMPATIBLE WITH COREXY: Homes both X-Y in one cycle.
+//#define HOMING_CYCLE_0    ((1<<X_AXIS)|(1<<Y_AXIS))  // NOT COMPATIBLE WITH COREXY: Homes both X-Y in one cycle.
 
-//#define HOMING_CYCLE_0 	(1<<X_AXIS)  // COREXY COMPATIBLE: First home X
-//#define HOMING_CYCLE_1 	(1<<Y_AXIS)  // COREXY COMPATIBLE: Then home Y
+//#define HOMING_CYCLE_0    (1<<X_AXIS)  // COREXY COMPATIBLE: First home X
+//#define HOMING_CYCLE_1    (1<<Y_AXIS)  // COREXY COMPATIBLE: Then home Y
 
 
 // Number of homing cycles performed after when the machine initially jogs to limit switches.
 // This help in preventing overshoot and should improve repeatability. This value should be one or
 // greater.
-#define N_HOMING_LOCATE_CYCLE 	1 // Integer (1-128)
+#define N_HOMING_LOCATE_CYCLE       1 // Integer (1-128)
 
 
 // Enables single axis homing commands. $HX, $HY, and $HZ for X, Y, and Z-axis homing. The full homing
@@ -148,8 +147,8 @@
 // and addresses are defined in settings.h. With the current settings, up to 2 startup blocks may
 // be stored and executed in order. These startup blocks would typically be used to set the g-code
 // parser state depending on user preferences.
-#define N_STARTUP_LINE 		0 // Integer (1-2)
-#define STARTUP_LINE_LEN    80
+#define N_STARTUP_LINE          0 // Integer (1-2)
+#define STARTUP_LINE_LEN        80
 
 
 // Number of floating decimal points printed by Grbl for certain value types. These settings are
@@ -157,12 +156,12 @@
 // values cannot be less than 0.001mm or 0.0001in, because machines can not be physically more
 // precise this. So, there is likely no need to change these, but you can if you need to here.
 // NOTE: Must be an integer value from 0 to ~4. More than 4 may exhibit round-off errors.
-#define N_DECIMAL_COORDVALUE_INCH	4 // Coordinate or position value in inches
-#define N_DECIMAL_COORDVALUE_MM  	3 // Coordinate or position value in mm
-#define N_DECIMAL_RATEVALUE_INCH 	1 // Rate or velocity value in in/min
-#define N_DECIMAL_RATEVALUE_MM   	0 // Rate or velocity value in mm/min
-#define N_DECIMAL_SETTINGVALUE   	3 // Decimals for floating point setting values
-#define N_DECIMAL_RPMVALUE       	0 // RPM value in rotations per min.
+#define N_DECIMAL_COORDVALUE_INCH       4 // Coordinate or position value in inches
+#define N_DECIMAL_COORDVALUE_MM         3 // Coordinate or position value in mm
+#define N_DECIMAL_RATEVALUE_INCH        1 // Rate or velocity value in in/min
+#define N_DECIMAL_RATEVALUE_MM          0 // Rate or velocity value in mm/min
+#define N_DECIMAL_SETTINGVALUE          3 // Decimals for floating point setting values
+#define N_DECIMAL_RPMVALUE              0 // RPM value in rotations per min.
 
 
 // If your machine has two limits switches wired in parallel to one axis, you will need to enable
@@ -188,8 +187,8 @@
 
 // After the safety door switch has been toggled and restored, this setting sets the power-up delay
 // between restoring the spindle and coolant and resuming the cycle.
-#define SAFETY_DOOR_SPINDLE_DELAY	2.0 // Float (seconds)
-#define SAFETY_DOOR_COOLANT_DELAY	1.0 // Float (seconds)
+#define SAFETY_DOOR_SPINDLE_DELAY       2.0 // Float (seconds)
+#define SAFETY_DOOR_COOLANT_DELAY       1.0 // Float (seconds)
 
 
 // Enable CoreXY kinematics. Use ONLY with CoreXY machines.
@@ -208,7 +207,7 @@
 // will be applied to all of them. This is useful when a user has a mixed set of limit pins with both
 // normally-open(NO) and normally-closed(NC) switches installed on their machine.
 // NOTE: PLEASE DO NOT USE THIS, unless you have a situation that needs it.
-//#define INVERT_LIMIT_PIN_MASK	((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)) // Default disabled. Uncomment to enable.
+//#define INVERT_LIMIT_PIN_MASK ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)) // Default disabled. Uncomment to enable.
 
 
 // Inverts the spindle enable pin from low-disabled/high-enabled to low-enabled/high-disabled. Useful
@@ -247,22 +246,22 @@
 // Configure rapid, feed, and spindle override settings. These values define the max and min
 // allowable override values and the coarse and fine increments per command received. Please
 // note the allowable values in the descriptions following each define.
-#define DEFAULT_FEED_OVERRIDE           	100 // 100%. Don't change this value.
-#define MAX_FEED_RATE_OVERRIDE          	200 // Percent of programmed feed rate (100-255). Usually 120% or 200%
-#define MIN_FEED_RATE_OVERRIDE          	 10 // Percent of programmed feed rate (1-100). Usually 50% or 1%
-#define FEED_OVERRIDE_COARSE_INCREMENT  	 10 // (1-99). Usually 10%.
-#define FEED_OVERRIDE_FINE_INCREMENT    	  1 // (1-99). Usually 1%.
+#define DEFAULT_FEED_OVERRIDE                   100 // 100%. Don't change this value.
+#define MAX_FEED_RATE_OVERRIDE                  200 // Percent of programmed feed rate (100-255). Usually 120% or 200%
+#define MIN_FEED_RATE_OVERRIDE                  10 // Percent of programmed feed rate (1-100). Usually 50% or 1%
+#define FEED_OVERRIDE_COARSE_INCREMENT          10 // (1-99). Usually 10%.
+#define FEED_OVERRIDE_FINE_INCREMENT            1 // (1-99). Usually 1%.
 
-#define DEFAULT_RAPID_OVERRIDE  			100 // 100%. Don't change this value.
-#define RAPID_OVERRIDE_MEDIUM   			 50 // Percent of rapid (1-99). Usually 50%.
-#define RAPID_OVERRIDE_LOW      			 25 // Percent of rapid (1-99). Usually 25%.
-//#define RAPID_OVERRIDE_EXTRA_LOW 			5 // *NOT SUPPORTED* Percent of rapid (1-99). Usually 5%.
+#define DEFAULT_RAPID_OVERRIDE                  100 // 100%. Don't change this value.
+#define RAPID_OVERRIDE_MEDIUM                   50 // Percent of rapid (1-99). Usually 50%.
+#define RAPID_OVERRIDE_LOW                      25 // Percent of rapid (1-99). Usually 25%.
+//#define RAPID_OVERRIDE_EXTRA_LOW              5 // *NOT SUPPORTED* Percent of rapid (1-99). Usually 5%.
 
-#define DEFAULT_SPINDLE_SPEED_OVERRIDE    	100 // 100%. Don't change this value.
-#define MAX_SPINDLE_SPEED_OVERRIDE        	200 // Percent of programmed spindle speed (100-255). Usually 200%.
-#define MIN_SPINDLE_SPEED_OVERRIDE        	 10 // Percent of programmed spindle speed (1-100). Usually 10%.
-#define SPINDLE_OVERRIDE_COARSE_INCREMENT 	 10 // (1-99). Usually 10%.
-#define SPINDLE_OVERRIDE_FINE_INCREMENT   	  1 // (1-99). Usually 1%.
+#define DEFAULT_SPINDLE_SPEED_OVERRIDE          100 // 100%. Don't change this value.
+#define MAX_SPINDLE_SPEED_OVERRIDE              200 // Percent of programmed spindle speed (100-255). Usually 200%.
+#define MIN_SPINDLE_SPEED_OVERRIDE              10 // Percent of programmed spindle speed (1-100). Usually 10%.
+#define SPINDLE_OVERRIDE_COARSE_INCREMENT       10 // (1-99). Usually 10%.
+#define SPINDLE_OVERRIDE_FINE_INCREMENT         1 // (1-99). Usually 1%.
 
 
 // When a M2 or M30 program end command is executed, most g-code states are restored to their defaults.
@@ -294,10 +293,10 @@
 // refreshes more often when its not doing anything important. With a good GUI, this data doesn't need
 // to be refreshed very often, on the order of a several seconds.
 // NOTE: WCO refresh must be 2 or greater. OVR refresh must be 1 or greater.
-#define REPORT_OVR_REFRESH_BUSY_COUNT		20  // (1-255)
-#define REPORT_OVR_REFRESH_IDLE_COUNT		10  // (1-255) Must be less than or equal to the busy count
-#define REPORT_WCO_REFRESH_BUSY_COUNT		30  // (2-255)
-#define REPORT_WCO_REFRESH_IDLE_COUNT		10  // (2-255) Must be less than or equal to the busy count
+#define REPORT_OVR_REFRESH_BUSY_COUNT       20  // (1-255)
+#define REPORT_OVR_REFRESH_IDLE_COUNT       10  // (1-255) Must be less than or equal to the busy count
+#define REPORT_WCO_REFRESH_BUSY_COUNT       30  // (2-255)
+#define REPORT_WCO_REFRESH_IDLE_COUNT       10  // (2-255) Must be less than or equal to the busy count
 
 
 // The temporal resolution of the acceleration management subsystem. A higher number gives smoother
@@ -307,14 +306,14 @@
 // NOTE: Changing this value also changes the execution time of a segment in the step segment buffer.
 // When increasing this value, this stores less overall time in the segment buffer and vice versa. Make
 // certain the step segment buffer is increased/decreased to account for these changes.
-#define ACCELERATION_TICKS_PER_SECOND		210
+#define ACCELERATION_TICKS_PER_SECOND       210
 
 
 // Sets the maximum step rate allowed to be written as a Grbl setting. This option enables an error
 // check in the settings module to prevent settings values that will exceed this limitation. The maximum
 // step rate is strictly limited by the CPU speed and will change if something other than an AVR running
 // at 16MHz is used.
-#define MAX_STEP_RATE_HZ        120000 // Hz
+#define MAX_STEP_RATE_HZ            120000 // Hz
 
 
 // By default, Grbl sets all input pins to normal-high operation with their internal pull-up resistors
@@ -338,7 +337,7 @@
 // Sets which axis the tool length offset is applied. Assumes the spindle is always parallel with
 // the selected axis with the tool oriented toward the negative direction. In other words, a positive
 // tool length offset value is subtracted from the current location.
-#define TOOL_LENGTH_OFFSET_AXIS		Z_AXIS // Default z-axis. Valid values are X_AXIS, Y_AXIS, or Z_AXIS.
+#define TOOL_LENGTH_OFFSET_AXIS     Z_AXIS // Default z-axis. Valid values are X_AXIS, Y_AXIS, or Z_AXIS.
 
 
 // Enables variable spindle output voltage for different RPM values. On the Arduino Uno, the spindle
@@ -385,21 +384,21 @@
 // limits or angle between neighboring block line move directions. This is useful for machines that can't
 // tolerate the tool dwelling for a split second, i.e. 3d printers or laser cutters. If used, this value
 // should not be much greater than zero or to the minimum value necessary for the machine to work.
-#define MINIMUM_JUNCTION_SPEED		0.0 // (mm/min)
+#define MINIMUM_JUNCTION_SPEED      0.0 // (mm/min)
 
 
 // Sets the minimum feed rate the planner will allow. Any value below it will be set to this minimum
 // value. This also ensures that a planned motion always completes and accounts for any floating-point
 // round-off errors. Although not recommended, a lower value than 1.0 mm/min will likely work in smaller
 // machines, perhaps to 0.1mm/min, but your success may vary based on multiple factors.
-#define MINIMUM_FEED_RATE			1.0 // (mm/min)
+#define MINIMUM_FEED_RATE           1.0 // (mm/min)
 
 
 // Number of arc generation iterations by small angle approximation before exact arc trajectory
 // correction with expensive sin() and cos() calcualtions. This parameter maybe decreased if there
 // are issues with the accuracy of the arc generations, or increased if arc execution is getting
 // bogged down by too many trig calculations.
-#define N_ARC_CORRECTION			4 // Integer (1-255)
+#define N_ARC_CORRECTION            4 // Integer (1-255)
 
 
 // The arc G2/3 g-code standard is problematic by definition. Radius-based arcs have horrible numerical
@@ -410,7 +409,7 @@
 // This define value sets the machine epsilon cutoff to determine if the arc is a full-circle or not.
 // NOTE: Be very careful when adjusting this value. It should always be greater than 1.2e-7 but not too
 // much greater than this. The default setting should capture most, if not all, full arc error situations.
-#define ARC_ANGULAR_TRAVEL_EPSILON	5E-7 // Float (radians)
+#define ARC_ANGULAR_TRAVEL_EPSILON  5E-7 // Float (radians)
 
 
 // Time delay increments performed during a dwell. The default value is set at 50ms, which provides
@@ -418,7 +417,7 @@
 // this delay will increase the maximum dwell time linearly, but also reduces the responsiveness of
 // run-time command executions, like status reports, since these are performed between each dwell
 // time step. Also, keep in mind that the Arduino delay timer is not very accurate for long delays.
-#define DWELL_TIME_STEP				50 // Integer (1-255) (milliseconds)
+#define DWELL_TIME_STEP             50 // Integer (1-255) (milliseconds)
 
 
 // The number of linear motions in the planner buffer to be planned at any give time. The vast
@@ -426,7 +425,7 @@
 // available RAM, like when re-compiling for a Mega2560. Or decrease if the Arduino begins to
 // crash due to the lack of available RAM or if the CPU is having trouble keeping up with planning
 // new incoming motions as they are executed.
-#define BLOCK_BUFFER_SIZE			64 // Uncomment to override default in planner.h.
+#define BLOCK_BUFFER_SIZE           64 // Uncomment to override default in planner.h.
 
 
 // Governs the size of the intermediary step segment buffer between the step execution algorithm
@@ -435,7 +434,7 @@
 // block velocity profile is traced exactly. The size of this buffer governs how much step
 // execution lead time there is for other Grbl processes have to compute and do their thing
 // before having to come back and refill this buffer, currently at ~50msec of step moves.
-#define SEGMENT_BUFFER_SIZE			32 // Uncomment to override default in stepper.h.
+#define SEGMENT_BUFFER_SIZE         32 // Uncomment to override default in stepper.h.
 
 
 // Line buffer size from the serial input stream to be executed. Also, governs the size of
@@ -446,7 +445,7 @@
 // can be too small and g-code blocks can get truncated. Officially, the g-code standards
 // support up to 256 characters. In future versions, this default will be increased, when
 // we know how much extra memory space we can re-invest into this.
-#define LINE_BUFFER_SIZE			200  // Uncomment to override default in protocol.h
+#define LINE_BUFFER_SIZE            200  // Uncomment to override default in protocol.h
 
 
 // Serial send and receive buffer size. The receive buffer is often used as another streaming
@@ -459,8 +458,8 @@
 // 115200  will take 5 msec to transmit a typical 55 character report. Worst case reports are
 // around 90-100 characters. As long as the serial TX buffer doesn't get continually maxed, Grbl
 // will continue operating efficiently. Size the TX buffer around the size of a worst-case report.
-//#define RX_BUFFER_SIZE			128 // (1-254) Uncomment to override defaults in serial.h
-//#define TX_BUFFER_SIZE			100 // (1-254)
+//#define RX_BUFFER_SIZE            128 // (1-254) Uncomment to override defaults in serial.h
+//#define TX_BUFFER_SIZE            100 // (1-254)
 
 
 // Configures the position after a probing cycle during Grbl's check mode. Disabled sets
@@ -486,8 +485,8 @@
 // uses the homing pull-off distance setting times the LOCATE_SCALAR to pull-off and re-engage
 // the limit switch.
 // NOTE: Both of these values must be greater than 1.0 to ensure proper function.
-//#define HOMING_AXIS_SEARCH_SCALAR		1.5 // Uncomment to override defaults in limits.c.
-//#define HOMING_AXIS_LOCATE_SCALAR		10.0 // Uncomment to override defaults in limits.c.
+//#define HOMING_AXIS_SEARCH_SCALAR     1.5 // Uncomment to override defaults in limits.c.
+//#define HOMING_AXIS_LOCATE_SCALAR     10.0 // Uncomment to override defaults in limits.c.
 
 
 // Enable the '$RST=*', '$RST=$', and '$RST=#' eeprom restore commands. There are cases where
@@ -505,7 +504,7 @@
 // written into the Arduino EEPROM via a seperate .INO sketch to contain product data. Altering this
 // macro to not restore the build info EEPROM will ensure this data is retained after firmware upgrades.
 // NOTE: Uncomment to override defaults in settings.h
-//#define SETTINGS_RESTORE_ALL		(SETTINGS_RESTORE_DEFAULTS | SETTINGS_RESTORE_PARAMETERS | SETTINGS_RESTORE_STARTUP_LINES | SETTINGS_RESTORE_BUILD_INFO)
+//#define SETTINGS_RESTORE_ALL      (SETTINGS_RESTORE_DEFAULTS | SETTINGS_RESTORE_PARAMETERS | SETTINGS_RESTORE_STARTUP_LINES | SETTINGS_RESTORE_BUILD_INFO)
 
 
 // Enable the '$I=(string)' build info write command. If disabled, any existing build info data must
@@ -566,12 +565,12 @@
 
 
 // Configure options for the parking motion, if enabled.
-#define PARKING_AXIS				Z_AXIS	// Define which axis that performs the parking motion
-#define PARKING_TARGET				-5.0	// Parking axis target. In mm, as machine coordinate [-max_travel,0].
-#define PARKING_RATE				500.0	// Parking fast rate after pull-out in mm/min.
-#define PARKING_PULLOUT_RATE		100.0	// Pull-out/plunge slow feed rate in mm/min.
-#define PARKING_PULLOUT_INCREMENT	5.0		// Spindle pull-out and plunge distance in mm. Incremental distance.
-											// Must be positive value or equal to zero.
+#define PARKING_AXIS                    Z_AXIS  // Define which axis that performs the parking motion
+#define PARKING_TARGET                  -5.0    // Parking axis target. In mm, as machine coordinate [-max_travel,0].
+#define PARKING_RATE                    500.0   // Parking fast rate after pull-out in mm/min.
+#define PARKING_PULLOUT_RATE            100.0   // Pull-out/plunge slow feed rate in mm/min.
+#define PARKING_PULLOUT_INCREMENT       5.0     // Spindle pull-out and plunge distance in mm. Incremental distance.
+// Must be positive value or equal to zero.
 
 
 // Enables a special set of M-code commands that enables and disables the parking motion.

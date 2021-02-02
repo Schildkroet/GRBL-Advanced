@@ -10,7 +10,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 # Location of gcc-arm-none-eabi toolchain
-GCC_BASE	= 	/opt/gcc-arm-none-eabi-8-2018-q4-major/bin
+GCC_BASE	= 	/opt/gcc-arm-none-eabi-9-2020-q2-update/bin
 
 CC          =   ${GCC_BASE}/arm-none-eabi-gcc
 CXX         =   ${GCC_BASE}/arm-none-eabi-g++

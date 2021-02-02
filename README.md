@@ -1,6 +1,9 @@
 ![GitHub Logo](https://github.com/Schildkroet/GRBL-Advanced/blob/software/doc/en.nucleo-F4.jpg?raw=true)
 
 ***
+[![Build](https://github.com/Schildkroet/GRBL-Advanced/workflows/Build%20Binary/badge.svg)](https://github.com/Schildkroet/GRBL-Advanced/actions)
+
+***
 Grbl-Advanced is a no-compromise, high performance, low cost alternative for CNC milling. This version of Grbl-Advanced runs on a STM32F411 Nucleo Board.
 
 It accepts standards-compliant g-code and has been tested with the output of several CAM tools with no problems. Arcs, circles and helical motion are fully supported, as well as, all other primary g-code commands. Macro functions, variables, and most canned cycles are not supported, but we think GUIs can do a much better job at translating them into straight g-code anyhow.

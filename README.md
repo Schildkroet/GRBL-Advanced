@@ -29,6 +29,9 @@ Added Canned Drill Cycles G81-G83 as additional features.
 #### 5-Axis support
 Added experimental support for rotary axis (5-axis). They are roughly tested and may contain still errors. Use at own risk!
 
+#### Lathe mode
+G33 / G76 (Requires rotary encoder)
+
 #### Hard Reset
 0x19 (CTRL-Y): Perform a hard reset.
 

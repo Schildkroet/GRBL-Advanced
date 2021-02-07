@@ -254,14 +254,16 @@ typedef struct
     float feed_rate;                // Millimeters/min
     uint8_t tool;                   // Tracks tool number.
     int32_t line_number;            // Last line number sent
-    float spindle_limit;
+    float spindle_limit;            // Max RPM for G96
 
     float position[N_AXIS];         // Where the interpreter considers the tool to be at this point in the code
     float coord_system[N_AXIS];     // Current work coordinate system (G54+). Stores offset from absolute machine
+
     // position in mm. Loaded from EEPROM when called.
     float coord_offset[N_AXIS];     // Retains the G92 coordinate offset (work coordinates) relative to
+
     // machine zero in mm. Non-persistent. Cleared upon reset and boot.
-    float tool_length_offset;       // Tracks tool length offset value when enabled.
+    float tool_length_offset[N_AXIS];       // Tracks tool length offset value when enabled.
 } Parser_State_t;
 
 

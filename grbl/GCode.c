@@ -30,6 +30,7 @@
 #include "CoolantControl.h"
 #include "MotionControl.h"
 #include "Protocol.h"
+#include "SpindleControl.h"
 #include "util.h"
 #include "ToolChange.h"
 #include "GCode.h"
@@ -133,10 +134,10 @@ uint8_t GC_ExecuteLine(char *line)
     uint8_t char_counter = 0;
     char letter = 0;
     float value = 0.0;
-    uint8_t int_value = 0;
+    uint16_t int_value = 0;
     uint16_t mantissa = 0;
     float old_xyz[N_AXIS] = {0.0};
-    uint8_t change_tool = 0;
+    uint8_t change_tool = 0, update_tooltable = 0;
 
     memcpy(old_xyz, gc_state.position, N_AXIS*sizeof(float));
 
@@ -279,7 +280,7 @@ uint8_t GC_ExecuteLine(char *line)
                 if(settings.flags2 & BITFLAG_LATHE_MODE)
                 {
                     word_bit = MODAL_GROUP_G14;
-                    gc_state.modal.spindle_mode = SPINDLE_SURFACE_MODE;
+                    gc_block.modal.spindle_mode = SPINDLE_SURFACE_MODE;
                 }
                 else
                 {
@@ -292,7 +293,7 @@ uint8_t GC_ExecuteLine(char *line)
                 if(settings.flags2 & BITFLAG_LATHE_MODE)
                 {
                     word_bit = MODAL_GROUP_G14;
-                    gc_state.modal.spindle_mode = SPINDLE_RPM_MODE;
+                    gc_block.modal.spindle_mode = SPINDLE_RPM_MODE;
                 }
                 else
                 {
@@ -411,6 +412,11 @@ uint8_t GC_ExecuteLine(char *line)
                 }
                 else if(mantissa == 10) // G43.1
                 {
+                    gc_block.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
+                }
+                else if(mantissa < 0.001)   // G43
+                {
+                    update_tooltable = 1;
                     gc_block.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
                 }
                 else
@@ -582,7 +588,7 @@ uint8_t GC_ExecuteLine(char *line)
                 axis_words |= (1<<B_AXIS);
                 break;
 #endif
-                // case 'C': // Not supported
+            // case 'C': // Not supported
             case 'D':
                 word_bit = WORD_D;
                 gc_block.values.d = int_value;
@@ -826,7 +832,19 @@ uint8_t GC_ExecuteLine(char *line)
     // [5. Select tool ]: NOT SUPPORTED. Only tracks value. T is negative (done.) Not an integer. Greater than max tool value.
     // bit_false(value_words,bit(WORD_T)); // NOTE: Single-meaning value word. Set at end of error-checking.
 
-    // [6. Change tool ]: N/A
+    // [6. Change tool ]:
+    if(update_tooltable == 1)
+    {
+        if(BIT_IS_TRUE(value_words, BIT(WORD_H)))
+        {
+            if(gc_block.values.h >= MAX_TOOL_NR)
+            {
+                return STATUS_GCODE_MAX_VALUE_EXCEEDED;
+            }
+        }
+        BIT_FALSE(value_words, BIT(WORD_H));
+    }
+
     // [7. Spindle control ]:
     if(BIT_IS_TRUE(command_words, BIT(MODAL_GROUP_G14)) && (gc_block.modal.motion == SPINDLE_SURFACE_MODE))
     {
@@ -843,6 +861,11 @@ uint8_t GC_ExecuteLine(char *line)
             {
                 return STATUS_INVALID_STATEMENT;
             }
+        }
+        else
+        {
+            // Reset spindle limit if not specified (optional)
+            gc_block.values.d = 0;
         }
         BIT_FALSE(value_words, BIT(WORD_D));
     }
@@ -954,7 +977,7 @@ uint8_t GC_ExecuteLine(char *line)
     //   NOTE: Although not explicitly stated so, G43.1 should be applied to only one valid
     //   axis that is configured (in config.h). There should be an error if the configured axis
     //   is absent or if any of the other axis words are present.
-    if(axis_command == AXIS_COMMAND_TOOL_LENGTH_OFFSET )   // Indicates called in block.
+    if((axis_command == AXIS_COMMAND_TOOL_LENGTH_OFFSET) && (update_tooltable == 0))  // Indicates called in block.
     {
         if(gc_block.modal.tool_length == TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC)
         {
@@ -1071,9 +1094,9 @@ uint8_t GC_ExecuteLine(char *line)
                     // L20: Update coordinate system axis at current position (with modifiers) with programmed value
                     // WPos = MPos - WCS - G92 - TLO  ->  WCS = MPos - G92 - TLO - WPos
                     gc_block.values.ijk[idx] = gc_state.position[idx] - gc_state.coord_offset[idx] - gc_block.values.xyz[idx];
-                    if(idx == TOOL_LENGTH_OFFSET_AXIS)
+                    //if(idx == TOOL_LENGTH_OFFSET_AXIS)
                     {
-                        gc_block.values.ijk[idx] -= gc_state.tool_length_offset;
+                        gc_block.values.ijk[idx] -= gc_state.tool_length_offset[idx];
                     }
                 }
                 else
@@ -1101,9 +1124,9 @@ uint8_t GC_ExecuteLine(char *line)
             {
                 // WPos = MPos - WCS - G92 - TLO  ->  G92 = MPos - WCS - TLO - WPos
                 gc_block.values.xyz[idx] = gc_state.position[idx] - block_coord_system[idx] - gc_block.values.xyz[idx];
-                if(idx == TOOL_LENGTH_OFFSET_AXIS)
+                //if(idx == TOOL_LENGTH_OFFSET_AXIS)
                 {
-                    gc_block.values.xyz[idx] -= gc_state.tool_length_offset;
+                    gc_block.values.xyz[idx] -= gc_state.tool_length_offset[idx];
                 }
             }
             else
@@ -1138,9 +1161,9 @@ uint8_t GC_ExecuteLine(char *line)
                             if(gc_block.modal.distance == DISTANCE_MODE_ABSOLUTE)
                             {
                                 gc_block.values.xyz[idx] += block_coord_system[idx] + gc_state.coord_offset[idx];
-                                if(idx == TOOL_LENGTH_OFFSET_AXIS)
+                                //if(idx == TOOL_LENGTH_OFFSET_AXIS)
                                 {
-                                    gc_block.values.xyz[idx] += gc_state.tool_length_offset;
+                                    gc_block.values.xyz[idx] += gc_state.tool_length_offset[idx];
                                 }
                             }
                             else
@@ -1240,8 +1263,78 @@ uint8_t GC_ExecuteLine(char *line)
                 axis_command = AXIS_COMMAND_NONE;
             }
 
-            // All remaining motion modes (all but G0 and G80), require a valid feed rate value. In units per mm mode,
+            // All remaining motion modes (all but G0, G80, G33 and G76), require a valid feed rate value. In units per mm mode,
             // the value must be positive. In inverse time mode, a positive value must be passed with each block.
+        }
+        else if((gc_block.modal.motion == MOTION_MODE_SPINDLE_SYNC) || (gc_block.modal.motion == MOTION_MODE_THREADING))
+        {
+            switch(gc_block.modal.motion)
+            {
+            case MOTION_MODE_SPINDLE_SYNC:
+                if(BIT_IS_FALSE(value_words, BIT(WORD_K)))
+                {
+                    // [K word missing]
+                    return STATUS_GCODE_VALUE_WORD_MISSING;
+                }
+                BIT_FALSE(value_words, BIT(WORD_K));
+
+                if(BIT_IS_FALSE(value_words, (BIT(WORD_X) | BIT(WORD_Y) | BIT(WORD_Z))))
+                {
+                    // [axis word missing]
+                    return STATUS_GCODE_NO_AXIS_WORDS;
+                }
+
+                break;
+
+            case MOTION_MODE_THREADING:
+                if(BIT_IS_FALSE(value_words, BIT(WORD_P)))
+                {
+                    // [P word missing]
+                    return STATUS_GCODE_VALUE_WORD_MISSING;
+                }
+                BIT_FALSE(value_words, BIT(WORD_P));
+
+                if(BIT_IS_FALSE(value_words, BIT(WORD_Z)))
+                {
+                    // [axis word missing]
+                    return STATUS_GCODE_NO_AXIS_WORDS;
+                }
+
+                if(BIT_IS_FALSE(value_words, (BIT(WORD_I) | BIT(WORD_J) | BIT(WORD_K))))
+                {
+                    // [IJK word missing]
+                    return STATUS_GCODE_VALUE_WORD_MISSING;
+                }
+                BIT_FALSE(value_words, (BIT(WORD_I) | BIT(WORD_J) | BIT(WORD_K)));
+
+                // [Optional]
+                if(BIT_IS_TRUE(value_words, BIT(WORD_R)))
+                {
+                    if(gc_block.values.r < 1.0)
+                    {
+                        return STATUS_BAD_NUMBER_FORMAT;
+                    }
+                }
+
+                if(BIT_IS_TRUE(value_words, BIT(WORD_L)))
+                {
+                    if(gc_block.values.l > 3)
+                    {
+                        return STATUS_BAD_NUMBER_FORMAT;
+                    }
+                }
+
+                if(BIT_IS_TRUE(value_words, BIT(WORD_Q)))
+                {
+                    if(gc_block.values.q < 0.0 || gc_block.values.q > 80)
+                    {
+                        return STATUS_BAD_NUMBER_FORMAT;
+                    }
+                }
+
+                BIT_FALSE(value_words, (BIT(WORD_R) | BIT(WORD_Q) | BIT(WORD_H) | BIT(WORD_E) | BIT(WORD_L)));
+                break;
+            }
         }
         else
         {
@@ -1484,63 +1577,6 @@ uint8_t GC_ExecuteLine(char *line)
                 }
                 BIT_FALSE(value_words, BIT(WORD_L));
                 break;
-
-            case MOTION_MODE_SPINDLE_SYNC:
-                if(BIT_IS_FALSE(value_words, BIT(WORD_K)))
-                {
-                    // [K word missing]
-                    return STATUS_GCODE_VALUE_WORD_MISSING;
-                }
-                BIT_FALSE(value_words, BIT(WORD_K));
-
-                if(BIT_IS_FALSE(value_words, (BIT(WORD_X) | BIT(WORD_Y) | BIT(WORD_Z))))
-                {
-                    // [axis word missing]
-                    return STATUS_GCODE_NO_AXIS_WORDS;
-                }
-
-                break;
-
-            case MOTION_MODE_THREADING:
-                if(BIT_IS_FALSE(value_words, BIT(WORD_P)))
-                {
-                    // [P word missing]
-                    return STATUS_GCODE_VALUE_WORD_MISSING;
-                }
-                BIT_FALSE(value_words, BIT(WORD_P));
-
-                if(BIT_IS_FALSE(value_words, BIT(WORD_Z)))
-                {
-                    // [axis word missing]
-                    return STATUS_GCODE_NO_AXIS_WORDS;
-                }
-
-                if(BIT_IS_FALSE(value_words, (BIT(WORD_I) | BIT(WORD_J) | BIT(WORD_K))))
-                {
-                    // [IJK word missing]
-                    return STATUS_GCODE_VALUE_WORD_MISSING;
-                }
-                BIT_FALSE(value_words, (BIT(WORD_I) | BIT(WORD_J) | BIT(WORD_K)));
-
-                // [Optional]
-                if(BIT_IS_TRUE(value_words, BIT(WORD_R)))
-                {
-                    if(gc_block.values.r < 1.0)
-                    {
-                        return STATUS_BAD_NUMBER_FORMAT;
-                    }
-                }
-
-                if(BIT_IS_TRUE(value_words, BIT(WORD_L)))
-                {
-                    if(gc_block.values.l > 3)
-                    {
-                        return STATUS_BAD_NUMBER_FORMAT;
-                    }
-                }
-
-                BIT_FALSE(value_words, (BIT(WORD_R) | BIT(WORD_Q) | BIT(WORD_H) | BIT(WORD_E) | BIT(WORD_L)));
-                break;
             }
         }
     }
@@ -1584,7 +1620,7 @@ uint8_t GC_ExecuteLine(char *line)
 
     if((settings.flags2 & BITFLAG_LATHE_MODE) && gc_block.modal.lathe_mode == LATHE_DIAMETER_MODE)
     {
-        gc_block.values.xyz[X_AXIS] /= 2;
+        gc_block.values.xyz[X_AXIS] /= 2.0;
     }
 
     // Intercept jog commands and complete error checking for valid jog commands and execute.
@@ -1678,7 +1714,7 @@ uint8_t GC_ExecuteLine(char *line)
     pl_data->feed_rate = gc_state.feed_rate; // Record data for planner use.
 
     // [4. Set spindle speed ]:
-    if((gc_state.spindle_speed != gc_block.values.s) || BIT_IS_TRUE(gc_parser_flags,GC_PARSER_LASER_FORCE_SYNC))
+    if((gc_block.modal.spindle_mode == SPINDLE_RPM_MODE) && ((gc_state.spindle_speed != gc_block.values.s) || BIT_IS_TRUE(gc_parser_flags,GC_PARSER_LASER_FORCE_SYNC)))
     {
         if(gc_state.modal.spindle != SPINDLE_DISABLE)
         {
@@ -1696,6 +1732,19 @@ uint8_t GC_ExecuteLine(char *line)
         }
 
         gc_state.spindle_speed = gc_block.values.s; // Update spindle speed state.
+        gc_state.modal.spindle_mode = SPINDLE_RPM_MODE;
+        gc_state.spindle_limit = 0;
+    }
+    else if(gc_block.modal.spindle_mode == SPINDLE_SURFACE_MODE)
+    {
+        // Set spindle max rpm for G96
+        gc_state.spindle_limit = gc_block.values.d;
+
+        // Set surface speed
+        gc_state.spindle_speed = gc_block.values.s;
+
+        // Set mode
+        gc_state.modal.spindle_mode = SPINDLE_SURFACE_MODE;
     }
 
     // NOTE: Pass zero spindle speed for all restricted laser motions.
@@ -1705,10 +1754,10 @@ uint8_t GC_ExecuteLine(char *line)
     }
     // else { pl_data->spindle_speed = 0.0; } // Initialized as zero already.
 
-    // [5. Select tool ]: NOT SUPPORTED. Only tracks tool value.
+    // [5. Select tool ]: Only tracks tool value.
     gc_state.tool = gc_block.values.t;
 
-    // [6. Change tool ]:
+    // [6. Change tool ]: M6
     if(change_tool && (settings.tool_change > 0))
     {
         if(sys.is_homed)
@@ -1778,11 +1827,16 @@ uint8_t GC_ExecuteLine(char *line)
         {
             gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS] = 0.0;
         }
-        // else G43.1
-        if(gc_state.tool_length_offset != gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS])
+        // G43.1
+        if((update_tooltable == 0) && gc_state.tool_length_offset[TOOL_LENGTH_OFFSET_AXIS] != gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS])
         {
-            gc_state.tool_length_offset = gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS];
+            gc_state.tool_length_offset[TOOL_LENGTH_OFFSET_AXIS] = gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS];
             System_FlagWcoChange();
+        }
+        // G43
+        if(update_tooltable == 1)
+        {
+            TC_ApplyToolOffset();
         }
     }
 
@@ -1890,7 +1944,7 @@ uint8_t GC_ExecuteLine(char *line)
                 }
                 else
                 {
-                    clear_z += gc_state.tool_length_offset;
+                    clear_z += gc_state.tool_length_offset[TOOL_LENGTH_OFFSET_AXIS];
                 }
 
                 if(clear_z < gc_block.values.xyz[Z_AXIS])
@@ -2006,11 +2060,179 @@ uint8_t GC_ExecuteLine(char *line)
             }
             else if(gc_state.modal.motion == MOTION_MODE_SPINDLE_SYNC)
             {
+                // Perform a small move towards target to trigger backlash compensation, because it could affect synchronized motion
+                old_xyz[Z_AXIS] -= 0.001;
+                MC_Line(old_xyz, pl_data);
 
+                // Wait till everything is finished
+                Protocol_BufferSynchronize();
+
+                // Get current RPM
+                uint16_t rpm = Spindle_GetRPM();
+                pl_data->spindle_speed = rpm;
+                if(rpm > 0)
+                {
+                    // Calculate feed rate depending on current RPM along Z-axis
+                    pl_data->feed_rate = rpm * gc_block.values.ijk[Z_AXIS];
+
+                    if(!isEqual_f(gc_block.values.xyz[X_AXIS], old_xyz[X_AXIS]))
+                    {
+                        // Also movement in X-axis
+                        float f = sqrt(pow(gc_block.values.xyz[X_AXIS], 2.0) + pow(gc_block.values.ijk[Z_AXIS], 2.0));
+
+                        pl_data->feed_rate *= f;
+                    }
+                }
+                else
+                {
+                    // Spindle not moving
+                    return STATUS_IDLE_ERROR;
+                }
+
+                // Sync move
+                MC_LineSync(gc_block.values.xyz, pl_data, gc_block.values.ijk[Z_AXIS]);
             }
             else if(gc_state.modal.motion == MOTION_MODE_THREADING)
             {
+                float pitch = gc_block.values.p;
+                float peak = gc_block.values.ijk[X_AXIS];
+                float doc = gc_block.values.ijk[Y_AXIS];
+                float final_depth = gc_block.values.ijk[Z_AXIS];
+                float regression = min(gc_block.values.r, 6.0);
+                uint8_t spring_passes = gc_block.values.h;
+                float angle = gc_block.values.q;
+                //float taper_dist = gc_block.values.e;
+                //uint8_t taper_type = gc_block.values.l;
 
+                float cur_xyz[N_AXIS];
+                memcpy(cur_xyz, old_xyz, sizeof(cur_xyz));
+
+                float next_doc = 0.0;
+                uint8_t leave = 0;
+                uint16_t idx = 0;
+
+                // Calculate z offset for angled slide compensation
+                float z_offset = doc * tan(angle*M_PI/180.0);
+
+
+                // Wait till everything is finished
+                Protocol_BufferSynchronize();
+
+                // Get current RPM
+                uint16_t rpm = Spindle_GetRPM();
+                pl_data->spindle_speed = rpm;
+                if(rpm > 0)
+                {
+                    // Calculate feed rate depending on current RPM along Z-axis
+                    pl_data->feed_rate = rpm * pitch;
+
+                    if(!isEqual_f(gc_block.values.xyz[X_AXIS], old_xyz[X_AXIS]))
+                    {
+                        // Also movement in X-axis
+                        float f = sqrt(pow(gc_block.values.xyz[X_AXIS], 2.0) + pow(pitch, 2.0));
+
+                        pl_data->feed_rate *= f;
+                    }
+                }
+                else
+                {
+                    // Spindle not moving
+                    return STATUS_IDLE_ERROR;
+                }
+
+                while((leave == 0) || (spring_passes != 0))
+                {
+                    if(leave == 0)
+                    {
+                        idx++;
+                    }
+
+                    if((leave == 1) && (spring_passes > 0))
+                    {
+                        // Thread cutting done, only spring passes left
+                        spring_passes--;
+                    }
+
+                    // Perform a small move towards target to trigger backlash compensation, because it could affect synchronized motion
+                    old_xyz[Z_AXIS] -= 0.001;
+                    if(leave == 0)
+                    {
+                        // Add Z offset
+                        old_xyz[Z_AXIS] -= z_offset;
+                    }
+                    MC_Line(old_xyz, pl_data);
+                    old_xyz[Z_AXIS] += 0.001;
+
+                    // Rapid from drive line to depth of cut
+                    pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
+                    if(peak < 0.0)
+                    {
+                        // External thread
+                        cur_xyz[X_AXIS] = old_xyz[X_AXIS] + peak - doc - next_doc;
+                        if(cur_xyz[X_AXIS] <= (old_xyz[X_AXIS] + peak - final_depth))
+                        {
+                            // Limit to final depth
+                            cur_xyz[X_AXIS] = old_xyz[X_AXIS] + peak - final_depth;
+                            leave = 1;
+                        }
+                    }
+                    else if(peak > 0.0)
+                    {
+                        // Internal thread
+                        cur_xyz[X_AXIS] = old_xyz[X_AXIS] + peak + doc + next_doc;
+                        if(cur_xyz[X_AXIS] <= (old_xyz[X_AXIS] + peak + final_depth))
+                        {
+                            // Limit to final depth
+                            cur_xyz[X_AXIS] = old_xyz[X_AXIS] + peak + final_depth;
+                            leave = 1;
+                        }
+                    }
+                    else
+                    {
+                        // peak is zero
+                        return STATUS_BAD_NUMBER_FORMAT;
+                    }
+                    MC_Line(cur_xyz, pl_data);
+
+                    // Handle entry taper
+                    // ToDo
+
+                    Protocol_BufferSynchronize();
+
+                    // Actual synced move
+                    cur_xyz[Z_AXIS] = gc_block.values.xyz[Z_AXIS] - z_offset*(idx-1);
+                    pl_data->condition &= ~PL_COND_FLAG_RAPID_MOTION;
+                    // Sync move
+                    MC_LineSync(cur_xyz, pl_data, pitch);
+
+                    // Handle exit taper
+                    // ToDo
+
+                    // Rapid out to drive line
+                    pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
+                    cur_xyz[X_AXIS] = old_xyz[X_AXIS];
+                    MC_Line(cur_xyz, pl_data);
+
+                    // Cycle ends at end of drive line
+                    if(leave == 0 || spring_passes != 0)
+                    {
+                        //Move back to start of drive line
+                        MC_Line(old_xyz, pl_data);
+                        cur_xyz[Z_AXIS] = old_xyz[Z_AXIS];
+                    }
+
+                    // Calculate DOC of next move
+                    if(regression <= 1.0001)
+                    {
+                        // No regression defined
+                        next_doc += doc;
+                    }
+                    else
+                    {
+                        // ToDo
+                        next_doc += (1/idx) * doc;
+                    }
+                }
             }
             else
             {

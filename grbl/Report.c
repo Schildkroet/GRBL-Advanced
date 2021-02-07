@@ -57,7 +57,7 @@ static void Report_LineFeed(void)
 {
     Putc('\r');
     Putc('\n');
-    Print_Flush();
+    Printf_Flush();
 }
 
 
@@ -112,7 +112,7 @@ static void report_util_uint8_setting(uint8_t n, int val)
 static void report_util_float_setting(uint8_t n, float val, uint8_t n_decimal)
 {
     Report_SettingPrefix(n);
-    PrintFloat(val, n_decimal);
+    Printf_Float(val, n_decimal);
     Report_LineFeed(); // report_util_setting_string(n);
 }
 
@@ -129,13 +129,13 @@ void Report_StatusMessage(uint8_t status_code)
     {
     case STATUS_OK: // STATUS_OK
         Printf("ok\r\n");
-        Print_Flush();
+        Printf_Flush();
         break;
 
     default:
         Printf("error:");
         Printf("%d\r\n", status_code);
-        Print_Flush();
+        Printf_Flush();
     }
 }
 
@@ -220,7 +220,7 @@ void Report_InitMessage(void)
 {
     //Printf("\r\nGRBL-Advanced %s ['$' for help]\r\n", GRBL_VERSION);
     Printf("\r\nGrbl %s [Advanced Edition | '$' for help]\r\n", GRBL_VERSION);
-    Print_Flush();
+    Printf_Flush();
 }
 
 
@@ -229,7 +229,7 @@ void Report_GrblHelp(void)
 {
     Printf("[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $SLP $C $X $H ~ ! ? ctrl-x]\r\n");
     Printf("[GRBL-Advanced by Schildkroet]\r\n");
-    Print_Flush();
+    Printf_Flush();
 }
 
 
@@ -303,7 +303,7 @@ void Report_GrblSettings(void)
 
         val += AXIS_SETTINGS_INCREMENT;
     }
-    Print_Flush();
+    Printf_Flush();
 }
 
 
@@ -408,12 +408,19 @@ void Report_NgcParams(void)
     Report_AxisValue(gc_state.coord_offset);
     report_util_feedback_line_feed();
     Printf("[TLO:");        // Print tool length offset value
-    PrintFloat_CoordValue(gc_state.tool_length_offset);
+    for(uint8_t idx = 0; idx < N_AXIS; idx++)
+    {
+        PrintFloat_CoordValue(gc_state.tool_length_offset[idx]);
+        if(idx < (N_AXIS-1))
+        {
+            Printf(",");
+        }
+    }
     report_util_feedback_line_feed();
     Report_ProbeParams();   // Print probe parameters. Not persistent in memory.
     Report_TLSParams();     // Print tls position. Persistent in memory.
 
-    Print_Flush();
+    Printf_Flush();
 }
 
 
@@ -535,7 +542,7 @@ void Report_GCodeModes(void)
     PrintFloat_RateValue(gc_state.feed_rate);
 
     Printf(" S");
-    PrintFloat(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
+    Printf_Float(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
 
     report_util_feedback_line_feed();
 }
@@ -629,6 +636,9 @@ void Report_BuildInfo(char *line)
 #endif
 #ifdef USE_MULTI_AXIS
     Putc('A');
+#endif
+#ifdef LATHE_MODE
+    Putc('D');
 #endif
 
     // NOTE: Compiled values, like override increments/max/min values, may be added at some point later.
@@ -751,15 +761,12 @@ void Report_RealtimeStatus(void)
     float wco[N_AXIS];
     if(BIT_IS_FALSE(settings.status_report_mask,BITFLAG_RT_STATUS_POSITION_TYPE) || (sys.report_wco_counter == 0) )
     {
-        for (idx = 0; idx <  N_AXIS; idx++)
+        for (idx = 0; idx < N_AXIS; idx++)
         {
             // Apply work coordinate offsets and tool length offset to current position.
             wco[idx] = gc_state.coord_system[idx]+gc_state.coord_offset[idx];
 
-            if(idx == TOOL_LENGTH_OFFSET_AXIS)
-            {
-                wco[idx] += gc_state.tool_length_offset;
-            }
+            wco[idx] += gc_state.tool_length_offset[idx];
 
             if(BIT_IS_FALSE(settings.status_report_mask, BITFLAG_RT_STATUS_POSITION_TYPE))
             {
@@ -811,7 +818,7 @@ void Report_RealtimeStatus(void)
     Printf("|FS:");
     PrintFloat_RateValue(Stepper_GetRealtimeRate());
     Putc(',');
-    PrintFloat(sys.spindle_speed, N_DECIMAL_RPMVALUE);
+    Printf_Float(sys.spindle_speed, N_DECIMAL_RPMVALUE);
 #endif
 
 #ifdef REPORT_FIELD_PIN_STATE

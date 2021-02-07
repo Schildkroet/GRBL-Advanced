@@ -46,6 +46,12 @@ void MC_SyncBacklashPosition(void);
 // (1 minute)/feed_rate time.
 void MC_Line(float *target, Planner_LineData_t *pl_data);
 
+void MC_LineSync(float *target, Planner_LineData_t *pl_data, float pitch);
+
+void MC_LineSyncStart(void);
+
+void MC_UpdateSyncMove(void);
+
 // Execute an arc in offset mode format. position == current xyz, target == target xyz,
 // offset == offset from current xyz, axis_XXX defines circle plane in tool space, axis_linear is
 // the direction of helical travel, radius == circle radius, is_clockwise_arc boolean. Used

@@ -30,7 +30,10 @@ extern "C" {
 void TIM1_Init(void);
 void TIM2_Init(void);
 void TIM3_Init(void);
+void TIM4_Init(uint16_t autoreload);
 void TIM9_Init(void);
+
+uint16_t TIM4_CNT(void);
 
 
 #ifdef __cplusplus

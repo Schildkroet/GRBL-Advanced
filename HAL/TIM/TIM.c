@@ -121,10 +121,71 @@ void TIM3_Init(void)
     TIM_ICInit(TIM3, &TIM_ICInitStructure);
 
     /* Enable the CC2 Interrupt Request */
+    TIM_ClearFlag(TIM3, TIM_FLAG_CC4);
     TIM_ITConfig(TIM3, TIM_IT_CC4, ENABLE);
 
     /* TIM enable counter */
     TIM_Cmd(TIM3, ENABLE);
+}
+
+
+/**
+ * Timer 4
+ * Used for Encoder
+ **/
+void TIM4_Init(uint16_t autoreload)
+{
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	TIM_ICInitTypeDef TIM_ICInitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_TIM4);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_TIM4);
+
+	TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
+    TIM_TimeBaseStructure.TIM_Prescaler = 0x03;
+    TIM_TimeBaseStructure.TIM_Period = autoreload-1;   // Set counter auto reload value
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;     // Select clock division: no division
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; // TIM counts up
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+
+	TIM_EncoderInterfaceConfig(TIM4, TIM_EncoderMode_TI1, TIM_ICPolarity_Falling, TIM_ICPolarity_Falling);
+	TIM_ICStructInit(&TIM_ICInitStructure);
+	TIM_ICInitStructure.TIM_ICFilter = 8;
+	TIM_ICInitStructure.TIM_Channel = TIM_Channel_1;
+	TIM_ICInit(TIM4, &TIM_ICInitStructure);
+
+	/* Enable the TIM4 global Interrupt */
+	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	TIM_ClearFlag(TIM4, TIM_FLAG_Update);
+	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+
+	//Reset counter
+	TIM_SetCounter(TIM4, 0);
+	TIM_Cmd(TIM4, ENABLE);
+}
+
+
+inline uint16_t TIM4_CNT(void)
+{
+    return TIM4->CNT;
 }
 
 

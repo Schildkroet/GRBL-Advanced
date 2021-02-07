@@ -36,10 +36,14 @@
 #include "Settings.h"
 #include "Config.h"
 #include "MotionControl.h"
+#include "Encoder.h"
 #include "Platform.h"
+#include "TIM.h"
+#include <stdbool.h>
 
 
-#define TIM3_RESET_VALUE        300
+#define RPM_FILTER_NUM      3
+
 
 /** @addtogroup Template_Project
   * @{
@@ -61,13 +65,11 @@ extern void System_PinChangeISR(void);
 // Counter for milliseconds
 static volatile uint32_t gMillis = 0;
 
-// TIM3
-uint16_t uhIC3ReadValue1 = 0;
-uint16_t uhIC3ReadValue2 = 0;
-uint16_t uhCaptureNumber = 0;
-uint32_t uwCapture = 0;
-uint32_t uwTIM3Freq = 0;
-uint16_t TIM3_ResetCnt = TIM3_RESET_VALUE;
+uint32_t spindle_rpm = 0;
+uint16_t tim4_cnt_prev = 0;
+uint32_t rpm_arr[RPM_FILTER_NUM] = {0};
+uint8_t rpm_idx = 0;
+
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
@@ -241,35 +243,76 @@ void SysTick_Handler(void)
 	 * enough for critical events. Debouncing pins is also implemented here.
 	 */
 	uint8_t limits = Limits_GetState();
-	if(limits) {
+	if(limits)
+    {
 		// X-Y-Z Limit
-		if((DebounceCounterLimits == 0) && settings.system_flags & BITFLAG_ENABLE_LIMITS) {
+		if((DebounceCounterLimits == 0) && (settings.system_flags & BITFLAG_ENABLE_LIMITS))
+        {
 			DebounceCounterLimits = 20;
 			Limit_PinChangeISR();
 		}
 	}
 
 	uint8_t controls = System_GetControlState();
-	if(controls) {
+	if(controls)
+    {
 		// System control
-		if(DebounceCounterControl == 0) {
+		if(DebounceCounterControl == 0)
+        {
 			DebounceCounterControl = 20;
 			System_PinChangeISR();
 		}
 	}
 
-	if(DebounceCounterLimits && !limits) {
+	if(DebounceCounterLimits && !limits)
+    {
 		DebounceCounterLimits--;
 	}
-	if(DebounceCounterControl && !controls) {
+	if(DebounceCounterControl && !controls)
+    {
 		DebounceCounterControl--;
 	}
 
 	gMillis++;
 
-	if(--TIM3_ResetCnt == 0)
+  if(gMillis%16 == 0)
+  {
+    // Update sync motion
+    MC_UpdateSyncMove();
+  }
+
+	if(gMillis%25 == 0)
     {
-        uwTIM3Freq = 0;
+        // 25ms Task (min 7 RPM)
+        uint16_t cnt = (uint16_t)Encoder_GetValue();
+        uint32_t cnt_diff = 0;
+
+        // Calculate ticks since last event
+        if(cnt < tim4_cnt_prev)
+        {
+            // Ovf
+            cnt_diff = (0xFFFF - tim4_cnt_prev) + cnt;
+        }
+        else
+        {
+            cnt_diff = cnt - tim4_cnt_prev;
+        }
+
+        // Calculate RPM and smooth it
+        float rpm = ((cnt_diff * 40.0) / PULSES_PER_REV) * 60.0;
+        rpm_arr[rpm_idx++] = (uint32_t)rpm;
+        if(rpm_idx > (RPM_FILTER_NUM-1))
+        {
+            rpm_idx = 0;
+        }
+
+        // Assign smoothed RPM
+        spindle_rpm = (rpm_arr[0] + rpm_arr[1] + rpm_arr[2]) / RPM_FILTER_NUM;
+
+        tim4_cnt_prev = cnt;
+
+        // Update sync motion
+        //MC_UpdateSyncMove();
     }
 }
 
@@ -289,13 +332,15 @@ void SysTick_Handler(void)
 void TIM1_BRK_TIM9_IRQHandler(void)
 {
 	/* TIM9_CH1 */
-	if(TIM_GetITStatus(TIM9, TIM_IT_CC1) != RESET) {
+	if(TIM_GetITStatus(TIM9, TIM_IT_CC1) != RESET)
+    {
 		// OC
 		Stepper_MainISR();
 
 		TIM_ClearITPendingBit(TIM9, TIM_IT_CC1);
 	}
-	else if(TIM_GetITStatus(TIM9, TIM_IT_Update) != RESET) {
+	else if(TIM_GetITStatus(TIM9, TIM_IT_Update) != RESET)
+    {
 		// OVF
 		Stepper_PortResetISR();
 
@@ -310,38 +355,25 @@ void TIM3_IRQHandler(void)
     {
         /* Clear TIM3 Capture compare interrupt pending bit */
         TIM_ClearITPendingBit(TIM3, TIM_IT_CC4);
-        if(uhCaptureNumber == 0)
-        {
-            /* Get the Input Capture value */
-            uhIC3ReadValue1 = TIM_GetCapture4(TIM3);
-            uhCaptureNumber = 1;
-        }
-        else if(uhCaptureNumber == 1)
-        {
-            /* Get the Input Capture value */
-            uhIC3ReadValue2 = TIM_GetCapture4(TIM3);
-
-            /* Capture computation */
-            if (uhIC3ReadValue2 > uhIC3ReadValue1)
-            {
-                uwCapture = (uhIC3ReadValue2 - uhIC3ReadValue1);
-            }
-            else if (uhIC3ReadValue2 < uhIC3ReadValue1)
-            {
-                uwCapture = ((0xFFFF - uhIC3ReadValue1) + uhIC3ReadValue2);
-            }
-            else
-            {
-                uwCapture = 0;
-            }
-
-            /* Frequency computation */
-            uwTIM3Freq = (uint32_t) SystemCoreClock / uwCapture;
-            uhCaptureNumber = 0;
-        }
-
-        TIM3_ResetCnt = TIM3_RESET_VALUE;
     }
+}
+
+
+void TIM4_IRQHandler(void)
+{
+    if(TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
+    {
+		// OVF
+		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+
+		Encoder_OvfISR();
+
+        // Spindle at zero position
+        if(sys.sync_move && sys.state == STATE_HOLD)
+        {
+            MC_LineSyncStart();
+        }
+	}
 }
 
 

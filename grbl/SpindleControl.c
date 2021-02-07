@@ -27,13 +27,14 @@
 #include "GCode.h"
 #include "SpindleControl.h"
 #include "Config.h"
+#include "Encoder.h"
 
 
 static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversions.
 static uint8_t spindle_enabled = 0;
 static uint8_t spindle_dir_cw = 1;
 
-extern uint32_t uwTIM3Freq;
+extern uint32_t spindle_rpm;
 
 
 void Spindle_Init(void)
@@ -43,6 +44,10 @@ void Spindle_Init(void)
     GPIO_InitGPIO(GPIO_SPINDLE);
 
     TIM1_Init();
+    //TIM3_Init();
+#if defined(LATHE_MODE)
+    Encoder_Init();
+#endif
 
     pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
     spindle_dir_cw = 1;
@@ -122,10 +127,9 @@ void Spindle_SetSpeed(uint8_t pwm_value)
 }
 
 
-uint16_t Spindle_GetRPM(void)
+uint32_t Spindle_GetRPM(void)
 {
-    // 4 impulses per revolution
-    return (uint16_t)(uwTIM3Freq / 4);
+    return spindle_rpm;
 }
 
 
@@ -233,3 +237,27 @@ void Spindle_Sync(uint8_t state, float rpm)
     Spindle_SetState(state, rpm);
 }
 
+
+void Spindle_SetSurfaceSpeed(float x_pos)
+{
+    if(isEqual_f(x_pos, 0.0))
+    {
+        x_pos = 0.5;
+    }
+    float u = (fabs(x_pos) * 2) * M_PI;
+    float rpm = gc_state.spindle_speed / (u / 1000);
+
+    // Limit Max RPM
+    if(gc_state.spindle_limit > 0)
+    {
+        rpm = min(rpm, gc_state.spindle_limit);
+    }
+    sys.spindle_speed = rpm;
+
+    if(sys.state == STATE_CHECK_MODE)
+    {
+        return;
+    }
+
+    Spindle_SetSpeed(Spindle_ComputePwmValue(rpm));
+}

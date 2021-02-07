@@ -26,6 +26,7 @@
 #include "GCode.h"
 #include "Probe.h"
 #include "Limits.h"
+#include "System32.h"
 #include "Protocol.h"
 #include "SpindleControl.h"
 #include "Stepper.h"
@@ -33,15 +34,29 @@
 #include "CoolantControl.h"
 #include "MotionControl.h"
 #include "defaults.h"
+#include "PID.h"
+#include "Encoder.h"
 
 
 #define DIR_POSITIV     0
 #define DIR_NEGATIV     1
 
 
+// Backlash compensation
 static float target_prev[N_AXIS] = {0.0};
 static uint8_t dir_negative[N_AXIS] = {DIR_NEGATIV};
 static uint8_t backlash_enable = 0;
+
+// Sync move
+int32_t pos_z = 0;
+static volatile uint8_t wait_spindle = 0;
+static uint8_t start_sync = 0;
+static uint16_t enc_cnt_prev = 0;
+static uint32_t EncValue = 0;
+static float sync_pitch = 0.0;
+
+float in = 0.0, out = 0.0, set = 0.0;
+PID_t pid;
 
 
 void MC_Init(void)
@@ -61,6 +76,17 @@ void MC_Init(void)
             backlash_enable = 1;
         }
     }
+
+    PID_Create(&pid, &in, &out, &set, 1.8, 22, 0.08);
+    PID_Limits(&pid, -0.4, 0.4);
+    PID_EnableAuto(&pid);
+
+    pos_z = 0;
+    wait_spindle = 0;
+    start_sync = 0;
+    enc_cnt_prev = 0;
+    sync_pitch = 0;
+    EncValue = 0;
 }
 
 
@@ -225,6 +251,157 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
         }
     }
 }
+
+
+void MC_LineSync(float *target, Planner_LineData_t *pl_data, float pitch)
+{
+    uint8_t old_f_override = sys.f_override;
+
+    // Put in hold state -  no moves will be started
+    sys.state = STATE_HOLD;
+
+    sync_pitch = pitch;
+
+    if(pitch < 1.1)
+    {
+        PID_Tune(&pid, 1.8, 22, 0.08);
+    }
+    else if(pitch < 1.6)
+    {
+        PID_Tune(&pid, 1.6, 18, 0.06);
+    }
+    else
+    {
+        PID_Tune(&pid, 1.4, 15, 0.04);
+    }
+
+    // Disable feed override
+    sys.f_override = DEFAULT_FEED_OVERRIDE;
+    sys.report_ovr_counter = 0; // Set to report change immediately
+
+    Planner_UpdateVelocityProfileParams();
+    Planner_CycleReinitialize();
+
+    // Save current z position
+    pos_z = sys_position[Z_AXIS];
+
+    // Calculate mm/s
+    float feed = pl_data->feed_rate / 60.0;
+
+    // Calculate distance [mm] which is needed for acceleration; ToDo: Include x-axis
+    float s_d = ((feed * feed) / ((settings.acceleration[Z_AXIS] / 3600) * 2));
+    // Increase it by a small amount
+    s_d += 0.05;
+
+    // Calculate position, when feedrate is reached
+    pos_z -= (int32_t)(s_d * settings.steps_per_mm[Z_AXIS]);
+
+    MC_Line(target, pl_data);
+    sys.sync_move = 1;
+
+    // Wait for spindle sync
+    while(wait_spindle == 0)
+    {
+        Protocol_ExecuteRealtime(); // Check for any run-time commands
+
+        if(sys.abort)
+        {
+            // Bail, if system abort.
+            return;
+        }
+    }
+
+    // Set state back to idle - queued move will be started
+    sys.state = STATE_IDLE;
+
+    // Trigger immediate start of cycle
+    Protocol_AutoCycleStart();
+    Protocol_ExecRtSystem();
+
+    // Wait till sync move is finished
+    Protocol_BufferSynchronize();
+    sys.sync_move = 0;
+    start_sync = 0;
+    wait_spindle = 0;
+    Stepper_Ovr(0.0);
+
+    // Restore old override
+    sys.f_override = old_f_override;
+    sys.report_ovr_counter = 0; // Set to report change immediately
+
+    Planner_UpdateVelocityProfileParams();
+    Planner_CycleReinitialize();
+}
+
+
+void MC_LineSyncStart(void)
+{
+    wait_spindle = 1;
+}
+
+
+void MC_UpdateSyncMove(void)
+{
+    if(sys.sync_move)
+    {
+        if(start_sync == 0)
+        {
+            if(sys_position[Z_AXIS] <= pos_z)
+            {
+                // Start sync
+                start_sync = 1;
+
+                in = 0.0;
+                PID_Compute(&pid);
+
+                // Save sys position at start
+                pos_z = sys_position[Z_AXIS];
+                // Reset encoder value
+                EncValue = 0;
+                enc_cnt_prev = (uint16_t)Encoder_GetValue();
+            }
+        }
+        else
+        {
+            uint16_t cnt = (uint16_t)Encoder_GetValue();
+            uint32_t cnt_diff = 0;
+
+            // Calculate ticks since last event
+            if(cnt < enc_cnt_prev)
+            {
+                // Ovf
+                cnt_diff = (0xFFFF - enc_cnt_prev) + cnt;
+            }
+            else
+            {
+                cnt_diff = cnt - enc_cnt_prev;
+            }
+            enc_cnt_prev = cnt;
+            EncValue += cnt_diff;
+
+            // Calculate revolutions since start
+            float rev_actual = (float)EncValue / PULSES_PER_REV;
+            // Distance since start
+            float dist_expected = rev_actual * sync_pitch;
+
+            // Expected distance since start
+            float dist_act = ((sys_position[Z_AXIS] - pos_z) / settings.steps_per_mm[Z_AXIS]) * -1.0;
+
+            // Error
+            in = dist_expected - dist_act;
+
+            // Compute
+            PID_Compute(&pid);
+
+            // Apply
+            Stepper_Ovr(out);
+
+            /*Printf("err %d\r\n", (int)(1000*in));
+            Printf_Flush();*/
+        }
+    }
+}
+
 
 // Execute an arc in offset mode format. position == current xyz, target == target xyz,
 // offset == offset from current xyz, axis_X defines circle plane in tool space, axis_linear is

@@ -59,5 +59,7 @@ void Stepper_UpdatePlannerBlockParams(void);
 // Called by realtime status reporting if realtime rate reporting is enabled in config.h.
 float Stepper_GetRealtimeRate(void);
 
+void Stepper_Ovr(float ovr);
+
 
 #endif // STEPPER_H

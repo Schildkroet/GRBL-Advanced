@@ -6,7 +6,6 @@
 #include "Config.h"
 #include "Usart.h"
 #include "FIFO_USART.h"
-#include "Settings.h"
 #include "GrIP.h"
 #include "Platform.h"
 
@@ -18,7 +17,7 @@ static char buf[512] = {0};
 static uint16_t buf_idx = 0;
 
 
-void Print_Init(void)
+void Printf_Init(void)
 {
     Usart_Init(STDOUT, BAUD_RATE);
 }
@@ -72,7 +71,7 @@ int Putc(const char c)
 }
 
 
-void Print_Flush(void)
+void Printf_Flush(void)
 {
     if(buf_idx == 0)
     {
@@ -100,9 +99,7 @@ void Print_Flush(void)
 // Convert float to string by immediately converting to a long integer, which contains
 // more digits than a float. Number of decimal places, which are tracked by a counter,
 // may be set by the user. The integer is then efficiently converted to a string.
-// NOTE: AVR '%' and '/' integer operations are very efficient. Bitshifting speed-up
-// techniques are actually just slightly slower. Found this out the hard way.
-void PrintFloat(float n, uint8_t decimal_places)
+void Printf_Float(float n, uint8_t decimal_places)
 {
     if(n < 0)
     {
@@ -153,35 +150,5 @@ void PrintFloat(float n, uint8_t decimal_places)
             Putc('.');
         } // Insert decimal point in right place.
         Putc(buf[i-1]);
-    }
-}
-
-
-// Floating value printing handlers for special variables types used in Grbl and are defined
-// in the config.h.
-//  - CoordValue: Handles all position or coordinate values in inches or mm reporting.
-//  - RateValue: Handles feed rate and current velocity in inches or mm reporting.
-void PrintFloat_CoordValue(float n)
-{
-    if(BIT_IS_TRUE(settings.flags, BITFLAG_REPORT_INCHES))
-    {
-        PrintFloat(n*INCH_PER_MM,N_DECIMAL_COORDVALUE_INCH);
-    }
-    else
-    {
-        PrintFloat(n, N_DECIMAL_COORDVALUE_MM);
-    }
-}
-
-
-void PrintFloat_RateValue(float n)
-{
-    if(BIT_IS_TRUE(settings.flags, BITFLAG_REPORT_INCHES))
-    {
-        PrintFloat(n*INCH_PER_MM,N_DECIMAL_RATEVALUE_INCH);
-    }
-    else
-    {
-        PrintFloat(n, N_DECIMAL_RATEVALUE_MM);
     }
 }

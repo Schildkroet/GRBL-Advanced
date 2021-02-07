@@ -73,13 +73,25 @@ uint8_t Limits_GetState(void)
     uint8_t limit_state = 0;
 
     limit_state = (GPIO_ReadInputDataBit(GPIO_LIM_X_PORT, GPIO_LIM_X_PIN)<<X1_LIMIT_BIT);
+#if !defined(LATHE_MODE)
     limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Y_PORT, GPIO_LIM_Y_PIN)<<Y1_LIMIT_BIT);
+#endif
     limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Z_PORT, GPIO_LIM_Z_PIN)<<Z1_LIMIT_BIT);
+
+    // Second limit
+    limit_state |= (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_8)<<X2_LIMIT_BIT);
+    limit_state |= (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5)<<Y2_LIMIT_BIT);
+    limit_state |= (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_6)<<Z2_LIMIT_BIT);
 
     if(BIT_IS_FALSE(settings.flags, BITFLAG_INVERT_LIMIT_PINS))
     {
         limit_state ^= LIMIT_MASK;
     }
+
+#if defined(LATHE_MODE)
+    // Clear Y-Limits in lathe mode
+    limit_state &= ~(1<<Y1_LIMIT_BIT | 1<<Y2_LIMIT_BIT);
+#endif
 
     return limit_state;
 }
@@ -109,8 +121,10 @@ void Limit_PinChangeISR(void) // DEFAULT: Limit pin change interrupt process.
         {
             if(settings.system_flags & BITFLAG_FORCE_HARD_LIMIT_CHECK)
             {
+                uint8_t lim = Limits_GetState();
+
                 // Check limit pin state.
-                if(Limits_GetState())
+                if(lim)
                 {
                     MC_Reset(); // Initiate system kill.
                     System_SetExecAlarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event

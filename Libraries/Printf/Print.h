@@ -10,16 +10,13 @@ extern "C" {
 #endif
 
 
-void Print_Init(void);
+void Printf_Init(void);
 int Printf(const char *str, ...);
-void PrintFloat(float n, uint8_t decimal_places);
+void Printf_Float(float n, uint8_t decimal_places);
 int8_t Getc(char *c);
 int Putc(const char c);
 
-void Print_Flush(void);
-
-void PrintFloat_CoordValue(float n);
-void PrintFloat_RateValue(float n);
+void Printf_Flush(void);
 
 
 #ifdef __cplusplus

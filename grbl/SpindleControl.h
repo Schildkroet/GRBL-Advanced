@@ -62,8 +62,12 @@ void Spindle_SetState(uint8_t state, float rpm);
 // NOTE: 328p PWM register is 8-bit.
 void Spindle_SetSpeed(uint8_t pwm_value);
 
+uint32_t Spindle_GetRPM(void);
+
 // Computes 328p-specific PWM register value for the given RPM for quick updating.
 uint8_t Spindle_ComputePwmValue(float rpm);
+
+void Spindle_SetSurfaceSpeed(float x_pos);
 
 
 #endif // SPINDLECONTROL_H

@@ -58,7 +58,7 @@ volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bit
 int main(void)
 {
     // Init formatted output
-    Print_Init();
+    Printf_Init();
     System_Init();
     Stepper_Init();
     Settings_Init();

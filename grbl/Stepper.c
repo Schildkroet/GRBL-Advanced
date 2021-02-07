@@ -24,6 +24,7 @@
 #include "Config.h"
 #include "Planner.h"
 #include "Probe.h"
+#include "GCode.h"
 #include "SpindleControl.h"
 #include "System.h"
 #include "Settings.h"
@@ -71,6 +72,8 @@
 #else
     #define STEP_TIMER_MIN          (uint16_t)((F_TIMER_STEPPER / 120000))
 #endif
+
+#define G96_UPDATE_CNT      20
 
 
 // Stores the planner block Bresenham algorithm execution data for the segments in the segment
@@ -175,8 +178,10 @@ static uint8_t dir_port_invert_mask;
 static Planner_Block_t *pl_block;     // Pointer to the planner block being prepped
 static Stepper_Block_t *st_prep_block;  // Pointer to the stepper block data being prepped
 
-
 static Stepper_PrepData_t prep;
+
+static float tim_ovr = 0;
+static uint8_t update_g96 = G96_UPDATE_CNT;
 
 
 /*    BLOCK VELOCITY PROFILE DEFINITION
@@ -298,6 +303,12 @@ void Stepper_Disable(uint8_t ovr_disable)
 }
 
 
+void Stepper_Ovr(float ovr)
+{
+    tim_ovr = ovr;
+}
+
+
 /* "The Stepper Driver Interrupt" - This timer interrupt is the workhorse of Grbl. Grbl employs
    the venerable Bresenham line algorithm to manage and exactly synchronize multi-axis moves.
    Unlike the popular DDA algorithm, the Bresenham algorithm is not susceptible to numerical
@@ -358,6 +369,7 @@ void Stepper_MainISR(void)
             GPIO_SetBits(GPIO_STEP_X_PORT, GPIO_STEP_X_PIN);
         }
     }
+#if !defined(LATHE_MODE)
     if(st.step_outbits & (1<<Y_STEP_BIT))
     {
         if(step_port_invert_mask & (1<<Y_STEP_BIT))
@@ -372,6 +384,7 @@ void Stepper_MainISR(void)
         }
 
     }
+#endif
     if(st.step_outbits & (1<<Z_STEP_BIT))
     {
         if(step_port_invert_mask & (1<<Z_STEP_BIT))
@@ -428,8 +441,26 @@ void Stepper_MainISR(void)
                 st.exec_segment->cycles_per_tick = STEP_TIMER_MIN;
             }
 
-            TIM9->ARR = st.exec_segment->cycles_per_tick;
-            TIM9->CCR1 = (uint16_t)(st.exec_segment->cycles_per_tick * 0.6);
+            int32_t new_cycles_per_tick = st.exec_segment->cycles_per_tick;
+            if(sys.sync_move == 1)
+            {
+                new_cycles_per_tick = st.exec_segment->cycles_per_tick * tim_ovr;
+                new_cycles_per_tick = st.exec_segment->cycles_per_tick + new_cycles_per_tick;
+                if(new_cycles_per_tick > 0xFFFF)
+                {
+                    new_cycles_per_tick = 0xFFFF;
+                }
+                if(new_cycles_per_tick < STEP_TIMER_MIN-50)
+                {
+                    new_cycles_per_tick = STEP_TIMER_MIN-50;
+                }
+            }
+
+            // Update TIM9 register for next interrupt
+            //TIM9->ARR = st.exec_segment->cycles_per_tick;
+            //TIM9->CCR1 = (uint16_t)(st.exec_segment->cycles_per_tick * 0.6);
+            TIM9->ARR = (uint16_t)new_cycles_per_tick;
+            TIM9->CCR1 = (uint16_t)(new_cycles_per_tick * 0.6);
             st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.
 
             // If the new segment starts a new planner block, initialize stepper variables and counters.
@@ -455,6 +486,7 @@ void Stepper_MainISR(void)
             {
                 GPIO_ResetBits(GPIO_DIR_X_PORT, GPIO_DIR_X_PIN);
             }
+#if !defined(LATHE_MODE)
             if(st.dir_outbits & (1<<Y_DIRECTION_BIT))
             {
                 GPIO_SetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
@@ -463,6 +495,7 @@ void Stepper_MainISR(void)
             {
                 GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
             }
+#endif
             if(st.dir_outbits & (1<<Z_DIRECTION_BIT))
             {
                 GPIO_SetBits(GPIO_DIR_Z_PORT, GPIO_DIR_Z_PIN);
@@ -495,8 +528,20 @@ void Stepper_MainISR(void)
             st.steps[A_AXIS] = st.exec_block->steps[A_AXIS] >> st.exec_segment->amass_level;
             st.steps[B_AXIS] = st.exec_block->steps[B_AXIS] >> st.exec_segment->amass_level;
 
-            // Set real-time spindle output as segment is loaded, just prior to the first step.
-            Spindle_SetSpeed(st.exec_segment->spindle_pwm);
+            if(gc_state.modal.spindle_mode == SPINDLE_RPM_MODE)
+            {
+                // Set real-time spindle output as segment is loaded, just prior to the first step.
+                Spindle_SetSpeed(st.exec_segment->spindle_pwm);
+            }
+            else if(st.exec_segment->spindle_pwm != SPINDLE_PWM_OFF_VALUE)
+            {
+                if(--update_g96 == 0)
+                {
+                    sys.x_pos = (sys_position[X_AXIS] / settings.steps_per_mm[X_AXIS]) - (gc_state.coord_system[X_AXIS]+gc_state.coord_offset[X_AXIS]+gc_state.tool_length_offset[X_AXIS]);
+                    Spindle_SetSurfaceSpeed(sys.x_pos);
+                    update_g96 = G96_UPDATE_CNT;
+                }
+            }
 
         }
         else
@@ -668,6 +713,7 @@ void Stepper_PortResetISR(void)
     }
 
     // Y
+#if !defined(LATHE_MODE)
     if(step_port_invert_mask & (1<<Y_STEP_BIT))
     {
         GPIO_SetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
@@ -676,6 +722,7 @@ void Stepper_PortResetISR(void)
     {
         GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
     }
+#endif
 
     // Z
     if(step_port_invert_mask & (1<<Z_STEP_BIT))
@@ -752,17 +799,15 @@ void Stepper_Reset(void)
     st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default.
 
     // Initialize step and direction port pins.
-    // TODO: Stepper invert mask
     // Reset Step Pins
-    GPIO_ResetBits(GPIO_STEP_X_PORT, GPIO_STEP_X_PIN);
-    GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
-    GPIO_ResetBits(GPIO_STEP_Z_PORT, GPIO_STEP_Z_PIN);
-    GPIO_ResetBits(GPIO_STEP_A_PORT, GPIO_STEP_A_PIN);
-    //GPIO_ResetBits(GPIO_STEP_B_PORT, GPIO_STEP_B_PIN);
+    Stepper_PortResetISR();
 
     // Reset Direction Pins
+    // ToDo: Use invert mask?
     GPIO_ResetBits(GPIO_DIR_X_PORT, GPIO_DIR_X_PIN);
+#if !defined(LATHE_MODE)
     GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
+#endif
     GPIO_ResetBits(GPIO_DIR_Z_PORT, GPIO_DIR_Z_PIN);
     GPIO_ResetBits(GPIO_DIR_A_PORT, GPIO_DIR_A_PIN);
     //GPIO_ResetBits(GPIO_DIR_B_PORT, GPIO_DIR_B_PIN);

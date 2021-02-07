@@ -14,25 +14,25 @@
 				<Option compiler="armgcc_eb" />
 				<Option projectDeviceOptionsRelation="0" />
 				<Compiler>
-					<Add option="-g3" />
-					<Add option="-O0" />
 					<Add option="-Wall" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
+					<Add option="-O0" />
+					<Add option="-g3" />
 				</Compiler>
 				<Cpp>
-					<Add option="-g3" />
-					<Add option="-O0" />
 					<Add option="-Wall" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
+					<Add option="-O0" />
+					<Add option="-g3" />
 				</Cpp>
 				<Assembler>
 					<Add option="-Wa,--gdwarf-2" />
 				</Assembler>
 				<Linker>
-					<Add option="-Wl,--gc-sections" />
 					<Add option="-eb_use_semi" />
+					<Add option="-Wl,--gc-sections" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -92,7 +92,6 @@
 			<Add option="-u _scanf_float" />
 			<Add option="-eb_lib=n" />
 			<Add option="-eb_start_files" />
-			<Add option="-flto" />
 			<Add option="-lm" />
 		</Linker>
 		<ExtraCommands>
@@ -345,6 +344,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Libraries\CRC\CRC.h" />
+		<Unit filename="Libraries\EEPROM\M24C0X.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\EEPROM\M24C0X.h" />
+		<Unit filename="Libraries\Encoder\Encoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Encoder\Encoder.h" />
 		<Unit filename="Libraries\Ethernet\Ethernet.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -370,25 +377,48 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Libraries\GrIP\GrIP.h" />
+		<Unit filename="Libraries\Printf\Print.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Libraries\Printf\Print.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="README.md" />
 		<Unit filename="Src\debug.h" />
-		<Unit filename="Src\M24C0X.c">
+		<Unit filename="Src\PID.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Src\M24C0X.h" />
+		<Unit filename="Src\PID.h" />
 		<Unit filename="Src\Platform.h" />
-		<Unit filename="Src\Print.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Print.h" />
 		<Unit filename="stm32f446re_flash.ld" />
 		<Extensions>
 			<code_completion />
 			<debugger>
 				<target_debugging_settings target="Debug" active_interface="ST-link">
+					<debug_interface interface_id="EBlink" ip_address="localhost" ip_port="4242" path="C:\Program Files (x86)\EmBitz\1.11\share\EBlink" executable="eblink.exe" description="" dont_start_server="false" backoff_time="400" options="10" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_DEV_ADDR" opt_value="" />
+							<option opt_id="ID_DEV_SPEED" opt_value="4000" />
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_RESET_TYPE" opt_value="System" />
+							<option opt_id="ID_DEVICE_SCRIPT_LIST" opt_value="stm32-auto" />
+							<option opt_id="ID_VERBOSE_LEVEL" opt_value="" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_HOTPLUG_CONNECT" opt_value="0" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
+							<option opt_id="ID_NO_FLASH_CACHE" opt_value="0" />
+							<option opt_id="ID_NO_GUI_MSGBOX" opt_value="0" />
+							<option opt_id="ID_SHUTDOWN_AFTER_DISCONNECT" opt_value="1" />
+							<option opt_id="ID_EBLINK_CMD_LINE" opt_value="" />
+							<option opt_id="ID_CMD_RESET" opt_value="" />
+							<option opt_id="ID_BEFORE_CONNECT" opt_value="" />
+							<option opt_id="ID_AFTER_CONNECT" opt_value="" />
+						</family_options>
+					</debug_interface>
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="400" options="2" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />

@@ -49,7 +49,11 @@ void TC_Init(void)
     memset(tc_pos, 0, sizeof(float)*N_AXIS);
 
     gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_CANCEL;
-    gc_state.tool_length_offset = 0.0;
+
+    for(uint8_t i = 0; i < N_AXIS; i++)
+    {
+        gc_state.tool_length_offset[i] = 0.0;
+    }
 }
 
 
@@ -89,7 +93,17 @@ void TC_ChangeCurrentTool(void)
     Protocol_BufferSynchronize();
 
     // Wait until move is finished
-    while(sys.state != STATE_IDLE);
+    while(sys.state != STATE_IDLE)
+    {
+        Protocol_ExecuteRealtime(); // Check for any run-time commands
+
+        if(sys.abort)
+        {
+            // Bail, if system abort.
+            return;
+        }
+    }
+
 
     sys.state = STATE_TOOL_CHANGE;
 
@@ -131,7 +145,7 @@ void TC_ProbeTLS(void)
     Protocol_BufferSynchronize();
 
     // Set up fast probing
-    pl_data.feed_rate = 200.0;
+    pl_data.feed_rate = 220.0;
     pl_data.condition = 0; // Reset rapid motion condition flag.
 
     // Probe TLS fast
@@ -174,7 +188,7 @@ void TC_ProbeTLS(void)
 
         // Apply offset as dynamic tool length offset
         gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
-        gc_state.tool_length_offset = toolOffset / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS];
+        gc_state.tool_length_offset[TOOL_LENGTH_OFFSET_AXIS] = toolOffset / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS];
     }
 
     Delay_ms(5);
@@ -204,23 +218,7 @@ void TC_ApplyToolOffset(void)
     // Apply offset as dynamic tool length offset
     gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
 
-    switch(TOOL_LENGTH_OFFSET_AXIS)
-    {
-    case X_AXIS:
-        gc_state.tool_length_offset = params.x_offset;
-        break;
-
-    case Y_AXIS:
-        gc_state.tool_length_offset = params.y_offset;
-        break;
-
-    case Z_AXIS:
-        gc_state.tool_length_offset = params.z_offset;
-        break;
-
-    default:
-        // Axis not valid
-        gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_CANCEL;
-        break;
-    }
+    gc_state.tool_length_offset[X_AXIS] = params.x_offset;
+    gc_state.tool_length_offset[Y_AXIS] = params.y_offset;
+    gc_state.tool_length_offset[Z_AXIS] = params.z_offset;
 }

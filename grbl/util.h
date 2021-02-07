@@ -126,6 +126,10 @@ uint8_t Read_Float(char *line, uint8_t *char_counter, float *float_ptr);
 
 uint8_t ExtractFloat(char *line, int start_idx, char *float_char);
 
+void PrintFloat_CoordValue(float n);
+
+void PrintFloat_RateValue(float n);
+
 // Non-blocking delay function used for general operation and suspend features.
 void Delay_sec(float seconds, uint8_t mode);
 

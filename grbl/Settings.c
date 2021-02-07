@@ -92,7 +92,6 @@ void Settings_Restore(uint8_t restore_flag)
     if(restore_flag & SETTINGS_RESTORE_DEFAULTS)
     {
         settings.system_flags = DEFAULT_SYSTEM_INVERT_MASK;
-        settings.flags2 = DEFAULT_LATHE_MODE;
         settings.stepper_idle_lock_time = DEFAULT_STEPPER_IDLE_LOCK_TIME;
         settings.step_invert_mask = DEFAULT_STEPPING_INVERT_MASK;
         settings.dir_invert_mask = DEFAULT_DIRECTION_INVERT_MASK;
@@ -109,6 +108,7 @@ void Settings_Restore(uint8_t restore_flag)
         settings.homing_debounce_delay = DEFAULT_HOMING_DEBOUNCE_DELAY;
         settings.homing_pulloff = DEFAULT_HOMING_PULLOFF;
 
+        // Flags
         settings.flags = 0;
         if(DEFAULT_REPORT_INCHES)
         {
@@ -141,6 +141,13 @@ void Settings_Restore(uint8_t restore_flag)
         if(DEFAULT_INVERT_PROBE_PIN)
         {
             settings.flags |= BITFLAG_INVERT_PROBE_PIN;
+        }
+
+        // Flags2
+        settings.flags2 = 0;
+        if(DEFAULT_LATHE_MODE)
+        {
+            settings.flags2 |= BITFLAG_LATHE_MODE;
         }
 
         settings.steps_per_mm[X_AXIS] = DEFAULT_X_STEPS_PER_MM;

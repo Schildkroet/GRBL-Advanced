@@ -584,7 +584,7 @@ void Protocol_ExecRtSystem(void)
 
     // Execute overrides.
     rt_exec = sys_rt_exec_motion_override; // Copy volatile sys_rt_exec_motion_override
-    if(rt_exec)
+    if(rt_exec && !sys.sync_move)
     {
         System_ClearExecMotionOverride(); // Clear all motion override flags.
 

@@ -22,7 +22,9 @@
 #include <string.h>
 #include "Config.h"
 #include "Protocol.h"
+#include "Print.h"
 #include "System.h"
+#include "Settings.h"
 #include "util.h"
 
 #include "System32.h"
@@ -146,6 +148,7 @@ uint8_t Read_Float(char *line, uint8_t *char_counter, float *float_ptr)
     return(true);
 }
 
+
 // Search a float in a string and return it as string
 uint8_t ExtractFloat(char *line, int start_idx, char *float_char)
 {
@@ -178,6 +181,37 @@ uint8_t ExtractFloat(char *line, int start_idx, char *float_char)
     // Return position after float in string
     return i;
 }
+
+
+// Floating value printing handlers for special variables types used in Grbl and are defined
+// in the config.h.
+//  - CoordValue: Handles all position or coordinate values in inches or mm reporting.
+//  - RateValue: Handles feed rate and current velocity in inches or mm reporting.
+void PrintFloat_CoordValue(float n)
+{
+    if(BIT_IS_TRUE(settings.flags, BITFLAG_REPORT_INCHES))
+    {
+        Printf_Float(n*INCH_PER_MM,N_DECIMAL_COORDVALUE_INCH);
+    }
+    else
+    {
+        Printf_Float(n, N_DECIMAL_COORDVALUE_MM);
+    }
+}
+
+
+void PrintFloat_RateValue(float n)
+{
+    if(BIT_IS_TRUE(settings.flags, BITFLAG_REPORT_INCHES))
+    {
+        Printf_Float(n*INCH_PER_MM,N_DECIMAL_RATEVALUE_INCH);
+    }
+    else
+    {
+        Printf_Float(n, N_DECIMAL_RATEVALUE_MM);
+    }
+}
+
 
 // Non-blocking delay function used for general operation and suspend features.
 void Delay_sec(float seconds, uint8_t mode)

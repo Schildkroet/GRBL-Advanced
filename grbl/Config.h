@@ -49,6 +49,9 @@
 // Uncomment to use 4th/5th axis
 //#define USE_MULTI_AXIS
 
+// Uncomment for lathe mode
+//#define LATHE_MODE
+
 
 // Define realtime command special characters. These characters are 'picked-off' directly from the
 // serial read data stream and are not passed to the grbl line execution parser. Select characters
@@ -293,10 +296,10 @@
 // refreshes more often when its not doing anything important. With a good GUI, this data doesn't need
 // to be refreshed very often, on the order of a several seconds.
 // NOTE: WCO refresh must be 2 or greater. OVR refresh must be 1 or greater.
-#define REPORT_OVR_REFRESH_BUSY_COUNT       20  // (1-255)
-#define REPORT_OVR_REFRESH_IDLE_COUNT       10  // (1-255) Must be less than or equal to the busy count
-#define REPORT_WCO_REFRESH_BUSY_COUNT       30  // (2-255)
-#define REPORT_WCO_REFRESH_IDLE_COUNT       10  // (2-255) Must be less than or equal to the busy count
+#define REPORT_OVR_REFRESH_BUSY_COUNT       15  // (1-255)
+#define REPORT_OVR_REFRESH_IDLE_COUNT       8   // (1-255) Must be less than or equal to the busy count
+#define REPORT_WCO_REFRESH_BUSY_COUNT       15  // (2-255)
+#define REPORT_WCO_REFRESH_IDLE_COUNT       8   // (2-255) Must be less than or equal to the busy count
 
 
 // The temporal resolution of the acceleration management subsystem. A higher number gives smoother

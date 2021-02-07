@@ -1,0 +1,47 @@
+name: Build Binary
+
+on:
+  push:
+    branches: [ software ]
+  pull_request:
+    branches: [ software ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Cache
+      id: cache-1
+      uses: actions/cache@v2
+      with:
+        path: cache
+        key: ${{ runner.os }}-cache-1
+
+    - name: Download GCC-ARM-NONE-EABI
+      if: steps.cache-1.outputs.cache-hit != 'true'
+      run: | 
+        mkdir cache && cd cache
+        wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2020q2/gcc-arm-none-eabi-9-2020-q2-update-x86_64-linux.tar.bz2"
+        cd ..
+
+    - name: Extract archives
+      run: | 
+        tar -xf cache/gcc-arm-none-eabi-9-2020-q2-update-x86_64-linux.tar.bz2 -C /opt
+
+    - name: make
+      run: make
+
+    - name: Upload compiled binaries
+      uses: actions/upload-artifact@v2
+      with: 
+        name: GRBL-Advanced
+        path: |
+          *.bin
+          *.hex

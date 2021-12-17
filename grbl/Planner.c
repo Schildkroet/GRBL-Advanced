@@ -124,10 +124,10 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
     }
 
 #ifdef COREXY
-    target_steps[A_MOTOR] = lround(target[A_MOTOR]*settings.steps_per_mm[A_MOTOR]);
-    target_steps[B_MOTOR] = lround(target[B_MOTOR]*settings.steps_per_mm[B_MOTOR]);
-    block->steps[A_MOTOR] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) + (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
-    block->steps[B_MOTOR] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) - (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
+    target_steps[A_AXIS] = lround(target[A_AXIS]*settings.steps_per_mm[A_AXIS]);
+    target_steps[B_AXIS] = lround(target[B_AXIS]*settings.steps_per_mm[B_AXIS]);
+    block->steps[A_AXIS] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) + (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
+    block->steps[B_AXIS] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) - (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
 #endif
 
     for(idx = 0; idx < N_AXIS; idx++)
@@ -136,7 +136,7 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
         // Also, compute individual axes distance for move and prep unit vector calculations.
         // NOTE: Computes true distance from converted step values.
 #ifdef COREXY
-        if(!(idx == A_MOTOR) && !(idx == B_MOTOR))
+        if(!(idx == A_AXIS) && !(idx == B_AXIS))
         {
             target_steps[idx] = lround(target[idx]*settings.steps_per_mm[idx]);
             block->steps[idx] = labs(target_steps[idx]-position_steps[idx]);
@@ -144,11 +144,11 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
 
         block->step_event_count = max(block->step_event_count, block->steps[idx]);
 
-        if(idx == A_MOTOR)
+        if(idx == A_AXIS)
         {
             delta_mm = (target_steps[X_AXIS]-position_steps[X_AXIS] + target_steps[Y_AXIS]-position_steps[Y_AXIS])/settings.steps_per_mm[idx];
         }
-        else if(idx == B_MOTOR)
+        else if(idx == B_AXIS)
         {
             delta_mm = (target_steps[X_AXIS]-position_steps[X_AXIS] - target_steps[Y_AXIS]+position_steps[Y_AXIS])/settings.steps_per_mm[idx];
         }

@@ -174,7 +174,7 @@ void Limits_GoHome(uint8_t cycle_mask)
         step_pin[idx] = Settings_GetStepPinMask(idx);
 
 #ifdef COREXY
-        if((idx == A_MOTOR) || (idx == B_MOTOR))
+        if((idx == A_AXIS) || (idx == B_AXIS))
         {
             step_pin[idx] = (Settings_GetStepPinMask(X_AXIS) | Settings_GetStepPinMask(Y_AXIS));
         }
@@ -210,13 +210,13 @@ void Limits_GoHome(uint8_t cycle_mask)
                 if(idx == X_AXIS)
                 {
                     int32_t axis_position = system_convert_corexy_to_y_axis_steps(sys_position);
-                    sys_position[A_MOTOR] = axis_position;
-                    sys_position[B_MOTOR] = -axis_position;
+                    sys_position[A_AXIS] = axis_position;
+                    sys_position[B_AXIS] = -axis_position;
                 }
                 else if (idx == Y_AXIS)
                 {
                     int32_t axis_position = system_convert_corexy_to_x_axis_steps(sys_position);
-                    sys_position[A_MOTOR] = sys_position[B_MOTOR] = axis_position;
+                    sys_position[A_AXIS] = sys_position[B_AXIS] = axis_position;
                 }
                 else
                 {
@@ -285,7 +285,7 @@ void Limits_GoHome(uint8_t cycle_mask)
                             }
                             else
                             {
-                                axislock &= ~(step_pin[A_MOTOR]|step_pin[B_MOTOR]);
+                                axislock &= ~(step_pin[A_AXIS]|step_pin[B_AXIS]);
                             }
 #else
                             axislock &= ~(step_pin[idx]);
@@ -393,14 +393,14 @@ void Limits_GoHome(uint8_t cycle_mask)
             if(idx == X_AXIS)
             {
                 int32_t off_axis_position = system_convert_corexy_to_y_axis_steps(sys_position);
-                sys_position[A_MOTOR] = set_axis_position + off_axis_position;
-                sys_position[B_MOTOR] = set_axis_position - off_axis_position;
+                sys_position[A_AXIS] = set_axis_position + off_axis_position;
+                sys_position[B_AXIS] = set_axis_position - off_axis_position;
             }
             else if(idx == Y_AXIS)
             {
                 int32_t off_axis_position = system_convert_corexy_to_x_axis_steps(sys_position);
-                sys_position[A_MOTOR] = off_axis_position + set_axis_position;
-                sys_position[B_MOTOR] = off_axis_position - set_axis_position;
+                sys_position[A_AXIS] = off_axis_position + set_axis_position;
+                sys_position[B_AXIS] = off_axis_position - set_axis_position;
             }
             else
             {

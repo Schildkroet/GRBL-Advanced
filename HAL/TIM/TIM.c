@@ -193,7 +193,7 @@ inline uint16_t TIM4_CNT(void)
  * Timer 9
  * Base clock: 24 MHz
  * Used for Stepper Interrupt
- * On CC1, Main Stepper Interuppt is called
+ * On CC1, Main Stepper Interrupt is called
  * On Update, Stepper Port Reset is called
  **/
 void TIM9_Init(void)

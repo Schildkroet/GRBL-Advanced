@@ -137,7 +137,8 @@ uint8_t GC_ExecuteLine(char *line)
     uint16_t int_value = 0;
     uint16_t mantissa = 0;
     float old_xyz[N_AXIS] = {0.0};
-    uint8_t change_tool = 0, update_tooltable = 0;
+    uint8_t change_tool = 0, update_tooltable = 0, apply_tool = 0;
+
 
     memcpy(old_xyz, gc_state.position, N_AXIS*sizeof(float));
 
@@ -522,6 +523,10 @@ uint8_t GC_ExecuteLine(char *line)
                 change_tool = 1;
                 break;
 
+            case 61: // Tool change
+                apply_tool = 1;
+                break;
+
 #ifdef ENABLE_M7
             case 7:
             case 8:
@@ -830,7 +835,11 @@ uint8_t GC_ExecuteLine(char *line)
     // bit_false(value_words,bit(WORD_S)); // NOTE: Single-meaning value word. Set at end of error-checking.
 
     // [5. Select tool ]: NOT SUPPORTED. Only tracks value. T is negative (done.) Not an integer. Greater than max tool value.
-    // bit_false(value_words,bit(WORD_T)); // NOTE: Single-meaning value word. Set at end of error-checking.
+    if(BIT_IS_TRUE(value_words, BIT(WORD_T)))
+    {
+        gc_state.tool = gc_block.values.t;
+    }
+    BIT_FALSE(value_words, BIT(WORD_T)); // NOTE: Single-meaning value word. Set at end of error-checking.
 
     // [6. Change tool ]:
     if(update_tooltable == 1)
@@ -1763,6 +1772,17 @@ uint8_t GC_ExecuteLine(char *line)
         if(sys.is_homed)
         {
             TC_ChangeCurrentTool();
+        }
+        else
+        {
+            return STATUS_MACHINE_NOT_HOMED;
+        }
+    }
+    if(apply_tool && (settings.tool_change == 3))
+    {
+        if(sys.is_homed)
+        {
+            TC_ApplyToolOffset();
         }
         else
         {

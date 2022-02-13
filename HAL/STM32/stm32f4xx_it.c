@@ -275,11 +275,11 @@ void SysTick_Handler(void)
 
 	gMillis++;
 
-  if(gMillis%16 == 0)
-  {
-    // Update sync motion
-    MC_UpdateSyncMove();
-  }
+    if(gMillis%16 == 0)
+    {
+      // Update sync motion
+      MC_UpdateSyncMove();
+    }
 
 	if(gMillis%25 == 0)
     {
@@ -310,9 +310,6 @@ void SysTick_Handler(void)
         spindle_rpm = (rpm_arr[0] + rpm_arr[1] + rpm_arr[2]) / RPM_FILTER_NUM;
 
         tim4_cnt_prev = cnt;
-
-        // Update sync motion
-        //MC_UpdateSyncMove();
     }
 }
 

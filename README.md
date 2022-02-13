@@ -106,8 +106,8 @@ make all flash
 ```
 List of Supported G-Codes in Grbl-Advanced:
   - Non-Modal Commands: G4, G10L2, G10L20, G28, G30, G28.1, G30.1, G53, G92, G92.1
-  - Motion Modes: G0, G1, G2, G3, G33, G38.2, G38.3, G38.4, G38.5, G76 G80
-  - Canned Cycles: G81, G82, G83
+  - Motion Modes: G0, G1, G2, G3, G33, G38.2, G38.3, G38.4, G38.5, G80
+  - Canned Cycles: G76, G81, G82, G83
   - Feed Rate Modes: G93, G94
   - Unit Modes: G20, G21
   - Distance Modes: G90, G91
@@ -123,5 +123,6 @@ List of Supported G-Codes in Grbl-Advanced:
   - Program Flow: M0, M1, M2, M30*
   - Coolant Control: M7*, M8, M9
   - Spindle Control: M3, M4, M5
+  - Tool Control: M6, M61
   - Valid Non-Command Words: A, B, D, E, F, H, I, J, K, L, N, P, Q, R, S, T, X, Y, Z
 ```

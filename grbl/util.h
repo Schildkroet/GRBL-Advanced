@@ -42,8 +42,8 @@
 #define BIT_IS_FALSE(x,mask)        ((x & mask) == 0)
 
 
-#define F_CPU                       96000000UL
-#define F_TIMER_STEPPER             24000000UL
+#define F_CPU                       168000000UL
+#define F_TIMER_STEPPER             42000000UL
 
 #define N_AXIS                      5
 #define N_LINEAR_AXIS               3

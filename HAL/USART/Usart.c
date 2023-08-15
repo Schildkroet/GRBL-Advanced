@@ -168,6 +168,10 @@ void Usart_Put(USART_TypeDef *usart, bool buffered, char c)
     {
         num = USART2_NUM;
     }
+    else if(usart == USART3)
+    {
+        num = USART3_NUM;
+    }
     else if(usart == USART6)
     {
         num = USART6_NUM;
@@ -199,6 +203,10 @@ void Usart_Write(USART_TypeDef *usart, bool buffered, char *data, uint8_t len)
     else if(usart == USART2)
     {
         num = USART2_NUM;
+    }
+    else if(usart == USART3)
+    {
+        num = USART3_NUM;
     }
     else if(usart == USART6)
     {

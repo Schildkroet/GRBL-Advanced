@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <EmBitz_project_file>
-	<EmBitzVersion release="1.11" revision="0" />
-	<FileVersion major="1" minor="0" />
+	<EmBitzVersion release="2.60" revision="0" />
+	<FileVersion major="2" minor="0" />
 	<Project>
 		<Option title="GRBL_Advanced" />
 		<Option pch_mode="2" />
@@ -66,7 +66,7 @@
 		<Device>
 			<Add option="$device=cortex-m4" />
 			<Add option="$fpu=fpv4-sp-d16" />
-			<Add option="$lscript=./stm32f446re_flash.ld" />
+			<Add option="$lscript=STM32F446ZETX_FLASH.ld" />
 			<Add option="$stack=0x0400" />
 			<Add option="$heap=0x0000" />
 		</Device>
@@ -79,7 +79,7 @@
 			<Add option="-fno-strict-aliasing" />
 			<Add symbol="ARM_MATH_CM4" />
 			<Add symbol="__FPU_USED" />
-			<Add symbol="STM32F446RE" />
+			<Add symbol="STM32F446ZE" />
 			<Add symbol="STM32F446xx" />
 			<Add symbol="USE_STDPERIPH_DRIVER" />
 			<Add directory=".\inc" />
@@ -311,8 +311,8 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="HAL\SPI\SPI.h" />
-		<Unit filename="HAL\STM32\startup_stm32f4xx.S">
-			<Option compilerVar="CC" />
+		<Unit filename="HAL\STM32\startup_stm32f446zetx.s">
+			<Option compilerVar="ASM" />
 		</Unit>
 		<Unit filename="HAL\STM32\stm32f4xx.h" />
 		<Unit filename="HAL\STM32\stm32f4xx_conf.h" />
@@ -391,66 +391,16 @@
 		</Unit>
 		<Unit filename="Src\PID.h" />
 		<Unit filename="Src\Platform.h" />
-		<Unit filename="stm32f446re_flash.ld" />
+		<Unit filename="STM32F446ZETX_FLASH.ld" />
+		<Unit filename="STM32F446ZETX_RAM.ld" />
 		<Extensions>
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Debug" active_interface="ST-link">
-					<debug_interface interface_id="EBlink" ip_address="localhost" ip_port="4242" path="C:\Program Files (x86)\EmBitz\1.11\share\EBlink" executable="eblink.exe" description="" dont_start_server="false" backoff_time="400" options="10" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
-						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_DEV_ADDR" opt_value="" />
-							<option opt_id="ID_DEV_SPEED" opt_value="4000" />
-							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
-							<option opt_id="ID_RESET_TYPE" opt_value="System" />
-							<option opt_id="ID_DEVICE_SCRIPT_LIST" opt_value="stm32-auto" />
-							<option opt_id="ID_VERBOSE_LEVEL" opt_value="" />
-							<option opt_id="ID_VEC_TABLE" opt_value="1" />
-							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
-							<option opt_id="ID_RAM_EXEC" opt_value="0" />
-							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
-							<option opt_id="ID_HOTPLUG_CONNECT" opt_value="0" />
-							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
-							<option opt_id="ID_NO_FLASH_CACHE" opt_value="0" />
-							<option opt_id="ID_NO_GUI_MSGBOX" opt_value="0" />
-							<option opt_id="ID_SHUTDOWN_AFTER_DISCONNECT" opt_value="1" />
-							<option opt_id="ID_EBLINK_CMD_LINE" opt_value="" />
-							<option opt_id="ID_CMD_RESET" opt_value="" />
-							<option opt_id="ID_BEFORE_CONNECT" opt_value="" />
-							<option opt_id="ID_AFTER_CONNECT" opt_value="" />
-						</family_options>
-					</debug_interface>
-					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="400" options="2" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
-						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
-							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
-							<option opt_id="ID_RESET_TYPE" opt_value="System" />
-							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
-							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
-							<option opt_id="ID_RAM_EXEC" opt_value="0" />
-							<option opt_id="ID_VEC_TABLE" opt_value="1" />
-							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
-							<option opt_id="ID_ALL_MODE_DEBUG" opt_value="0" />
-							<option opt_id="ID_DEV_ADDR" opt_value="" />
-							<option opt_id="ID_VERBOSE_LEVEL" opt_value="3" />
-						</family_options>
-					</debug_interface>
+				<target_debugging_settings target="Debug">
+					<debug_interface description="" options="10" reg_filter="0" probe="" device="" speed="" bus_address="" serial="" defines="" scripts="" flash_size="" ram_size="" vcc_voltage="" verbose="32" unwind="45392936" rstType="18022400" use_jtag="false" disable_cache="false" enable_semi="false" close_eblink="false" gdb_reset="" gdb_reset_remote="reset" gdb_before_conn="" gdb_after_conn="" use_remote="false" ip_address="localhost" ip_port="4242" path="C:\Program Files (x86)\EmBitz\1.11\share\EBlink" executable="eblink.exe" start_server="false" arguments="" flash_verify="false" flash_run="false" />
 				</target_debugging_settings>
-				<target_debugging_settings target="Release" active_interface="ST-link">
-					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="400" options="10" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
-						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
-							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
-							<option opt_id="ID_RESET_TYPE" opt_value="System" />
-							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
-							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
-							<option opt_id="ID_RAM_EXEC" opt_value="0" />
-							<option opt_id="ID_VEC_TABLE" opt_value="1" />
-							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
-							<option opt_id="ID_ALL_MODE_DEBUG" opt_value="0" />
-							<option opt_id="ID_DEV_ADDR" opt_value="" />
-							<option opt_id="ID_VERBOSE_LEVEL" opt_value="3" />
-						</family_options>
-					</debug_interface>
+				<target_debugging_settings target="Release">
+					<debug_interface description="" options="10" reg_filter="0" probe="STlink" device="auto" speed="" bus_address="" serial="" defines="" scripts="" flash_size="" ram_size="" vcc_voltage="" verbose="4" unwind="2" rstType="0" use_jtag="false" disable_cache="false" enable_semi="false" close_eblink="false" gdb_reset="" gdb_reset_remote="reset;" gdb_before_conn="" gdb_after_conn="" use_remote="false" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" start_server="false" arguments="" flash_verify="true" flash_run="true" />
 				</target_debugging_settings>
 			</debugger>
 			<envvars />

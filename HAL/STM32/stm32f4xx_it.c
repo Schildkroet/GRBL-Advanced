@@ -128,7 +128,7 @@ void ProcessReceive(char c)
 		}
 		else {
 			// Write character to buffer
-			FifoUsart_Insert(USART2_NUM, USART_DIR_RX, c);
+			FifoUsart_Insert(USART3_NUM, USART_DIR_RX, c);
 		}
 	}
 }

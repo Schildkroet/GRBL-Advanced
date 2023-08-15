@@ -23,8 +23,8 @@
 //#define USART6_NUM            2
 
 // USART used for Printf(...)
-#define STDOUT                  USART2
-#define STDOUT_NUM              USART2_NUM
+#define STDOUT                  USART3
+#define STDOUT_NUM              USART3_NUM
 //#define STDOUT_BAUD           115200
 
 

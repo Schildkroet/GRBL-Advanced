@@ -312,7 +312,7 @@
 		</Unit>
 		<Unit filename="HAL\SPI\SPI.h" />
 		<Unit filename="HAL\STM32\startup_stm32f446zetx.s">
-			<Option compilerVar="ASM" />
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="HAL\STM32\stm32f4xx.h" />
 		<Unit filename="HAL\STM32\stm32f4xx_conf.h" />

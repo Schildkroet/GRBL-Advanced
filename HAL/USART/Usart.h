@@ -25,7 +25,7 @@
 // Number of USARTs on this device
 #define USART_NUM			4
 
-// Numerate available USARTs in ascending order
+// Enumerate available USARTs in ascending order
 #define USART1_NUM			0
 #define USART2_NUM			1
 #define USART3_NUM			2

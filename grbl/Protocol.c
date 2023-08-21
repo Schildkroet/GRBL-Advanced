@@ -577,7 +577,6 @@ void Protocol_ExecRtSystem(void)
                     sys.state = STATE_IDLE;
                 }
             }
-
             System_ClearExecStateFlag(EXEC_CYCLE_STOP);
         }
     }

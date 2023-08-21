@@ -51,6 +51,8 @@
 
 // Uncomment for lathe mode
 //#define LATHE_MODE
+// Pulses/revolutions of spindle encoder
+#define PULSES_PER_REV      360
 
 
 // Define realtime command special characters. These characters are 'picked-off' directly from the

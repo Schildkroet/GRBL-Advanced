@@ -5,9 +5,6 @@
 #include <stdint.h>
 
 
-#define PULSES_PER_REV      360
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif

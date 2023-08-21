@@ -76,18 +76,19 @@
 
 
 // Modal Group G1: Motion modes
-#define MOTION_MODE_SEEK                    0 // G0 (Default: Must be zero)
-#define MOTION_MODE_LINEAR                  1 // G1 (Do not alter value)
-#define MOTION_MODE_CW_ARC                  2  // G2 (Do not alter value)
-#define MOTION_MODE_CCW_ARC                 3  // G3 (Do not alter value)
+#define MOTION_MODE_SEEK                    0   // G0 (Default: Must be zero)
+#define MOTION_MODE_LINEAR                  1   // G1 (Do not alter value)
+#define MOTION_MODE_CW_ARC                  2   // G2 (Do not alter value)
+#define MOTION_MODE_CCW_ARC                 3   // G3 (Do not alter value)
 #define MOTION_MODE_PROBE_TOWARD            140 // G38.2 (Do not alter value)
 #define MOTION_MODE_PROBE_TOWARD_NO_ERROR   141 // G38.3 (Do not alter value)
 #define MOTION_MODE_PROBE_AWAY              142 // G38.4 (Do not alter value)
 #define MOTION_MODE_PROBE_AWAY_NO_ERROR     143 // G38.5 (Do not alter value)
-#define MOTION_MODE_NONE                    80 // G80 (Do not alter value)
+#define MOTION_MODE_NONE                    80  // G80 (Do not alter value)
 #define MOTION_MODE_DRILL                   81  // G81
 #define MOTION_MODE_DRILL_DWELL             82  // G82
 #define MOTION_MODE_DRILL_PECK              83  // G83
+#define MOTION_MODE_DRILL_BREAK             73  // G73
 #define MOTION_MODE_SPINDLE_SYNC            33  // G33
 #define MOTION_MODE_THREADING               76  // G76
 

@@ -332,9 +332,11 @@ uint8_t GC_ExecuteLine(char *line)
                 }
                 break;
 
+            case 73:
             case 81:
             case 82:
-            case 83:  // Canned drilling cycles
+            case 83:
+                // Canned drilling cycles
                 word_bit = MODAL_GROUP_G1;
                 gc_block.modal.motion = int_value;
                 axis_command = AXIS_COMMAND_MOTION_MODE;
@@ -907,7 +909,7 @@ uint8_t GC_ExecuteLine(char *line)
     }
 
     // [10.1 Canned drilling cycle]: R/P/Q value missing.
-    if(gc_block.modal.motion == MOTION_MODE_DRILL || gc_block.modal.motion == MOTION_MODE_DRILL_DWELL || gc_block.modal.motion == MOTION_MODE_DRILL_PECK)
+    if (gc_block.modal.motion == MOTION_MODE_DRILL || gc_block.modal.motion == MOTION_MODE_DRILL_DWELL || gc_block.modal.motion == MOTION_MODE_DRILL_PECK || gc_block.modal.motion == MOTION_MODE_DRILL_BREAK)
     {
         if(BIT_IS_FALSE(value_words, BIT(WORD_R)))
         {
@@ -926,7 +928,7 @@ uint8_t GC_ExecuteLine(char *line)
             // TODO: Check validity of P
             BIT_FALSE(value_words, BIT(WORD_P));
         }
-        if(gc_block.modal.motion == MOTION_MODE_DRILL_PECK)
+        if (gc_block.modal.motion == MOTION_MODE_DRILL_PECK || gc_block.modal.motion == MOTION_MODE_DRILL_BREAK)
         {
             if(BIT_IS_FALSE(value_words, BIT(WORD_Q)))
             {
@@ -1581,6 +1583,7 @@ uint8_t GC_ExecuteLine(char *line)
             case MOTION_MODE_DRILL:
             case MOTION_MODE_DRILL_DWELL:
             case MOTION_MODE_DRILL_PECK:
+            case MOTION_MODE_DRILL_BREAK:
                 if(BIT_TRUE(value_words, (BIT(WORD_L))))
                 {
                 }
@@ -1763,9 +1766,6 @@ uint8_t GC_ExecuteLine(char *line)
     }
     // else { pl_data->spindle_speed = 0.0; } // Initialized as zero already.
 
-    // [5. Select tool ]: Only tracks tool value.
-    gc_state.tool = gc_block.values.t;
-
     // [6. Change tool ]: M6
     if(change_tool && (settings.tool_change > 0))
     {
@@ -1947,7 +1947,7 @@ uint8_t GC_ExecuteLine(char *line)
                 MC_Arc(gc_block.values.xyz, pl_data, gc_state.position, gc_block.values.ijk, gc_block.values.r,
                        axis_0, axis_1, axis_linear, BIT_IS_TRUE(gc_parser_flags, GC_PARSER_ARC_IS_CLOCKWISE));
             }
-            else if(gc_state.modal.motion == MOTION_MODE_DRILL || gc_state.modal.motion == MOTION_MODE_DRILL_DWELL || gc_state.modal.motion == MOTION_MODE_DRILL_PECK)
+            else if (gc_state.modal.motion == MOTION_MODE_DRILL || gc_state.modal.motion == MOTION_MODE_DRILL_DWELL || gc_state.modal.motion == MOTION_MODE_DRILL_PECK || gc_state.modal.motion == MOTION_MODE_DRILL_BREAK)
             {
                 float xyz[N_AXIS] = {0.0};
                 float clear_z = gc_block.values.r + gc_state.coord_system[Z_AXIS] + gc_state.coord_offset[Z_AXIS];
@@ -2010,7 +2010,7 @@ uint8_t GC_ExecuteLine(char *line)
                     pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
                     MC_Line(xyz, pl_data);
 
-                    if(gc_state.modal.motion != MOTION_MODE_DRILL_PECK)
+                    if (gc_state.modal.motion == MOTION_MODE_DRILL || gc_state.modal.motion == MOTION_MODE_DRILL_DWELL)
                     {
                         //-- G81 -- G82 --//
                         // 3. Move the Z-axis at the current feed rate to the Z position.
@@ -2018,10 +2018,10 @@ uint8_t GC_ExecuteLine(char *line)
                         xyz[Z_AXIS] = gc_block.values.xyz[Z_AXIS];
                         MC_Line(xyz, pl_data);
                     }
-                    else
+                    else    // Peck / Chip break
                     {
                         uint8_t exit = 0;
-                        //-- G83 --//
+                        //-- G83/73 --//
                         for(float curr_z = clear_z - gc_block.values.q; exit == 0; curr_z -= gc_block.values.q)
                         {
                             // Check if target depth exceeds final depth
@@ -2036,10 +2036,20 @@ uint8_t GC_ExecuteLine(char *line)
                             xyz[Z_AXIS] = curr_z;
                             MC_Line(xyz, pl_data);
 
-                            // Rapid move to R
-                            xyz[Z_AXIS] = clear_z;
-                            pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
-                            MC_Line(xyz, pl_data);
+                            if(gc_state.modal.motion == MOTION_MODE_DRILL_PECK)
+                            {
+                                // Rapid move to R
+                                xyz[Z_AXIS] = clear_z;
+                                pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
+                                MC_Line(xyz, pl_data);
+                            }
+                            else
+                            {
+                                // Back off a bit
+                                xyz[Z_AXIS] += 2;
+                                pl_data->condition |= PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
+                                MC_Line(xyz, pl_data);
+                            }
 
                             if(exit == 0)
                             {

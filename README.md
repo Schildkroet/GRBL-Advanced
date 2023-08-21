@@ -107,7 +107,7 @@ make all flash
 List of Supported G-Codes in Grbl-Advanced:
   - Non-Modal Commands: G4, G10L2, G10L20, G28, G30, G28.1, G30.1, G53, G92, G92.1
   - Motion Modes: G0, G1, G2, G3, G33, G38.2, G38.3, G38.4, G38.5, G80
-  - Canned Cycles: G76, G81, G82, G83
+  - Canned Cycles: G73, G76, G81, G82, G83
   - Feed Rate Modes: G93, G94
   - Unit Modes: G20, G21
   - Distance Modes: G90, G91

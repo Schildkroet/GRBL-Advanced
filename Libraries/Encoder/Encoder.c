@@ -18,7 +18,14 @@
   along with Grbl-Advanced.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "Encoder.h"
+#include "Config.h"
 #include "TIM.h"
+
+
+#ifndef PULSES_PER_REV
+    #define PULSES_PER_REV      360
+    #pragma message("Using 360 pulses/rev for encoder")
+#endif
 
 
 static uint32_t OvfCnt = 0;

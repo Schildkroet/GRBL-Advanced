@@ -281,7 +281,7 @@ void SysTick_Handler(void)
       MC_UpdateSyncMove();
     }
 
-	if(gMillis%25 == 0)
+	if(gMillis%32 == 0)
     {
         // 25ms Task (min 7 RPM)
         uint16_t cnt = (uint16_t)Encoder_GetValue();
@@ -299,7 +299,7 @@ void SysTick_Handler(void)
         }
 
         // Calculate RPM and smooth it
-        float rpm = ((cnt_diff * 40.0) / PULSES_PER_REV) * 60.0;
+        float rpm = ((cnt_diff * 31.25) / PULSES_PER_REV) * 60.0;
         rpm_arr[rpm_idx++] = (uint32_t)rpm;
         if(rpm_idx > (RPM_FILTER_NUM-1))
         {

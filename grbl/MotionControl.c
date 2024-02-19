@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c) 2017-2020 Patrick F.
+  Copyright (c) 2017-2024 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -48,15 +48,15 @@ static uint8_t dir_negative[N_AXIS] = {DIR_NEGATIV};
 static uint8_t backlash_enable = 0;
 
 // Sync move
-int32_t pos_z = 0;
+static int32_t pos_z = 0;
 static volatile uint8_t wait_spindle = 0;
 static uint8_t start_sync = 0;
 static uint16_t enc_cnt_prev = 0;
 static uint32_t EncValue = 0;
 static float sync_pitch = 0.0;
 
-float in = 0.0, out = 0.0, set = 0.0;
-PID_t pid;
+static float in = 0.0, out = 0.0, set = 0.0;
+static PID_t pid;
 
 
 void MC_Init(void)
@@ -78,7 +78,7 @@ void MC_Init(void)
     }
 
     PID_Create(&pid, &in, &out, &set, 1.8, 22, 0.08);
-    PID_Limits(&pid, -0.4, 0.4);
+    PID_Limits(&pid, -0.7, 0.7);
     PID_EnableAuto(&pid);
 
     pos_z = 0;
@@ -262,18 +262,7 @@ void MC_LineSync(float *target, Planner_LineData_t *pl_data, float pitch)
 
     sync_pitch = pitch;
 
-    if(pitch < 1.1)
-    {
-        PID_Tune(&pid, 1.8, 22, 0.08);
-    }
-    else if(pitch < 1.6)
-    {
-        PID_Tune(&pid, 1.6, 18, 0.06);
-    }
-    else
-    {
-        PID_Tune(&pid, 1.4, 15, 0.04);
-    }
+    PID_Tune(&pid, 20, 130.0, 0.0);
 
     // Disable feed override
     sys.f_override = DEFAULT_FEED_OVERRIDE;
@@ -395,9 +384,6 @@ void MC_UpdateSyncMove(void)
 
             // Apply
             Stepper_Ovr(out);
-
-            /*Printf("err %d\r\n", (int)(1000*in));
-            Printf_Flush();*/
         }
     }
 }

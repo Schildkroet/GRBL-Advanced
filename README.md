@@ -98,7 +98,12 @@ sudo apt install build-essential stlink-tools
 * Clone repository and run following commands:
 ```
 make clean
-make all flash
+
+# Choose a target
+make target=F446
+make target=F411
+
+make flash
 ```
 
 ***

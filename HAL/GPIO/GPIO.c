@@ -12,7 +12,7 @@
   * D12: Z_LIMIT_BIT: PA6
   * D13: SPINDLE_DIRECTION_BIT: PA5
   * D14: SPINDLE_ENABLE_BIT: PB7
-  * D15: SAFETY_DOOR_ENABLE_BIT: PB8
+  * D15: SAFETY_DOOR_ENABLE_BIT: PC2
   *
   * A0: CONTROL_RESET_BIT: PA0
   * A1: CONTROL_FEED_HOLD_BIT: PA1
@@ -195,6 +195,7 @@ static void GPIO_InitSystem(void)
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	// Safety door
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
 }

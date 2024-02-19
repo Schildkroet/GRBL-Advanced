@@ -28,7 +28,7 @@
 #define CONFIG_H
 
 
-#define GRBL_VERSION            "1.1i"
+#define GRBL_VERSION            "1.1j"
 #define GRBL_VERSION_BUILD      __DATE__
 
 

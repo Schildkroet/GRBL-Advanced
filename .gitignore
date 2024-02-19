@@ -1,5 +1,11 @@
 bin/*
 obj/*
+build/*
 *.depend
 *.layout
 grbl-master
+*.hex
+*.bin
+*.elf
+*.lst
+*.map

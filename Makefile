@@ -32,11 +32,22 @@ SOURCES		:=	./ ARM/cmsis/ grbl/ HAL/ HAL/EXTI HAL/FLASH HAL/GPIO HAL/I2C HAL/SPI
 
 INCLUDES    :=	$(SOURCES) ARM/SPL/inc
 
-LD_FILE		= stm32f411re_flash.ld
-DEFINES		= -DSTM32F411xE -DSTM32F411RE
-
-#LD_FILE		= stm32f446re_flash.ld
-#DEFINES		= -DSTM32F446xx -DSTM32F446RE
+# STM32 F446
+ifeq ($(target),F446)
+	LD_FILE		= stm32f446re_flash.ld
+	DEFINES		= -DSTM32F446xx -DSTM32F446RE
+	TARGET_STR	= "STM32 F446"
+# STM32 F411
+else ifeq ($(target),F411)
+	LD_FILE		= stm32f411re_flash.ld
+	DEFINES		= -DSTM32F411xE -DSTM32F411RE
+	TARGET_STR	= "STM32 F411"
+else
+# Default Target
+	LD_FILE		= stm32f446re_flash.ld
+	DEFINES		= -DSTM32F446xx -DSTM32F446RE
+	TARGET_STR	= "STM32 F446"
+endif
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -110,8 +121,9 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 #---------------------------------------------------------------------------------
 all:
+	@echo "Building "$(TARGET_STR)"..."
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).hex $(OUTPUT).lst -f $(CURDIR)/Makefile -j3
+	@make --no-print-directory -C $(BUILD) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).hex $(OUTPUT).lst -f $(CURDIR)/Makefile -j4
 	@$(SIZE) $(OUTPUT).elf
 
 #---------------------------------------------------------------------------------

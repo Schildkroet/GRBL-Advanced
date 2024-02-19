@@ -56,12 +56,13 @@
 // Level 1 cutoff frequency and up to as fast as the CPU allows (over 30kHz in limited testing).
 // NOTE: AMASS cutoff frequency multiplied by ISR overdrive factor must not exceed maximum step frequency.
 // NOTE: Current settings are set to overdrive the ISR to no more than 16kHz, balancing CPU overhead
-// and timer accuracy.  Do not alter these settings unless you know what you are doing.
-#define MAX_AMASS_LEVEL         3
+// and timer accuracy. Do not alter these settings unless you know what you are doing.
+#define MAX_AMASS_LEVEL         4
 // AMASS_LEVEL0: Normal operation. No AMASS. No upper cutoff frequency. Starts at LEVEL1 cutoff frequency.
-#define AMASS_LEVEL1            (uint32_t)(F_TIMER_STEPPER/8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
-#define AMASS_LEVEL2            (uint32_t)(F_TIMER_STEPPER/4000) // Over-drives ISR (x4)
-#define AMASS_LEVEL3            (uint32_t)(F_TIMER_STEPPER/2000) // Over-drives ISR (x8)
+#define AMASS_LEVEL1            (uint32_t)(F_TIMER_STEPPER / 8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
+#define AMASS_LEVEL2            (uint32_t)(F_TIMER_STEPPER / 4000) // Over-drives ISR (x4)
+#define AMASS_LEVEL3            (uint32_t)(F_TIMER_STEPPER / 2000) // Over-drives ISR (x8)
+#define AMASS_LEVEL4            (uint32_t)(F_TIMER_STEPPER / 1000) // Over-drives ISR (x16)
 
 #if MAX_AMASS_LEVEL <= 0
     error "AMASS must have 1 or more levels to operate correctly."
@@ -71,6 +72,7 @@
     #define STEP_TIMER_MIN          (uint16_t)(F_TIMER_STEPPER / MAX_STEP_RATE_HZ)
 #else
     #define STEP_TIMER_MIN          (uint16_t)((F_TIMER_STEPPER / 120000))
+    #pragma message("Max stepper rate: 120KHz")
 #endif
 
 #define G96_UPDATE_CNT      20
@@ -1363,9 +1365,13 @@ void Stepper_PrepareBuffer(void)
             {
                 prep_segment->amass_level = 2;
             }
-            else
+            else if (cycles < AMASS_LEVEL4)
             {
                 prep_segment->amass_level = 3;
+            }
+            else
+            {
+                prep_segment->amass_level = 4;
             }
 
             cycles >>= prep_segment->amass_level;

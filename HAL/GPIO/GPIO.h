@@ -67,8 +67,8 @@
 #define GPIO_SPINDLE_ENA_PIN	GPIO_Pin_7
 
 // Safety door
-#define GPIO_DOOR_PORT			GPIOB
-#define GPIO_DOOR_PIN			GPIO_Pin_8
+#define GPIO_DOOR_PORT			GPIOC
+#define GPIO_DOOR_PIN			GPIO_Pin_2
 
 // Control pins
 #define GPIO_CTRL_RST_PORT		GPIOA

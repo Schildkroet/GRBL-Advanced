@@ -28,6 +28,7 @@
 #include "Settings.h"
 #include "Stepper.h"
 #include "Planner.h"
+#include "Print.h"
 
 
 // Define planner variables
@@ -90,7 +91,7 @@ void Planner_ResetBuffer(void)
    head. It avoids changing the planner state and preserves the buffer to ensure subsequent gcode
    motions are still planned correctly, while the stepper module only points to the block buffer head
    to execute the special system motion. */
-uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
+uint8_t Planner_BufferLine(const float *target, const Planner_LineData_t *pl_data)
 {
     // Prepare and initialize new block. Copy relevant pl_data for block execution.
     Planner_Block_t *block = &block_buffer[block_buffer_head];
@@ -103,6 +104,8 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
     // Compute and store initial move distance data.
     int32_t target_steps[N_AXIS], position_steps[N_AXIS];
     float unit_vec[N_AXIS], delta_mm;
+    int32_t target_steps_orig[N_AXIS];
+    float unit_vec_orig[N_AXIS], delta_mm_orig;
     uint8_t idx;
 
     // Copy position data based on type of motion being planned.
@@ -124,8 +127,8 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
     }
 
 #ifdef COREXY
-    target_steps[A_MOTOR] = lround(target[A_MOTOR]*settings.steps_per_mm[A_MOTOR]);
-    target_steps[B_MOTOR] = lround(target[B_MOTOR]*settings.steps_per_mm[B_MOTOR]);
+    target_steps[A_MOTOR] = lroundf(target[A_MOTOR]*settings.steps_per_mm[A_MOTOR]);
+    target_steps[B_MOTOR] = lroundf(target[B_MOTOR]*settings.steps_per_mm[B_MOTOR]);
     block->steps[A_MOTOR] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) + (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
     block->steps[B_MOTOR] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) - (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
 #endif
@@ -138,7 +141,7 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
 #ifdef COREXY
         if(!(idx == A_MOTOR) && !(idx == B_MOTOR))
         {
-            target_steps[idx] = lround(target[idx]*settings.steps_per_mm[idx]);
+            target_steps[idx] = lroundf(target[idx]*settings.steps_per_mm[idx]);
             block->steps[idx] = labs(target_steps[idx]-position_steps[idx]);
         }
 
@@ -157,12 +160,15 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
             delta_mm = (target_steps[idx] - position_steps[idx])/settings.steps_per_mm[idx];
         }
 #else
-        target_steps[idx] = lround(target[idx]*settings.steps_per_mm[idx]);
+        target_steps[idx] = lroundf(target[idx]*settings.steps_per_mm[idx]);
+        target_steps_orig[idx] = lroundf((target[idx] + pl_data->backlash[idx]) * settings.steps_per_mm[idx]);
         block->steps[idx] = labs(target_steps[idx]-position_steps[idx]);
         block->step_event_count = max(block->step_event_count, block->steps[idx]);
         delta_mm = (target_steps[idx] - position_steps[idx])/settings.steps_per_mm[idx];
+        delta_mm_orig = (target_steps_orig[idx] - position_steps[idx]) / settings.steps_per_mm[idx];
 #endif
         unit_vec[idx] = delta_mm; // Store unit vector numerator
+        unit_vec_orig[idx] = delta_mm_orig;
 
         // Set direction bits. Bit enabled always means direction is negative.
         if(delta_mm < 0.0)
@@ -256,7 +262,7 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
             {
                 convert_delta_vector_to_unit_vector(junction_unit_vec);
                 float junction_acceleration = limit_value_by_axis_maximum(settings.acceleration, junction_unit_vec);
-                float sin_theta_d2 = sqrt(0.5*(1.0-junction_cos_theta)); // Trig half angle identity. Always positive.
+                float sin_theta_d2 = sqrtf(0.5*(1.0-junction_cos_theta)); // Trig half angle identity. Always positive.
 
                 block->max_junction_speed_sqr = max(MINIMUM_JUNCTION_SPEED*MINIMUM_JUNCTION_SPEED, (junction_acceleration * settings.junction_deviation * sin_theta_d2)/(1.0-sin_theta_d2));
             }
@@ -276,6 +282,12 @@ uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data)
             // Update previous path unit_vector and planner position.
             memcpy(planner.previous_unit_vec, unit_vec, sizeof(unit_vec));  // pl.previous_unit_vec[] = unit_vec[]
             memcpy(planner.position, target_steps, sizeof(target_steps));   // pl.position[] = target_steps[]
+        }
+        else
+        {
+            // Update previous path unit_vector and planner position.
+            memcpy(planner.previous_unit_vec, unit_vec_orig, sizeof(unit_vec_orig)); // pl.previous_unit_vec[] = unit_vec[]
+            memcpy(planner.position, target_steps_orig, sizeof(target_steps_orig));  // pl.position[] = target_steps[]
         }
 
         // New block is all set. Update buffer head and next buffer head indices.
@@ -354,7 +366,7 @@ float Planner_GetExecBlockExitSpeedSqr(void)
 
 // Computes and returns block nominal speed based on running condition and override values.
 // NOTE: All system motion commands, such as homing/parking, are not subject to overrides.
-float Planner_ComputeProfileNominalSpeed(Planner_Block_t *block)
+float Planner_ComputeProfileNominalSpeed(const Planner_Block_t *block)
 {
     float nominal_speed = block->programmed_rate;
 

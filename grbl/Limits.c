@@ -29,7 +29,6 @@
 #include "Protocol.h"
 #include "Limits.h"
 #include "GPIO.h"
-
 #include "System32.h"
 
 
@@ -49,6 +48,7 @@ void Limits_Init(void)
     // TODO: Hard limits via interrupt
     if(BIT_IS_TRUE(settings.flags, BITFLAG_HARD_LIMIT_ENABLE))
     {
+        // Enable hard limits
         settings.system_flags |= BITFLAG_ENABLE_LIMITS;
     }
     else
@@ -58,9 +58,9 @@ void Limits_Init(void)
 }
 
 
-// Disables hard limits.
 void Limits_Disable(void)
 {
+    // Disables hard limits.
     settings.system_flags &= ~BITFLAG_ENABLE_LIMITS;
 }
 
@@ -72,11 +72,12 @@ uint8_t Limits_GetState(void)
 {
     uint8_t limit_state = 0;
 
-    limit_state = (GPIO_ReadInputDataBit(GPIO_LIM_X_PORT, GPIO_LIM_X_PIN)<<X1_LIMIT_BIT);
-#if !defined(LATHE_MODE)
-    limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Y_PORT, GPIO_LIM_Y_PIN)<<Y1_LIMIT_BIT);
-#endif
-    limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Z_PORT, GPIO_LIM_Z_PIN)<<Z1_LIMIT_BIT);
+    limit_state = (GPIO_ReadInputDataBit(GPIO_LIM_X_PORT, GPIO_LIM_X_PIN) << X1_LIMIT_BIT);
+    if (BIT_IS_FALSE(settings.flags_ext, BITFLAG_LATHE_MODE))
+    {
+        limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Y_PORT, GPIO_LIM_Y_PIN) << Y1_LIMIT_BIT);
+    }
+    limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Z_PORT, GPIO_LIM_Z_PIN) << Z1_LIMIT_BIT);
 
     // Second limit
     limit_state |= (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_8)<<X2_LIMIT_BIT);
@@ -88,10 +89,11 @@ uint8_t Limits_GetState(void)
         limit_state ^= LIMIT_MASK;
     }
 
-#if defined(LATHE_MODE)
-    // Clear Y-Limits in lathe mode
-    limit_state &= ~(1<<Y1_LIMIT_BIT | 1<<Y2_LIMIT_BIT);
-#endif
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_LATHE_MODE))
+    {
+        // Clear Y-Limits in lathe mode
+        limit_state &= ~(1 << Y1_LIMIT_BIT | 1 << Y2_LIMIT_BIT);
+    }
 
     return limit_state;
 }
@@ -119,8 +121,9 @@ void Limit_PinChangeISR(void) // DEFAULT: Limit pin change interrupt process.
     {
         if(!(sys_rt_exec_alarm))
         {
-            if(settings.system_flags & BITFLAG_FORCE_HARD_LIMIT_CHECK)
+            if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_FORCE_HARD_LIMIT_CHECK))
             {
+                Delay_us(25);
                 uint8_t lim = Limits_GetState();
 
                 // Check limit pin state.
@@ -132,8 +135,10 @@ void Limit_PinChangeISR(void) // DEFAULT: Limit pin change interrupt process.
             }
             else
             {
-                MC_Reset(); // Initiate system kill.
-                System_SetExecAlarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
+                // Initiate system kill.
+                MC_Reset();
+                // Indicate hard limit critical event
+                System_SetExecAlarm(EXEC_ALARM_HARD_LIMIT);
             }
         }
     }
@@ -255,16 +260,20 @@ void Limits_GoHome(uint8_t cycle_mask)
 
         }
 
-        homing_rate *= sqrt(n_active_axis); // [sqrt(N_AXIS)] Adjust so individual axes all move at homing rate.
+        // [sqrtf(N_AXIS)] Adjust so individual axes all move at homing rate.
+        homing_rate *= sqrtf(n_active_axis);
         sys.homing_axis_lock = axislock;
 
         // Perform homing cycle. Planner buffer should be empty, as required to initiate the homing cycle.
         pl_data->feed_rate = homing_rate; // Set current homing rate.
         Planner_BufferLine(target, pl_data); // Bypass mc_line(). Directly plan homing motion.
 
-        sys.step_control = STEP_CONTROL_EXECUTE_SYS_MOTION; // Set to execute homing motion and clear existing flags.
-        Stepper_PrepareBuffer(); // Prep and fill segment buffer from newly planned block.
-        Stepper_WakeUp(); // Initiate motion
+        // Set to execute homing motion and clear existing flags.
+        sys.step_control = STEP_CONTROL_EXECUTE_SYS_MOTION;
+        // Prep and fill segment buffer from newly planned block.
+        Stepper_PrepareBuffer();
+        // Initiate motion
+        Stepper_WakeUp();
 
         do
         {
@@ -297,7 +306,8 @@ void Limits_GoHome(uint8_t cycle_mask)
                 sys.homing_axis_lock = axislock;
             }
 
-            Stepper_PrepareBuffer(); // Check and prep segment buffer. NOTE: Should take no longer than 200us.
+            // Check and prep segment buffer. NOTE: Should take no longer than 200us.
+            Stepper_PrepareBuffer();
 
             // Exit routines: No time to run protocol_execute_realtime() in this loop.
             if(sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP))
@@ -326,7 +336,8 @@ void Limits_GoHome(uint8_t cycle_mask)
                 }
                 if(sys_rt_exec_alarm)
                 {
-                    MC_Reset(); // Stop motors, if they are running.
+                    // Stop motors, if they are running.
+                    MC_Reset();
                     Protocol_ExecuteRealtime();
 
                     return;
@@ -342,8 +353,10 @@ void Limits_GoHome(uint8_t cycle_mask)
         }
         while(0x3F & axislock);
 
-        Stepper_Reset(); // Immediately force kill steppers and reset step segment buffer.
-        Delay_ms(settings.homing_debounce_delay); // Delay to allow transient dynamics to dissipate.
+        // Immediately force kill steppers and reset step segment buffer.
+        Stepper_Reset();
+        // Delay to allow transient dynamics to dissipate.
+        Delay_ms(settings.homing_debounce_delay);
 
         // Reverse direction and reset homing rate for locate cycle(s).
         approach = !approach;
@@ -369,26 +382,28 @@ void Limits_GoHome(uint8_t cycle_mask)
     // set up pull-off maneuver from axes limit switches that have been homed. This provides
     // some initial clearance off the switches and should also help prevent them from falsely
     // triggering when hard limits are enabled or when more than one axes shares a limit pin.
-    int32_t set_axis_position;
+    int32_t set_axis_position = 0;
     // Set machine positions for homed limit switches. Don't update non-homed axes.
-    for(idx = 0; idx < N_AXIS; idx++)
+    for (idx = 0; idx < N_AXIS; idx++)
     {
         // NOTE: settings.max_travel[] is stored as a negative value.
-        if(cycle_mask & BIT(idx))
+        if (cycle_mask & BIT(idx))
         {
-#ifdef HOMING_FORCE_SET_ORIGIN
-            set_axis_position = 0;
-#else
-            if(BIT_IS_TRUE(settings.homing_dir_mask, BIT(idx)))
+            if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_HOMING_FORCE_SET_ORIGIN))
             {
-                set_axis_position = lround((settings.max_travel[idx]+settings.homing_pulloff)*settings.steps_per_mm[idx]);
+                set_axis_position = 0;
             }
             else
             {
-                set_axis_position = lround(-settings.homing_pulloff*settings.steps_per_mm[idx]);
+                if (BIT_IS_TRUE(settings.homing_dir_mask, BIT(idx)))
+                {
+                    set_axis_position = lroundf((settings.max_travel[idx] + settings.homing_pulloff) * settings.steps_per_mm[idx]);
+                }
+                else
+                {
+                    set_axis_position = lroundf(-settings.homing_pulloff * settings.steps_per_mm[idx]);
+                }
             }
-#endif
-
 #ifdef COREXY
             if(idx == X_AXIS)
             {
@@ -409,22 +424,23 @@ void Limits_GoHome(uint8_t cycle_mask)
 #else
             sys_position[idx] = set_axis_position;
 #endif
-
         }
     }
 
     // Necessary for backlash compensation
     MC_Init();
 
-    sys.step_control = STEP_CONTROL_NORMAL_OP; // Return step control to normal operation.
-    sys.is_homed = 1;   // Machine is homed and knows its position
+    // Return step control to normal operation.
+    sys.step_control = STEP_CONTROL_NORMAL_OP;
+    // Machine is homed and knows its position
+    sys.is_homed = 1;
 }
 
 
 // Performs a soft limit check. Called from mc_line() only. Assumes the machine has been homed,
 // the workspace volume is in all negative space, and the system is in normal operation.
 // NOTE: Used by jogging to limit travel within soft-limit volume.
-void Limits_SoftCheck(float *target)
+void Limits_SoftCheck(const float *target)
 {
     if(System_CheckTravelLimits(target))
     {
@@ -448,10 +464,11 @@ void Limits_SoftCheck(float *target)
             while(sys.state != STATE_IDLE);
         }
 
-        MC_Reset(); // Issue system reset and ensure spindle and coolant are shutdown.
-        System_SetExecAlarm(EXEC_ALARM_SOFT_LIMIT); // Indicate soft limit critical event
-        Protocol_ExecuteRealtime(); // Execute to enter critical event loop and system abort
-
-        return;
+        // Issue system reset and ensure spindle and coolant are shutdown.
+        MC_Reset();
+        // Indicate soft limit critical event
+        System_SetExecAlarm(EXEC_ALARM_SOFT_LIMIT);
+        // Execute to enter critical event loop and system abort
+        Protocol_ExecuteRealtime();
     }
 }

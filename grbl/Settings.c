@@ -4,7 +4,7 @@
 
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c) 2017-2020 Patrick F.
+  Copyright (c) 2017-2024 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,77 +19,54 @@
   You should have received a copy of the GNU General Public License
   along with Grbl-Advanced.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "Settings.h"
+#include "CRC.h"
 #include "Config.h"
 #include "GCode.h"
 #include "Limits.h"
-#include "Protocol.h"
-#include "Probe.h"
-#include "Report.h"
-#include "Settings.h"
-#include "SpindleControl.h"
-#include "System.h"
-#include "Stepper.h"
-#include "defaults.h"
 #include "Nvm.h"
-#include <stdint.h>
+#include "Probe.h"
+#include "Protocol.h"
+#include "Report.h"
+#include "SpindleControl.h"
+#include "Stepper.h"
+#include "System.h"
+#include "defaults.h"
 #include <string.h>
+
+
+static void WriteGlobalSettings(void);
+static uint8_t ReadGlobalSettings(void);
 
 
 Settings_t settings;
 
 
-// Method to store startup lines into EEPROM
-void Settings_StoreStartupLine(uint8_t n, char *line)
+// Initialize the config subsystem
+void Settings_Init(void)
 {
-#ifdef FORCE_BUFFER_SYNC_DURING_EEPROM_WRITE
-    Protocol_BufferSynchronize(); // A startup line may contain a motion and be executing.
-#endif
+    Nvm_Init();
 
-    uint32_t addr = n*(STARTUP_LINE_LEN+1)+EEPROM_ADDR_STARTUP_BLOCK;
-    Nvm_Write(addr, (uint8_t*)line, STARTUP_LINE_LEN);
-    Nvm_Update();
-}
+    if (!ReadGlobalSettings())
+    {
+        Report_StatusMessage(STATUS_SETTING_READ_FAIL);
+        // Force restore all EEPROM data.
+        Settings_Restore(SETTINGS_RESTORE_ALL);
+        Report_GrblSettings();
+    }
 
-
-// Method to store build info into EEPROM
-// NOTE: This function can only be called in IDLE state.
-void Settings_StoreBuildInfo(char *line)
-{
-    // Build info can only be stored when state is IDLE.
-    Nvm_Write(EEPROM_ADDR_BUILD_INFO, (uint8_t*)line, STARTUP_LINE_LEN);
-    Nvm_Update();
-}
-
-
-// Method to store coord data parameters into EEPROM
-void Settings_WriteCoordData(uint8_t coord_select, float *coord_data)
-{
-#ifdef FORCE_BUFFER_SYNC_DURING_EEPROM_WRITE
-    Protocol_BufferSynchronize();
-#endif
-
-    uint32_t addr = coord_select*(sizeof(float)*N_AXIS+1) + EEPROM_ADDR_PARAMETERS;
-    Nvm_Write(addr, (uint8_t*)coord_data, sizeof(float)*N_AXIS);
-
-    Nvm_Update();
-}
-
-
-// Method to store Grbl global settings struct and version number into EEPROM
-// NOTE: This function can only be called in IDLE state.
-void WriteGlobalSettings(void)
-{
-    Nvm_WriteByte(0, SETTINGS_VERSION);
-    Nvm_Write(EEPROM_ADDR_GLOBAL, (uint8_t*)&settings, sizeof(Settings_t));
-
-    Nvm_Update();
+    // Read tool table
+    TT_Init();
 }
 
 
 // Method to restore EEPROM-saved Grbl global settings back to defaults.
 void Settings_Restore(uint8_t restore_flag)
 {
-    if(restore_flag & SETTINGS_RESTORE_DEFAULTS)
+    sys.state = STATE_BUSY;
+    Report_RealtimeStatus();
+
+    if (restore_flag & SETTINGS_RESTORE_DEFAULTS)
     {
         settings.system_flags = DEFAULT_SYSTEM_INVERT_MASK;
         settings.stepper_idle_lock_time = DEFAULT_STEPPER_IDLE_LOCK_TIME;
@@ -101,6 +78,7 @@ void Settings_Restore(uint8_t restore_flag)
 
         settings.rpm_max = DEFAULT_SPINDLE_RPM_MAX;
         settings.rpm_min = DEFAULT_SPINDLE_RPM_MIN;
+        settings.enc_ppr = DEFAULT_ENCODER_PULSES_PER_REV;
 
         settings.homing_dir_mask = DEFAULT_HOMING_DIR_MASK;
         settings.homing_feed_rate = DEFAULT_HOMING_FEED_RATE;
@@ -110,44 +88,107 @@ void Settings_Restore(uint8_t restore_flag)
 
         // Flags
         settings.flags = 0;
-        if(DEFAULT_REPORT_INCHES)
+        if (DEFAULT_REPORT_INCHES)
         {
             settings.flags |= BITFLAG_REPORT_INCHES;
         }
-        if(DEFAULT_LASER_MODE)
+        if (DEFAULT_LASER_MODE)
         {
             settings.flags |= BITFLAG_LASER_MODE;
         }
-        if(DEFAULT_INVERT_ST_ENABLE)
+        if (DEFAULT_INVERT_ST_ENABLE)
         {
             settings.flags |= BITFLAG_INVERT_ST_ENABLE;
         }
-        if(DEFAULT_HARD_LIMIT_ENABLE)
+        if (DEFAULT_HARD_LIMIT_ENABLE)
         {
             settings.flags |= BITFLAG_HARD_LIMIT_ENABLE;
         }
-        if(DEFAULT_HOMING_ENABLE)
+        if (DEFAULT_HOMING_ENABLE)
         {
             settings.flags |= BITFLAG_HOMING_ENABLE;
         }
-        if(DEFAULT_SOFT_LIMIT_ENABLE)
+        if (DEFAULT_SOFT_LIMIT_ENABLE)
         {
             settings.flags |= BITFLAG_SOFT_LIMIT_ENABLE;
         }
-        if(DEFAULT_INVERT_LIMIT_PINS)
+        if (DEFAULT_INVERT_LIMIT_PINS)
         {
             settings.flags |= BITFLAG_INVERT_LIMIT_PINS;
         }
-        if(DEFAULT_INVERT_PROBE_PIN)
+        if (DEFAULT_INVERT_PROBE_PIN)
         {
             settings.flags |= BITFLAG_INVERT_PROBE_PIN;
         }
 
-        // Flags2
-        settings.flags2 = 0;
-        if(DEFAULT_LATHE_MODE)
+        // flags_ext
+        settings.flags_ext = 0;
+        if (DEFAULT_LATHE_MODE)
         {
-            settings.flags2 |= BITFLAG_LATHE_MODE;
+            settings.flags_ext |= BITFLAG_LATHE_MODE;
+        }
+        if (BUFFER_SYNC_DURING_EEPROM_WRITE)
+        {
+            settings.flags_ext |= BITFLAG_BUFFER_SYNC_NVM_WRITE;
+        }
+        if (DEFAULT_ENABLE_M7)
+        {
+            settings.flags_ext |= BITFLAG_ENABLE_M7;
+        }
+        if (HARD_LIMIT_FORCE_STATE_CHECK)
+        {
+            settings.flags_ext |= BITFLAG_FORCE_HARD_LIMIT_CHECK;
+        }
+        if (ENABLE_BACKLASH_COMPENSATION)
+        {
+            settings.flags_ext |= BITFLAG_ENABLE_BACKLASH_COMP;
+        }
+        if (USE_MULTI_AXIS)
+        {
+            settings.flags_ext |= BITFLAG_ENABLE_MULTI_AXIS;
+        }
+        if (HOMING_INIT_LOCK)
+        {
+            settings.flags_ext |= BITFLAG_HOMING_INIT_LOCK;
+        }
+        if (HOMING_FORCE_SET_ORIGIN)
+        {
+            settings.flags_ext |= BITFLAG_HOMING_FORCE_SET_ORIGIN;
+        }
+        if (FORCE_INITIALIZATION_ALARM)
+        {
+            settings.flags_ext |= BITFLAG_FORCE_INITIALIZATION_ALARM;
+        }
+        if (CHECK_LIMITS_AT_INIT)
+        {
+            settings.flags_ext |= BITFLAG_CHECK_LIMITS_AT_INIT;
+        }
+
+        // Flags report
+        settings.flags_report = 0;
+        if (DEFAULT_REPORT_FIELD_BUFFER_STATE)
+        {
+            settings.flags_report |= BITFLAG_REPORT_FIELD_BUFFER_STATE;
+        }
+        if (DEFAULT_REPORT_FIELD_PIN_STATE)
+        {
+            settings.flags_report |= BITFLAG_REPORT_FIELD_PIN_STATE;
+        }
+        if (DEFAULT_REPORT_FIELD_CURRENT_FEED_SPEED)
+        {
+            settings.flags_report |= BITFLAG_REPORT_FIELD_CUR_FEED_SPEED;
+        }
+        if (DEFAULT_REPORT_FIELD_WORK_COORD_OFFSET)
+        {
+            settings.flags_report |= BITFLAG_REPORT_FIELD_WORK_COORD_OFFSET;
+        }
+        if (DEFAULT_REPORT_FIELD_OVERRIDES)
+        {
+            settings.flags_report |= BITFLAG_REPORT_FIELD_OVERRIDES;
+        }
+        if (DEFAULT_REPORT_FIELD_LINE_NUMBERS)
+        {
+            settings.flags_report |= BITFLAG_REPORT_FIELD_LINE_NUMBERS;
         }
 
         settings.steps_per_mm[X_AXIS] = DEFAULT_X_STEPS_PER_MM;
@@ -187,43 +228,101 @@ void Settings_Restore(uint8_t restore_flag)
         WriteGlobalSettings();
     }
 
-    if(restore_flag & SETTINGS_RESTORE_PARAMETERS)
+    if (restore_flag & SETTINGS_RESTORE_PARAMETERS)
     {
         uint8_t idx;
         float coord_data[N_AXIS];
 
         memset(&coord_data, 0, sizeof(coord_data));
 
-        for(idx = 0; idx <= SETTING_INDEX_NCOORD; idx++)
+        for (idx = 0; idx <= SETTING_INDEX_NCOORD; idx++)
         {
             Settings_WriteCoordData(idx, coord_data);
         }
-    }
-
-    if(restore_flag & SETTINGS_RESTORE_STARTUP_LINES)
-    {
-#if N_STARTUP_LINE > 0
-        Nvm_WriteByte(EEPROM_ADDR_STARTUP_BLOCK, 0);
-        Nvm_WriteByte(EEPROM_ADDR_STARTUP_BLOCK+1, 0); // Checksum
-#endif
-#if N_STARTUP_LINE > 1
-        Nvm_WriteByte(EEPROM_ADDR_STARTUP_BLOCK+(STARTUP_LINE_LEN+1), 0);
-        Nvm_WriteByte(EEPROM_ADDR_STARTUP_BLOCK+(STARTUP_LINE_LEN+2), 0); // Checksum
-#endif
         Nvm_Update();
     }
 
-    if(restore_flag & SETTINGS_RESTORE_BUILD_INFO)
+    if (restore_flag & SETTINGS_RESTORE_COORDS)
     {
-        Nvm_WriteByte(EEPROM_ADDR_BUILD_INFO , 0);
-        Nvm_WriteByte(EEPROM_ADDR_BUILD_INFO+1 , 0); // Checksum
+        float coord_data[N_AXIS];
+
+        memset(&coord_data, 0, sizeof(coord_data));
+
+        for (uint8_t idx = 0; idx < N_COORDINATE_SYSTEM; idx++)
+        {
+            Settings_WriteCoordData(idx, coord_data);
+        }
         Nvm_Update();
     }
 
-    if(restore_flag & SETTINGS_RESTORE_TOOLS)
+    if (restore_flag & SETTINGS_RESTORE_STARTUP_LINES)
+    {
+        for (uint8_t i = 0; i < N_STARTUP_LINE; i++)
+        {
+            Nvm_WriteByte(EEPROM_ADDR_STARTUP_BLOCK + ((STARTUP_LINE_LEN + 1) * i), 0);
+            Nvm_WriteByte(EEPROM_ADDR_STARTUP_BLOCK + ((STARTUP_LINE_LEN + 1) * i + 1), 0); // Checksum
+        }
+
+        Nvm_Update();
+    }
+
+    if (restore_flag & SETTINGS_RESTORE_BUILD_INFO)
+    {
+        Nvm_WriteByte(EEPROM_ADDR_BUILD_INFO, 0);
+        Nvm_WriteByte(EEPROM_ADDR_BUILD_INFO + 1, 0); // Checksum
+        Nvm_Update();
+    }
+
+    if (restore_flag & SETTINGS_RESTORE_TOOLS)
     {
         TT_Reset();
+        Nvm_Update();
     }
+
+    sys.state = STATE_IDLE;
+}
+
+
+// Method to store startup lines into EEPROM
+void Settings_StoreStartupLine(uint8_t n, const char *line)
+{
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_BUFFER_SYNC_NVM_WRITE))
+    {
+        // A startup line may contain a motion and be executing.
+        Protocol_BufferSynchronize();
+    }
+
+    uint32_t addr = n*(STARTUP_LINE_LEN+1)+EEPROM_ADDR_STARTUP_BLOCK;
+    Nvm_Write(addr, (uint8_t*)line, STARTUP_LINE_LEN);
+    Nvm_Update();
+}
+
+
+// Method to store build info into EEPROM
+// NOTE: This function can only be called in IDLE state.
+void Settings_StoreBuildInfo(const char *line)
+{
+    // Build info can only be stored when state is IDLE.
+    Nvm_Write(EEPROM_ADDR_BUILD_INFO, (uint8_t*)line, STARTUP_LINE_LEN);
+    Nvm_Update();
+}
+
+
+// Method to store coord data parameters into EEPROM
+void Settings_WriteCoordData(uint8_t coord_select, const float *coord_data)
+{
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_BUFFER_SYNC_NVM_WRITE))
+    {
+        Protocol_BufferSynchronize();
+    }
+
+    uint32_t addr = coord_select*(sizeof(float)*N_AXIS+1) + EEPROM_ADDR_PARAMETERS;
+    Nvm_Write(addr, (uint8_t*)coord_data, sizeof(float)*N_AXIS);
+
+    uint8_t crc = CRC_CalculateCRC8((const uint8_t *)coord_data, sizeof(float) * N_AXIS);
+    Nvm_WriteByte(addr + (sizeof(float) * N_AXIS), crc);
+
+    Nvm_Update();
 }
 
 
@@ -234,7 +333,7 @@ uint8_t Settings_ReadStartupLine(uint8_t n, char *line)
     if(!(Nvm_Read((uint8_t*)line, addr, STARTUP_LINE_LEN)))
     {
         // Reset line with default value
-        line[0] = 0; // Empty line
+        line[0] = 0;
         Settings_StoreStartupLine(n, line);
 
         return false;
@@ -244,21 +343,32 @@ uint8_t Settings_ReadStartupLine(uint8_t n, char *line)
 }
 
 
-void Settings_StoreToolTable(ToolTable_t *table)
+void Settings_StoreToolTable(const ToolTable_t *table)
 {
     Nvm_Write(EEPROM_ADDR_TOOLTABLE, (uint8_t*)table, sizeof(ToolTable_t));
+
+    uint8_t crc = CRC_CalculateCRC8((const uint8_t *)table, sizeof(ToolTable_t));
+    Nvm_WriteByte(EEPROM_ADDR_TOOLTABLE_CRC, crc);
 }
 
 
-void Settings_StoreToolParams(uint8_t tool_nr, ToolParams_t *params)
+/*void Settings_StoreToolParams(uint8_t tool_nr, const ToolParams_t *params)
 {
     Nvm_Write(EEPROM_ADDR_TOOLTABLE+(tool_nr*sizeof(ToolParams_t)), (uint8_t*)params, sizeof(ToolParams_t));
-}
+
+    uint8_t crc = CRC_CalculateCRC8((const uint8_t *)table, sizeof(ToolTable_t));
+    Nvm_WriteByte(EEPROM_ADDR_TOOLTABLE_CRC, crc);
+}*/
 
 
 uint8_t Settings_ReadToolTable(ToolTable_t *table)
 {
     if(!(Nvm_Read((uint8_t*)table, EEPROM_ADDR_TOOLTABLE, sizeof(ToolTable_t))))
+    {
+        return false;
+    }
+    uint8_t crc = CRC_CalculateCRC8((const uint8_t *)table, sizeof(ToolTable_t));
+    if (crc != Nvm_ReadByte(EEPROM_ADDR_TOOLTABLE_CRC))
     {
         return false;
     }
@@ -273,7 +383,7 @@ uint8_t Settings_ReadBuildInfo(char *line)
     if(!(Nvm_Read((uint8_t*)line, EEPROM_ADDR_BUILD_INFO, STARTUP_LINE_LEN)))
     {
         // Reset line with default value
-        line[0] = 0; // Empty line
+        line[0] = 0;
         Settings_StoreBuildInfo(line);
 
         return false;
@@ -290,31 +400,13 @@ uint8_t Settings_ReadCoordData(uint8_t coord_select, float *coord_data)
     if(!(Nvm_Read((uint8_t*)coord_data, addr, sizeof(float)*N_AXIS)))
     {
         // Reset with default zero vector
-        memset(&coord_data, 0.0, sizeof(coord_data));
+        memset(coord_data, 0, sizeof(float) * N_AXIS);
         Settings_WriteCoordData(coord_select, coord_data);
 
         return false;
     }
-
-    return true;
-}
-
-
-// Reads Grbl global settings struct from EEPROM.
-uint8_t ReadGlobalSettings()
-{
-    // Check version-byte of eeprom
-    uint8_t version = Nvm_ReadByte(0);
-
-    if(version == SETTINGS_VERSION)
-    {
-        // Read settings-record and check checksum
-        if(!(Nvm_Read((uint8_t*)&settings, EEPROM_ADDR_GLOBAL, sizeof(Settings_t))))
-        {
-            return false;
-        }
-    }
-    else
+    uint8_t crc = CRC_CalculateCRC8((const uint8_t *)coord_data, sizeof(float)*N_AXIS);
+    if (crc != Nvm_ReadByte(addr + (sizeof(float) * N_AXIS)))
     {
         return false;
     }
@@ -366,16 +458,19 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
                     break;
 
                 case 2:
+                    // Convert to mm/min^2 for grbl internal use.
                     settings.acceleration[parameter] = value*60*60;
-                    break; // Convert to mm/min^2 for grbl internal use.
+                    break;
                 case 3:
+                    // Store as negative for grbl internal use.
                     settings.max_travel[parameter] = -value;
-                    break;  // Store as negative for grbl internal use.
+                    break;
                 case 4:
                     settings.backlash[parameter] = value;
                     break;
                 }
-                break; // Exit while-loop after setting has been configured and proceed to the EEPROM write call.
+                // Exit while-loop after setting has been configured and proceed to the EEPROM write call.
+                break;
             }
             else
             {
@@ -392,12 +487,12 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
     else
     {
         // Store non-axis Grbl settings
-        uint8_t int_value = trunc(value);
+        uint8_t int_value = truncf(value);
 
         switch(parameter)
         {
         case 0:
-            //settings.system_flags = int_value;
+            settings.system_flags = int_value & CONTROL_MASK;
             break;
 
         case 1:
@@ -406,12 +501,14 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
 
         case 2:
             settings.step_invert_mask = int_value;
-            Stepper_GenerateStepDirInvertMasks(); // Regenerate step and direction port invert masks.
+            // Regenerate step and direction port invert masks.
+            Stepper_GenerateStepDirInvertMasks();
             break;
 
         case 3:
             settings.dir_invert_mask = int_value;
-            Stepper_GenerateStepDirInvertMasks(); // Regenerate step and direction port invert masks.
+            // Regenerate step and direction port invert masks.
+            Stepper_GenerateStepDirInvertMasks();
             break;
 
         case 4: // Reset to ensure change. Immediate re-init may cause problems.
@@ -448,6 +545,10 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
             Probe_ConfigureInvertMask(false);
             break;
 
+        case 7:
+            settings.flags_report = int_value;
+            break;
+
         case 10:
             settings.status_report_mask = int_value;
             break;
@@ -469,19 +570,25 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
             {
                 settings.flags &= ~BITFLAG_REPORT_INCHES;
             }
-            System_FlagWcoChange(); // Make sure WCO is immediately updated.
+            // Make sure WCO is immediately updated.
+            System_FlagWcoChange();
             break;
 
         case 14:
+            // Check for range?
             settings.tool_change = int_value;
-            break;   // Check for range?
+            break;
+
+        case 15:
+            settings.enc_ppr = (uint16_t)value;
+            break;
 
         case 20:
             if (int_value)
             {
                 if (BIT_IS_FALSE(settings.flags, BITFLAG_HOMING_ENABLE))
                 {
-                    return(STATUS_SOFT_LIMIT_ERROR);
+                    return (STATUS_SOFT_LIMIT_ERROR);
                 }
                 settings.flags |= BITFLAG_SOFT_LIMIT_ENABLE;
             }
@@ -500,7 +607,8 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
             {
                 settings.flags &= ~BITFLAG_HARD_LIMIT_ENABLE;
             }
-            Limits_Init(); // Re-init to immediately change. NOTE: Nice to have but could be problematic later.
+            // Re-init to immediately change. NOTE: Nice to have but could be problematic later.
+            Limits_Init();
             break;
 
         case 22:
@@ -511,33 +619,43 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
             else
             {
                 settings.flags &= ~BITFLAG_HOMING_ENABLE;
-                settings.flags &= ~BITFLAG_SOFT_LIMIT_ENABLE; // Force disable soft-limits.
+                // Force disable soft-limits.
+                settings.flags &= ~BITFLAG_SOFT_LIMIT_ENABLE;
             }
             break;
 
         case 23:
             settings.homing_dir_mask = int_value;
             break;
+
         case 24:
             settings.homing_feed_rate = value;
             break;
+
         case 25:
             settings.homing_seek_rate = value;
             break;
+
         case 26:
             settings.homing_debounce_delay = int_value;
             break;
+
         case 27:
             settings.homing_pulloff = value;
             break;
+
         case 30:
             settings.rpm_max = value;
+            // Re-initialize spindle rpm calibration
             Spindle_Init();
-            break; // Re-initialize spindle rpm calibration
+            break;
+
         case 31:
             settings.rpm_min = value;
+            // Re-initialize spindle rpm calibration
             Spindle_Init();
-            break; // Re-initialize spindle rpm calibration
+            break;
+
         case 32:
             if (int_value)
             {
@@ -552,16 +670,115 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
         case 33:
             if (int_value)
             {
-                settings.flags2 |= BITFLAG_LATHE_MODE;
+                settings.flags_ext |= BITFLAG_LATHE_MODE;
             }
             else
             {
-                settings.flags2 &= ~BITFLAG_LATHE_MODE;
+                settings.flags_ext &= ~BITFLAG_LATHE_MODE;
+            }
+            break;
+
+        case 34:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_BUFFER_SYNC_NVM_WRITE;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_BUFFER_SYNC_NVM_WRITE;
+            }
+            break;
+
+        case 35:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_ENABLE_M7;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_ENABLE_M7;
+            }
+            break;
+
+        case 36:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_FORCE_HARD_LIMIT_CHECK;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_FORCE_HARD_LIMIT_CHECK;
+            }
+            break;
+
+        case 37:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_ENABLE_BACKLASH_COMP;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_ENABLE_BACKLASH_COMP;
+            }
+            break;
+
+        case 38:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_ENABLE_MULTI_AXIS;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_ENABLE_MULTI_AXIS;
+            }
+            break;
+
+        case 39:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_HOMING_INIT_LOCK;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_HOMING_INIT_LOCK;
+            }
+            break;
+
+        case 40:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_HOMING_FORCE_SET_ORIGIN;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_HOMING_FORCE_SET_ORIGIN;
+            }
+            break;
+
+        case 41:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_FORCE_INITIALIZATION_ALARM;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_FORCE_INITIALIZATION_ALARM;
+            }
+            break;
+
+        case 42:
+            if (int_value)
+            {
+                settings.flags_ext |= BITFLAG_CHECK_LIMITS_AT_INIT;
+            }
+            else
+            {
+                settings.flags_ext &= ~BITFLAG_CHECK_LIMITS_AT_INIT;
             }
             break;
 
         default:
-            return(STATUS_INVALID_STATEMENT);
+            return (STATUS_INVALID_STATEMENT);
         }
     }
 
@@ -580,23 +797,6 @@ void Settings_StoreTlsPosition(void)
 }
 
 
-// Initialize the config subsystem
-void Settings_Init(void)
-{
-    Nvm_Init();
-
-    if(!ReadGlobalSettings())
-    {
-        Report_StatusMessage(STATUS_SETTING_READ_FAIL);
-        Settings_Restore(SETTINGS_RESTORE_ALL); // Force restore all EEPROM data.
-        Report_GrblSettings();
-    }
-
-    // Read tool table
-    TT_Init();
-}
-
-
 // Returns step pin mask according to Grbl internal axis indexing.
 uint8_t Settings_GetStepPinMask(uint8_t axis_idx)
 {
@@ -606,18 +806,22 @@ uint8_t Settings_GetStepPinMask(uint8_t axis_idx)
     }
     if(axis_idx == Y_AXIS)
     {
-        return (1<<Y_STEP_BIT);
+        return (1 << Y_STEP_BIT);
     }
-    if(axis_idx == Z_AXIS)
+    if (axis_idx == Z_AXIS)
     {
-        return (1<<Z_STEP_BIT);
+        return (1 << Z_STEP_BIT);
     }
-    if(axis_idx == A_AXIS)
+    if (axis_idx == A_AXIS)
     {
-        return (1<<A_STEP_BIT);
+        return (1 << A_STEP_BIT);
+    }
+    if (axis_idx == B_AXIS)
+    {
+        return (1 << B_STEP_BIT);
     }
 
-    return (1<<B_STEP_BIT);
+    return 0;
 }
 
 
@@ -640,8 +844,12 @@ uint8_t Settings_GetDirectionPinMask(uint8_t axis_idx)
     {
         return (1<<A_DIRECTION_BIT);
     }
+    if (axis_idx == B_AXIS)
+    {
+        return (1 << B_DIRECTION_BIT);
+    }
 
-    return (1<<B_DIRECTION_BIT);
+    return 0;
 }
 
 
@@ -664,6 +872,52 @@ uint8_t Settings_GetLimitPinMask(uint8_t axis_idx)
     {
         return (1<<A_STEP_BIT);
     }
+    if (axis_idx == B_AXIS)
+    {
+        return (1 << B_STEP_BIT);
+    }
 
-    return (1<<B_STEP_BIT);
+    return 0;
+}
+
+
+// Method to store Grbl global settings struct and version number into EEPROM
+// NOTE: This function can only be called in IDLE state.
+static void WriteGlobalSettings(void)
+{
+    Nvm_WriteByte(0, SETTINGS_VERSION);
+    Nvm_Write(EEPROM_ADDR_GLOBAL, (uint8_t *)&settings, sizeof(Settings_t));
+
+    uint8_t crc = CRC_CalculateCRC8((const uint8_t *)&settings, sizeof(settings));
+    Nvm_WriteByte(EEPROM_ADDR_GLOBAL_CRC, crc);
+
+    Nvm_Update();
+}
+
+
+// Reads Grbl global settings struct from EEPROM.
+static uint8_t ReadGlobalSettings(void)
+{
+    // Check version-byte of eeprom
+    uint8_t version = Nvm_ReadByte(0);
+
+    if (version == SETTINGS_VERSION)
+    {
+        // Read settings-record and check checksum
+        if (!(Nvm_Read((uint8_t *)&settings, EEPROM_ADDR_GLOBAL, sizeof(Settings_t))))
+        {
+            return false;
+        }
+        uint8_t crc = CRC_CalculateCRC8((const uint8_t *)&settings, sizeof(settings));
+        if (crc != Nvm_ReadByte(EEPROM_ADDR_GLOBAL_CRC))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
 }

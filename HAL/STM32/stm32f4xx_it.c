@@ -66,9 +66,9 @@ extern void System_PinChangeISR(void);
 static volatile uint32_t gMillis = 0;
 
 uint32_t spindle_rpm = 0;
-uint16_t tim4_cnt_prev = 0;
-uint32_t rpm_arr[RPM_FILTER_NUM] = {0};
-uint8_t rpm_idx = 0;
+static uint16_t tim4_cnt_prev = 0;
+static uint32_t rpm_arr[RPM_FILTER_NUM] = {0};
+static uint8_t rpm_idx = 0;
 
 
 /******************************************************************************/
@@ -120,9 +120,12 @@ void ProcessReceive(char c)
 			case CMD_SPINDLE_OVR_FINE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_MINUS); break;
 			case CMD_SPINDLE_OVR_STOP: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_STOP); break;
 			case CMD_COOLANT_FLOOD_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_FLOOD_OVR_TOGGLE); break;
-#ifdef ENABLE_M7
-            case CMD_COOLANT_MIST_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_MIST_OVR_TOGGLE); break;
-#endif
+            case CMD_COOLANT_MIST_OVR_TOGGLE:
+                if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
+                {
+                    System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_MIST_OVR_TOGGLE);
+                }
+                break;
 			}
 		// Throw away any unfound extended-ASCII character by not passing it to the serial buffer.
 		}
@@ -299,7 +302,7 @@ void SysTick_Handler(void)
         }
 
         // Calculate RPM and smooth it
-        float rpm = ((cnt_diff * 31.25) / PULSES_PER_REV) * 60.0;
+        float rpm = ((cnt_diff * 31.25) / settings.enc_ppr) * 60.0;
         rpm_arr[rpm_idx++] = (uint32_t)rpm;
         if(rpm_idx > (RPM_FILTER_NUM-1))
         {

@@ -36,6 +36,7 @@
 #include "defaults.h"
 #include "PID.h"
 #include "Encoder.h"
+#include "Print.h"
 
 
 #define DIR_POSITIV     0
@@ -104,16 +105,16 @@ void MC_SyncBacklashPosition(void)
 // segments, must pass through this routine before being passed to the planner. The seperation of
 // mc_line and plan_buffer_line is done primarily to place non-planner-type functions from being
 // in the planner and to let backlash compensation or canned cycle integration simple and direct.
-void MC_Line(float *target, Planner_LineData_t *pl_data)
+void MC_Line(const float *target, const Planner_LineData_t *pl_data)
 {
-    Planner_LineData_t pl_backlash = {0};
-    uint8_t backlash_update = 0;
+    //uint8_t backlash_update = 0;
+    float target_new[N_AXIS] = {};
+    Planner_LineData_t pl_data_new;
 
+    memcpy(target_new, target, sizeof(float)*N_AXIS);
+    memcpy(&pl_data_new, pl_data, sizeof(Planner_LineData_t));
 
-    pl_backlash.spindle_speed = pl_data->spindle_speed;
-    pl_backlash.line_number = pl_data->line_number;
-    pl_backlash.feed_rate = pl_data->feed_rate;
-
+    pl_data_new.backlash_motion = 0;
 
     // If enabled, check for soft limit violations. Placed here all line motions are picked up
     // from everywhere in Grbl.
@@ -170,90 +171,119 @@ void MC_Line(float *target, Planner_LineData_t *pl_data)
         }
     } while(1);
 
-#ifdef ENABLE_BACKLASH_COMPENSATION
-    pl_backlash.backlash_motion = 1;
-    pl_backlash.condition = pl_data->condition | PL_COND_FLAG_RAPID_MOTION; // Set rapid motion condition flag.
-
-    // Backlash compensation (not for A & B)
-    for(uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_BACKLASH_COMP))
     {
-        // Move positive?
-        if(target[i] > target_prev[i])
-        {
-            // Last move negative?
-            if(dir_negative[i] == DIR_NEGATIV)
-            {
-                dir_negative[i] = DIR_POSITIV;
-                target_prev[i] += settings.backlash[i];
+        float delta_prev[N_AXIS] = {};
+        float vec_norm[N_AXIS] = {};
 
-                backlash_update = 1;
+        // Backlash compensation (not for A & B)
+        for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+        {
+            delta_prev[i] = target[i] - target_prev[i];
+            vec_norm[i] = 0.0;
+            pl_data_new.backlash[i] = 0.0;
+
+            // Move positive?
+            if (target[i] > target_prev[i])
+            {
+                // Last move negative?
+                if (dir_negative[i] == DIR_NEGATIV)
+                {
+                    dir_negative[i] = DIR_POSITIV;
+                    target_new[i] += settings.backlash[i];
+                    vec_norm[i] = settings.backlash[i];
+                    pl_data_new.backlash[i] = -settings.backlash[i];
+                    current_backlash[i] += settings.backlash[i] * settings.steps_per_mm[i];
+
+                    pl_data_new.backlash_motion |= BIT(i);
+                }
+            }
+            // Move negative?
+            else if (target[i] < target_prev[i])
+            {
+                // Last move positive?
+                if (dir_negative[i] == DIR_POSITIV)
+                {
+                    dir_negative[i] = DIR_NEGATIV;
+                    target_new[i] -= settings.backlash[i];
+                    vec_norm[i] = -settings.backlash[i];
+                    pl_data_new.backlash[i] = settings.backlash[i];
+                    current_backlash[i] -= (settings.backlash[i] * settings.steps_per_mm[i]);
+
+                    pl_data_new.backlash_motion |= BIT(i);
+                }
             }
         }
-        // Move negative?
-        else if(target[i] < target_prev[i])
-        {
-            // Last move positive?
-            if(dir_negative[i] == DIR_POSITIV)
-            {
-                dir_negative[i] = DIR_NEGATIV;
-                target_prev[i] -= settings.backlash[i];
 
-                backlash_update = 1;
+        if (backlash_enable && pl_data_new.backlash_motion)
+        {
+            float vec_len = sqrtf(powf(delta_prev[X_AXIS], 2.0) + powf(delta_prev[Y_AXIS], 2.0) + powf(delta_prev[Z_AXIS], 2.0));
+
+            pl_data_new.feed_rate *= 1.1;
+
+            // Normalize target vector and reduce to a length of 0.1 and add it to previous target
+            for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+            {
+                vec_norm[i] += ((delta_prev[i] / vec_len) / 10.0) + target_prev[i];
+            }
+
+            // Perform backlash move if necessary
+            if (vec_len > 0.1)
+            {
+                Planner_BufferLine(vec_norm, &pl_data_new);
+                pl_data_new.backlash_motion = 0;
             }
         }
+
+        // Save target for next function call
+        memcpy(target_prev, target, N_AXIS*sizeof(float));
+
+        // Backlash move needs a slot in planner buffer, so we have to check again, if planner is free
+        do
+        {
+            Protocol_ExecuteRealtime(); // Check for any run-time commands
+
+            if (sys.abort)
+            {
+                // Bail, if system abort.
+                return;
+            }
+
+            if (Planner_CheckBufferFull())
+            {
+                // Auto-cycle start when buffer is full.
+                Protocol_AutoCycleStart();
+            }
+            else
+            {
+                break;
+            }
+        } while(1);
     }
 
-    if(backlash_enable && backlash_update)
+    if(pl_data_new.backlash_motion != 0)
     {
-        // Perform backlash move if necessary
-        Planner_BufferLine(target_prev, &pl_backlash);
+        Planner_BufferLine(target_new, &pl_data_new);
+        return;
     }
-
-    memcpy(target_prev, target, N_AXIS*sizeof(float));
-
-    // Backlash move needs a slot in planner buffer, so we have to check again, if planner is free
-    do
-    {
-        Protocol_ExecuteRealtime(); // Check for any run-time commands
-
-        if(sys.abort)
-        {
-            // Bail, if system abort.
-            return;
-        }
-
-        if(Planner_CheckBufferFull())
-        {
-            // Auto-cycle start when buffer is full.
-            Protocol_AutoCycleStart();
-        }
-        else
-        {
-            break;
-        }
-    } while(1);
-#else
-    (void)backlash_update;
-    (void)pl_backlash;
-#endif
 
     // Plan and queue motion into planner buffer
-    if(Planner_BufferLine(target, pl_data) == PLAN_EMPTY_BLOCK)
+    if (Planner_BufferLine(target, &pl_data_new) == PLAN_EMPTY_BLOCK)
     {
         if(BIT_IS_TRUE(settings.flags, BITFLAG_LASER_MODE))
         {
             // Correctly set spindle state, if there is a coincident position passed. Forces a buffer
             // sync while in M3 laser mode only.
-            if(pl_data->condition & PL_COND_FLAG_SPINDLE_CW)
+            if (pl_data_new.condition & PL_COND_FLAG_SPINDLE_CW)
             {
-                Spindle_Sync(PL_COND_FLAG_SPINDLE_CW, pl_data->spindle_speed);
+                Spindle_Sync(PL_COND_FLAG_SPINDLE_CW, pl_data_new.spindle_speed);
             }
         }
     }
 }
 
 
-void MC_LineSync(float *target, Planner_LineData_t *pl_data, float pitch)
+void MC_LineSync(const float *target, const Planner_LineData_t *pl_data, float pitch)
 {
     uint8_t old_f_override = sys.f_override;
 
@@ -369,7 +399,7 @@ void MC_UpdateSyncMove(void)
             EncValue += cnt_diff;
 
             // Calculate revolutions since start
-            float rev_actual = (float)EncValue / PULSES_PER_REV;
+            float rev_actual = (float)EncValue / settings.enc_ppr;
             // Distance since start
             float dist_expected = rev_actual * sync_pitch;
 
@@ -396,8 +426,15 @@ void MC_UpdateSyncMove(void)
 // The arc is approximated by generating a huge number of tiny, linear segments. The chordal tolerance
 // of each segment is configured in settings.arc_tolerance, which is defined to be the maximum normal
 // distance from segment to the circle when the end points both lie on the circle.
-void MC_Arc(float *target, Planner_LineData_t *pl_data, float *position, float *offset, float radius,
-            uint8_t axis_0, uint8_t axis_1, uint8_t axis_linear, uint8_t is_clockwise_arc)
+void MC_Arc(const float *target,
+            Planner_LineData_t *pl_data,
+            float *position,
+            const float *offset,
+            float radius,
+            uint8_t axis_0,
+            uint8_t axis_1,
+            uint8_t axis_linear,
+            uint8_t is_clockwise_arc)
 {
     float center_axis0 = position[axis_0] + offset[axis_0];
     float center_axis1 = position[axis_1] + offset[axis_1];
@@ -427,8 +464,8 @@ void MC_Arc(float *target, Planner_LineData_t *pl_data, float *position, float *
     // (2x) settings.arc_tolerance. For 99% of users, this is just fine. If a different arc segment fit
     // is desired, i.e. least-squares, midpoint on arc, just change the mm_per_arc_segment calculation.
     // For the intended uses of Grbl, this value shouldn't exceed 2000 for the strictest of cases.
+    radius += settings.arc_tolerance;
     uint16_t segments = floor(fabs(0.5*angular_travel*radius) / sqrt(settings.arc_tolerance*(2*radius - settings.arc_tolerance)));
-
     if(segments)
     {
         // Multiply inverse feed_rate to compensate for the fact that this movement is approximated
@@ -476,14 +513,13 @@ void MC_Arc(float *target, Planner_LineData_t *pl_data, float *position, float *
         float sin_Ti;
         float cos_Ti;
         float r_axisi;
-        uint16_t i;
         uint8_t count = 0;
 
-        for(i = 1; i < segments; i++)   // Increment (segments-1).
+        for (uint16_t i = 1; i < segments; i++) // Increment (segments-1).
         {
             if(count < N_ARC_CORRECTION)
             {
-                // Apply vector rotation matrix. ~40 usec
+                // Apply vector rotation matrix. ~180 nsec
                 r_axisi = r_axis0*sin_T + r_axis1*cos_T;
                 r_axis0 = r_axis0*cos_T - r_axis1*sin_T;
                 r_axis1 = r_axisi;
@@ -491,7 +527,7 @@ void MC_Arc(float *target, Planner_LineData_t *pl_data, float *position, float *
             }
             else
             {
-                // Arc correction to radius vector. Computed only every N_ARC_CORRECTION increments. ~375 usec
+                // Arc correction to radius vector. Computed only every N_ARC_CORRECTION increments. ~37 usec
                 // Compute exact location by applying transformation matrix from initial radius vector(=-offset).
                 cos_Ti = cos(i*theta_per_segment);
                 sin_Ti = sin(i*theta_per_segment);
@@ -601,7 +637,7 @@ void MC_HomigCycle(uint8_t cycle_mask)
 
 // Perform tool length probe cycle. Requires probe switch.
 // NOTE: Upon probe failure, the program will be stopped and placed into ALARM state.
-uint8_t MC_ProbeCycle(float *target, Planner_LineData_t *pl_data, uint8_t parser_flags)
+uint8_t MC_ProbeCycle(const float *target, const Planner_LineData_t *pl_data, uint8_t parser_flags)
 {
     // TODO: Need to update this cycle so it obeys a non-auto cycle start.
     if(sys.state == STATE_CHECK_MODE)
@@ -719,7 +755,7 @@ void MC_OverrideCtrlUpdate(uint8_t override_state)
 // Plans and executes the single special motion case for parking. Independent of main planner buffer.
 // NOTE: Uses the always free planner ring buffer head to store motion parameters for execution.
 #ifdef PARKING_ENABLE
-void MC_ParkingMotion(float *parking_target, Planner_LineData_t *pl_data)
+void MC_ParkingMotion(const float *parking_target, const Planner_LineData_t *pl_data)
 {
     if(sys.abort)
     {

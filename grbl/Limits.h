@@ -40,7 +40,7 @@ void Limit_PinChangeISR(void);
 void Limits_GoHome(uint8_t cycle_mask);
 
 // Check for soft limit violations
-void Limits_SoftCheck(float *target);
+void Limits_SoftCheck(const float *target);
 
 
 #endif // LIMITS_H

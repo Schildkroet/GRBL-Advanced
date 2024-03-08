@@ -31,7 +31,7 @@ void SysTick_Init(void)
 
 
 // for 100 MHz STM32F411
-#define COUNTS_PER_MICROSECOND  33
+#define COUNTS_PER_MICROSECOND  50
 void Delay_us(volatile uint32_t us)
 {
     volatile uint32_t count = us * COUNTS_PER_MICROSECOND - 2;

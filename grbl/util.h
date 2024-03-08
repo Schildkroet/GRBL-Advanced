@@ -42,7 +42,6 @@
 #define BIT_IS_FALSE(x,mask)        ((x & mask) == 0)
 
 
-#define F_CPU                       96000000UL
 #define F_TIMER_STEPPER             24000000UL
 
 #define N_AXIS                      5
@@ -120,12 +119,10 @@
 // Read a floating point value from a string. Line points to the input buffer, char_counter
 // is the indexer pointing to the current character of the line, while float_ptr is
 // a pointer to the result variable. Returns true when it succeeds
-uint8_t Read_Float(char *line, uint8_t *char_counter, float *float_ptr);
-
-uint8_t ExtractFloat(char *line, int start_idx, char *float_char);
+uint8_t Read_Float(const char *line, uint8_t *char_counter, float *float_ptr);
+uint8_t ExtractFloat(const char *line, int start_idx, char *float_char);
 
 void PrintFloat_CoordValue(float n);
-
 void PrintFloat_RateValue(float n);
 
 // Non-blocking delay function used for general operation and suspend features.

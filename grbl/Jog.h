@@ -31,7 +31,7 @@
 
 
 // Sets up valid jog motion received from g-code parser, checks for soft-limits, and executes the jog.
-uint8_t Jog_Execute(Planner_LineData_t *pl_data, Parser_Block_t *gc_block);
+uint8_t Jog_Execute(Planner_LineData_t *pl_data, const Parser_Block_t *gc_block);
 
 
 #endif // JOG_H

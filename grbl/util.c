@@ -40,9 +40,9 @@
 // Scientific notation is officially not supported by g-code, and the 'E' character may
 // be a g-code word on some CNC systems. So, 'E' notation will not be recognized.
 // NOTE: Thanks to Radu-Eosif Mihailescu for identifying the issues with using strtod().
-uint8_t Read_Float(char *line, uint8_t *char_counter, float *float_ptr)
+uint8_t Read_Float(const char *line, uint8_t *char_counter, float *float_ptr)
 {
-    char *ptr = line + *char_counter;
+    char *ptr = (char *)line + *char_counter;
     unsigned char c;
 
     // Grab first character and increment pointer. No spaces assumed in line.
@@ -150,9 +150,11 @@ uint8_t Read_Float(char *line, uint8_t *char_counter, float *float_ptr)
 
 
 // Search a float in a string and return it as string
-uint8_t ExtractFloat(char *line, int start_idx, char *float_char)
+uint8_t ExtractFloat(const char *line, int start_idx, char *float_char)
 {
     unsigned int i = 0;
+
+    float_char[0] = '\0';
 
     for(i = start_idx; i < strlen(line); i++)
     {
@@ -216,7 +218,7 @@ void PrintFloat_RateValue(float n)
 // Non-blocking delay function used for general operation and suspend features.
 void Delay_sec(float seconds, uint8_t mode)
 {
-    uint16_t i = ceil(1000/DWELL_TIME_STEP*seconds);
+    uint16_t i = ceilf(1000/DWELL_TIME_STEP*seconds);
 
     while(i-- > 0)
     {
@@ -246,14 +248,14 @@ void Delay_sec(float seconds, uint8_t mode)
 }
 
 // Simple hypotenuse computation function.
-float hypot_f(float x, float y)
+/*float hypot_f(float x, float y)
 {
-    return sqrt(x*x + y*y);
-}
+    return sqrtf(x*x + y*y);
+}*/
 
 bool isEqual_f(float a, float b)
 {
-    if(fabs(a-b) < 0.00001)
+    if(fabsf(a-b) < 0.00001)
     {
         return true;
     }
@@ -274,7 +276,7 @@ float convert_delta_vector_to_unit_vector(float *vector)
         }
     }
 
-    magnitude = sqrt(magnitude);
+    magnitude = sqrtf(magnitude);
     float inv_magnitude = 1.0/magnitude;
 
     for(idx = 0; idx < N_AXIS; idx++)
@@ -294,7 +296,7 @@ float limit_value_by_axis_maximum(float *max_value, float *unit_vec)
     {
         if(unit_vec[idx] != 0)    // Avoid divide by zero.
         {
-            limit_value = min(limit_value,fabs(max_value[idx]/unit_vec[idx]));
+            limit_value = min(limit_value,fabsf(max_value[idx]/unit_vec[idx]));
         }
     }
 

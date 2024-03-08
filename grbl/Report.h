@@ -66,6 +66,9 @@
 #define STATUS_GCODE_G43_DYNAMIC_AXIS_ERROR     37
 #define STATUS_GCODE_MAX_VALUE_EXCEEDED         38
 
+#define STATUS_PROBE_ERROR                      39
+#define STATUS_TOOLS_READ_FAIL                  40
+
 // Define Grbl alarm codes. Valid values (1-255). 0 is reserved.
 #define ALARM_HARD_LIMIT_ERROR          EXEC_ALARM_HARD_LIMIT
 #define ALARM_SOFT_LIMIT_ERROR          EXEC_ALARM_SOFT_LIMIT
@@ -132,12 +135,12 @@ void Report_NgcParams(void);
 void Report_GCodeModes(void);
 
 // Prints startup line when requested and executed.
-void Report_StartupLine(uint8_t n, char *line);
+void Report_StartupLine(uint8_t n, const char *line);
 
-void Report_ExecuteStartupMessage(char *line, uint8_t status_code);
+void Report_ExecuteStartupMessage(const char *line, uint8_t status_code);
 
 // Prints build info and user info
-void Report_BuildInfo(char *line);
+void Report_BuildInfo(const char *line);
 
 
 #endif // REPORT_H

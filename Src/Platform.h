@@ -35,10 +35,6 @@
 #define FIFO_DIR_TX             1
 
 
-// Communication interface
-// Comment out to use serial interface
-//#define ETH_IF
-
 #define ETH_SOCK                0
 #define ETH_PORT                30501
 

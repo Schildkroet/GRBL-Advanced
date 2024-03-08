@@ -21,9 +21,7 @@
 #define TOOLTABLE_H_INCLUDED
 
 #include <stdint.h>
-
-
-#define MAX_TOOL_NR     20
+#include "Config.h"
 
 
 #pragma pack(push, 1) // exact fit - no padding
@@ -38,7 +36,7 @@ typedef struct
 
 typedef struct
 {
-    ToolParams_t tools[MAX_TOOL_NR];
+    ToolParams_t tools[TOOLTABLE_MAX_TOOL_NR];
 } ToolTable_t;
 #pragma pack(pop)
 

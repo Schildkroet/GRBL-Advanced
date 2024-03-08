@@ -23,8 +23,8 @@
 #include "stm32f4xx.h"
 
 
-#ifdef USE_EXT_EEPROM
-    #define EEPROM_SIZE			1
+#if (USE_EXT_EEPROM)
+    #define EEPROM_SIZE         1
 #else
     #define EEPROM_SIZE			1024
 #endif
@@ -44,7 +44,7 @@ uint8_t EE_ReadByte(uint16_t VirtAddress);
 void EE_WriteByte(uint16_t VirtAddress, uint8_t Data);
 
 uint8_t EE_ReadByteArray(uint8_t *DataOut, uint16_t VirtAddress, uint16_t size);
-void EE_WriteByteArray(uint16_t VirtAddress, uint8_t *DataIn, uint16_t size);
+void EE_WriteByteArray(uint16_t VirtAddress, const uint8_t *DataIn, uint16_t size);
 
 void EE_Program(void);
 void EE_Erase(void);

@@ -140,7 +140,7 @@ void ComIf_Update(void)
         else
         {
             // Read max 64 bytes from usart buffer
-            for(uint16_t read = 0; read < MAX_READ_SIZE; read++)
+            for(uint8_t read = 0; read < MAX_READ_SIZE; read++)
             {
                 char c;
                 if(Getc(&c) == 0)

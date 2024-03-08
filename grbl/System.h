@@ -96,6 +96,7 @@
 
 #define STATE_FEED_DWELL                    BIT(8)  // Dwell
 #define STATE_TOOL_CHANGE                   BIT(9)  // Tool change in progress
+#define STATE_BUSY                          BIT(10) // Writing NVM etc.
 
 // Define system suspend flags. Used in various ways to manage suspend states and procedures.
 #define SUSPEND_DISABLE                     0      // Must be zero.
@@ -134,7 +135,7 @@
 // Define global system variables
 typedef struct
 {
-    uint16_t state;               // Tracks the current system state of Grbl.
+    uint16_t state;              // Tracks the current system state of Grbl.
     uint8_t abort;               // System abort flag. Forces exit back to main loop for reset.
     uint8_t suspend;             // System suspend bitflag variable that manages holds, cancels, and safety door.
     uint8_t soft_limit;          // Tracks soft limit errors for the state machine. (boolean)
@@ -197,11 +198,11 @@ float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx);
 void System_ConvertArraySteps2Mpos(float *position, const int32_t *steps);
 
 // CoreXY calculation only. Returns x or y-axis "steps" based on CoreXY motor steps.
-int32_t system_convert_corexy_to_x_axis_steps(int32_t *steps);
-int32_t system_convert_corexy_to_y_axis_steps(int32_t *steps);
+int32_t system_convert_corexy_to_x_axis_steps(const int32_t *steps);
+int32_t system_convert_corexy_to_y_axis_steps(const int32_t *steps);
 
 // Checks and reports if target array exceeds machine travel limits.
-uint8_t System_CheckTravelLimits(float *target);
+uint8_t System_CheckTravelLimits(const float *target);
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
 void System_SetExecStateFlag(uint16_t mask);

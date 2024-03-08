@@ -50,6 +50,7 @@
 #define MODAL_GROUP_G15     13  // [G7, G8] Lathe Diameter Mode
 
 #define MODAL_GROUP_M4      11  // [M0,M1,M2,M30] Stopping
+#define MODAL_GROUP_M5      15  // [M62-M65]
 #define MODAL_GROUP_M7      12  // [M3,M4,M5] Spindle turning
 #define MODAL_GROUP_M8      13  // [M7,M8,M9] Coolant control
 #define MODAL_GROUP_M9      14  // [M56] Override control
@@ -142,17 +143,18 @@
 // Modal Group G8: Tool length offset
 #define TOOL_LENGTH_OFFSET_CANCEL           0 // G49 (Default: Must be zero)
 #define TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC   1 // G43.1
+#define TOOL_LENGTH_OFFSET_ENABLE           2 // G43
 
 // Modal Group G12: Active work coordinate system
 // N/A: Stores coordinate system value (54-59) to change to.
 
 // Modal Group G12: Lathe Mode
-#define LATHE_RADIUS_MODE                   0
-#define LATHE_DIAMETER_MODE                 1
+#define LATHE_RADIUS_MODE                   0 // G8 (Default: Must be zero)
+#define LATHE_DIAMETER_MODE                 1 // G7
 
 // Modal Group G14: Spindle Control Mode
-#define SPINDLE_RPM_MODE                    0
-#define SPINDLE_SURFACE_MODE                1
+#define SPINDLE_RPM_MODE                    0 // G97 RPM (Default: Must be zero)
+#define SPINDLE_SURFACE_MODE                1 // G96 CSS
 
 
 // Define parameter word mapping.
@@ -234,16 +236,16 @@ typedef struct
     uint16_t d;
     uint8_t h;
     float e;
-    float f;         // Feed
-    float ijk[N_AXIS];    // I,J,K Axis arc offsets
-    uint8_t l;       // G10 or canned cycles parameters
-    int32_t n;       // Line number
-    float p;         // G10 or dwell parameters
-    float q;        // G82 peck drilling
-    float r;         // Arc radius
-    float s;         // Spindle speed
-    uint8_t t;       // Tool selection
-    float xyz[N_AXIS];    // X,Y,Z Translational axes
+    float f;            // Feed
+    float ijk[N_AXIS];  // I,J,K Axis arc offsets
+    uint8_t l;          // G10 or canned cycles parameters
+    int32_t n;          // Line number
+    float p;            // G10 or dwell parameters
+    float q;            // G82 peck drilling
+    float r;            // Arc radius
+    float s;            // Spindle speed
+    uint8_t t;          // Tool selection
+    float xyz[N_AXIS];  // X,Y,Z Translational axes
 } GC_Values_t;
 
 
@@ -260,11 +262,12 @@ typedef struct
     float position[N_AXIS];         // Where the interpreter considers the tool to be at this point in the code
     float coord_system[N_AXIS];     // Current work coordinate system (G54+). Stores offset from absolute machine
 
-    // position in mm. Loaded from EEPROM when called.
+    // Position in mm. Loaded from EEPROM when called.
     float coord_offset[N_AXIS];     // Retains the G92 coordinate offset (work coordinates) relative to
 
-    // machine zero in mm. Non-persistent. Cleared upon reset and boot.
-    float tool_length_offset[N_AXIS];       // Tracks tool length offset value when enabled.
+    // Machine zero in mm. Non-persistent. Cleared upon reset and boot.
+    float tool_length_offset_dynamic[N_AXIS]; // Tracks tool length offset value when enabled.
+    float tool_length_offset[N_AXIS];
 } Parser_State_t;
 
 
@@ -284,8 +287,7 @@ void GC_Init(void);
 // Set g-code parser position. Input in steps.
 void GC_SyncPosition(void);
 
-// Execute one block of rs275/ngc/g-code
-uint8_t GC_ExecuteLine(char *line);
-
+// Execute one block of rs274/ngc/g-code
+uint8_t GC_ExecuteLine(const char *line);
 
 #endif // GCODE_H

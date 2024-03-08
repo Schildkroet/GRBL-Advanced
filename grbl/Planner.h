@@ -88,6 +88,7 @@ typedef struct
     int32_t line_number;      // Desired line number to report when executing.
 
     uint8_t backlash_motion;
+    float backlash[N_AXIS];
 } Planner_LineData_t;
 
 
@@ -99,7 +100,7 @@ void Planner_ResetBuffer(void); // Reset buffer only.
 // Add a new linear movement to the buffer. target[N_AXIS] is the signed, absolute target position
 // in millimeters. Feed rate specifies the speed of the motion. If feed rate is inverted, the feed
 // rate is taken to mean "frequency" and would complete the operation in 1/feed_rate minutes.
-uint8_t Planner_BufferLine(float *target, Planner_LineData_t *pl_data);
+uint8_t Planner_BufferLine(const float *target, const Planner_LineData_t *pl_data);
 
 // Called when the current block is no longer needed. Discards the block and makes the memory
 // availible for new blocks.
@@ -118,7 +119,7 @@ uint8_t Planner_NextBlockIndex(uint8_t block_index);
 float Planner_GetExecBlockExitSpeedSqr(void);
 
 // Called by main program during planner calculations and step segment buffer during initialization.
-float Planner_ComputeProfileNominalSpeed(Planner_Block_t *block);
+float Planner_ComputeProfileNominalSpeed(const Planner_Block_t *block);
 
 // Re-calculates buffered motions profile parameters upon a motion-based override change.
 void Planner_UpdateVelocityProfileParams(void);

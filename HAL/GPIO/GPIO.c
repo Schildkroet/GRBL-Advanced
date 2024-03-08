@@ -11,8 +11,8 @@
   * D11: SPINDLE_PWM: PA7
   * D12: Z_LIMIT_BIT: PA6
   * D13: SPINDLE_DIRECTION_BIT: PA5
-  * D14: SPINDLE_ENABLE_BIT: PB7
-  * D15: SAFETY_DOOR_ENABLE_BIT: PC2
+  * ???: SPINDLE_ENABLE_BIT: PB13
+  * ???: SAFETY_DOOR_ENABLE_BIT: PC2
   *
   * A0: CONTROL_RESET_BIT: PA0
   * A1: CONTROL_FEED_HOLD_BIT: PA1
@@ -23,6 +23,8 @@
   */
 #include "GPIO.h"
 #include "Platform.h"
+#include "Config.h"
+#include "defaults.h"
 
 
 static void GPIO_InitStepper(void);
@@ -112,14 +114,12 @@ static void GPIO_InitSpindle(void)
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	/* GPIO Configuration:  */
-#if !defined(LATHE_MODE)
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
-#endif
 
 	/* GPIO Configuration:  PWM */
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
@@ -140,12 +140,13 @@ static void GPIO_InitLimit(void)
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 
-	/* GPIO Configuration: */
-#if !defined(LATHE_MODE)
-	// Y1
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-#endif
+    /* GPIO Configuration: */
+    if (DEFAULT_LATHE_MODE)
+    {
+        // Y1
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+        GPIO_Init(GPIOB, &GPIO_InitStructure);
+    }
 
     // X1 X2 Y2 Z2
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_5 | GPIO_Pin_6;
@@ -176,7 +177,7 @@ static void GPIO_InitSystem(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
-#ifdef ETH_IF
+#if (USE_ETH_IF)
     // W5500 Reset Pin
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;

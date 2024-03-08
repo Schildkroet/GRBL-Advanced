@@ -26,9 +26,9 @@ OBJDUMP		= 	${GCC_BASE}/arm-none-eabi-objdump
 #---------------------------------------------------------------------------------
 TARGET		:=	GRBL_Advanced
 BUILD       :=	build
-SOURCES		:=	./ ARM/cmsis/ grbl/ HAL/ HAL/EXTI HAL/FLASH HAL/GPIO HAL/I2C HAL/SPI HAL/STM32 \
+SOURCES		:=	./ ARM/ ARM/cmsis/ grbl/ HAL/ HAL/EXTI HAL/FLASH HAL/GPIO HAL/I2C HAL/SPI HAL/STM32 \
                 HAL/TIM HAL/USART ARM/SPL/src Src/ Libraries/GrIP Libraries/CRC Libraries/Ethernet \
-                Libraries/Ethernet/utility Libraries/Encoder Libraries/EEPROM Libraries/Printf
+                Libraries/Ethernet/W5500 Libraries/Encoder Libraries/EEPROM Libraries/Printf
 
 INCLUDES    :=	$(SOURCES) ARM/SPL/inc
 
@@ -57,7 +57,7 @@ CFLAGS      := 	-O2 -g1 -std=c11 -Wall -Wextra $(INCLUDE) -fno-common -fsingle-p
                 -ffunction-sections -fomit-frame-pointer -mlittle-endian  -DUSE_STDPERIPH_DRIVER -D__FPU_USED -DARM_MATH_CM4 -Wimplicit-fallthrough=0
 CXXFLAGS    :=  $(CFLAGS)
 
-LDFLAGS		:=	-lm -flto -Wl,--gc-sections -Wl,-M=$(OUTPUT).map --specs=nosys.specs -nostartfiles --specs=nano.specs -u _scanf_float
+LDFLAGS		:=	-lm -flto -Wl,--gc-sections -Wl,-M=$(OUTPUT).map --specs=nosys.specs -nostartfiles --specs=nano.specs
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -133,6 +133,7 @@ clean:
 #---------------------------------------------------------------------------------
 flash: $(OUTPUT).bin
 	st-flash write $(OUTPUT).bin 0x8000000
+	st-flash reset
 
 #---------------------------------------------------------------------------------
 else

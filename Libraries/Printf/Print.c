@@ -19,7 +19,7 @@ static uint16_t buf_idx = 0;
 
 void Printf_Init(void)
 {
-    Usart_Init(STDOUT, BAUD_RATE);
+    Usart_Init(STDOUT, SERIAL_BAUDRATE);
 }
 
 
@@ -79,7 +79,7 @@ void Printf_Flush(void)
         return;
     }
 
-#ifdef ETH_IF
+#if (USE_ETH_IF)
     Pdu_t data;
 
     data.Data = (uint8_t*)buf;
@@ -103,7 +103,7 @@ void Printf_Float(float n, uint8_t decimal_places)
 {
     if(n < 0)
     {
-        Putc('-');
+        Printf("-");
         n = -n;
     }
 
@@ -147,8 +147,8 @@ void Printf_Float(float n, uint8_t decimal_places)
     {
         if(i == decimal_places)
         {
-            Putc('.');
+            Printf(".");
         } // Insert decimal point in right place.
-        Putc(buf[i-1]);
+        Printf("%c", buf[i - 1]);
     }
 }

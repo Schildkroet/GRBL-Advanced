@@ -21,6 +21,7 @@
 */
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include "Config.h"
 #include "Planner.h"
 #include "Probe.h"
@@ -57,12 +58,13 @@
 // NOTE: AMASS cutoff frequency multiplied by ISR overdrive factor must not exceed maximum step frequency.
 // NOTE: Current settings are set to overdrive the ISR to no more than 16kHz, balancing CPU overhead
 // and timer accuracy. Do not alter these settings unless you know what you are doing.
-#define MAX_AMASS_LEVEL         4
+#define MAX_AMASS_LEVEL         5
 // AMASS_LEVEL0: Normal operation. No AMASS. No upper cutoff frequency. Starts at LEVEL1 cutoff frequency.
-#define AMASS_LEVEL1            (uint32_t)(F_TIMER_STEPPER / 8000) // Over-drives ISR (x2). Defined as F_CPU/(Cutoff frequency in Hz)
+#define AMASS_LEVEL1            (uint32_t)(F_TIMER_STEPPER / 8000) // Over-drives ISR (x2). Defined as F_TIMER_STEPPER/(Cutoff frequency in Hz)
 #define AMASS_LEVEL2            (uint32_t)(F_TIMER_STEPPER / 4000) // Over-drives ISR (x4)
 #define AMASS_LEVEL3            (uint32_t)(F_TIMER_STEPPER / 2000) // Over-drives ISR (x8)
 #define AMASS_LEVEL4            (uint32_t)(F_TIMER_STEPPER / 1000) // Over-drives ISR (x16)
+#define AMASS_LEVEL5            (uint32_t)(F_TIMER_STEPPER / 500)  // Over-drives ISR (x32)
 
 #if MAX_AMASS_LEVEL <= 0
     error "AMASS must have 1 or more levels to operate correctly."
@@ -186,6 +188,9 @@ static float tim_ovr = 0;
 static uint8_t update_g96 = G96_UPDATE_CNT;
 
 
+float current_backlash[N_AXIS] = {};
+
+
 /*    BLOCK VELOCITY PROFILE DEFINITION
           __________________________
          /|                        |\     _________________         ^
@@ -233,6 +238,19 @@ void Stepper_Init(void)
 
     // Init TIM9
     TIM9_Init();
+
+    if(BIT_IS_TRUE(settings.flags, BITFLAG_HOMING_ENABLE))
+    {
+        Stepper_Disable(1);
+    }
+
+    tim_ovr = 0;
+    update_g96 = G96_UPDATE_CNT;
+
+    for(int i = 0; i < N_AXIS; i++)
+    {
+        current_backlash[i] = 0.0;
+    }
 }
 
 
@@ -371,22 +389,22 @@ void Stepper_MainISR(void)
             GPIO_SetBits(GPIO_STEP_X_PORT, GPIO_STEP_X_PIN);
         }
     }
-#if !defined(LATHE_MODE)
-    if(st.step_outbits & (1<<Y_STEP_BIT))
+    if (BIT_IS_FALSE(settings.flags_ext, BITFLAG_LATHE_MODE))
     {
-        if(step_port_invert_mask & (1<<Y_STEP_BIT))
+        if (st.step_outbits & (1 << Y_STEP_BIT))
         {
-            // Low pulse
-            GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
+            if (step_port_invert_mask & (1 << Y_STEP_BIT))
+            {
+                // Low pulse
+                GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
+            }
+            else
+            {
+                // High pulse
+                GPIO_SetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
+            }
         }
-        else
-        {
-            // High pulse
-            GPIO_SetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
-        }
-
     }
-#endif
     if(st.step_outbits & (1<<Z_STEP_BIT))
     {
         if(step_port_invert_mask & (1<<Z_STEP_BIT))
@@ -448,7 +466,7 @@ void Stepper_MainISR(void)
             {
                 new_cycles_per_tick = st.exec_segment->cycles_per_tick * tim_ovr;
                 new_cycles_per_tick = st.exec_segment->cycles_per_tick + new_cycles_per_tick;
-                if(new_cycles_per_tick > 0xFFFF)
+                if (new_cycles_per_tick > 0xFFFF)
                 {
                     new_cycles_per_tick = 0xFFFF;
                 }
@@ -488,16 +506,17 @@ void Stepper_MainISR(void)
             {
                 GPIO_ResetBits(GPIO_DIR_X_PORT, GPIO_DIR_X_PIN);
             }
-#if !defined(LATHE_MODE)
-            if(st.dir_outbits & (1<<Y_DIRECTION_BIT))
+            if (BIT_IS_FALSE(settings.flags_ext, BITFLAG_LATHE_MODE))
             {
-                GPIO_SetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
+                if (st.dir_outbits & (1 << Y_DIRECTION_BIT))
+                {
+                    GPIO_SetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
+                }
+                else
+                {
+                    GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
+                }
             }
-            else
-            {
-                GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
-            }
-#endif
             if(st.dir_outbits & (1<<Z_DIRECTION_BIT))
             {
                 GPIO_SetBits(GPIO_DIR_Z_PORT, GPIO_DIR_Z_PIN);
@@ -539,7 +558,7 @@ void Stepper_MainISR(void)
             {
                 if(--update_g96 == 0)
                 {
-                    sys.x_pos = (sys_position[X_AXIS] / settings.steps_per_mm[X_AXIS]) - (gc_state.coord_system[X_AXIS]+gc_state.coord_offset[X_AXIS]+gc_state.tool_length_offset[X_AXIS]);
+                    sys.x_pos = (sys_position[X_AXIS] / settings.steps_per_mm[X_AXIS]) - (gc_state.coord_system[X_AXIS] + gc_state.coord_offset[X_AXIS] + gc_state.tool_length_offset_dynamic[X_AXIS] + gc_state.tool_length_offset[X_AXIS]);
                     Spindle_SetSurfaceSpeed(sys.x_pos);
                     update_g96 = G96_UPDATE_CNT;
                 }
@@ -562,7 +581,6 @@ void Stepper_MainISR(void)
         }
     }
 
-
     // Check probing state.
     if(sys_probe_state == PROBE_ACTIVE)
     {
@@ -580,14 +598,25 @@ void Stepper_MainISR(void)
         st.step_outbits |= (1<<X_STEP_BIT);
         st.counter_x -= st.exec_block->step_event_count;
 
-        if(st.exec_segment->backlash_motion == 0)
+        if (st.exec_block->direction_bits & (1 << X_DIRECTION_BIT))
         {
-            if(st.exec_block->direction_bits & (1<<X_DIRECTION_BIT))
+            sys_position[X_AXIS]--;
+        }
+        else
+        {
+            sys_position[X_AXIS]++;
+        }
+
+        if (fabsf(current_backlash[X_AXIS]) > 0.5)
+        {
+            if (current_backlash[X_AXIS] > 0.0)
             {
+                current_backlash[X_AXIS] -= 1.0;
                 sys_position[X_AXIS]--;
             }
             else
             {
+                current_backlash[X_AXIS] += 1.0;
                 sys_position[X_AXIS]++;
             }
         }
@@ -595,19 +624,30 @@ void Stepper_MainISR(void)
 
     st.counter_y += st.steps[Y_AXIS];
 
-    if(st.counter_y > st.exec_block->step_event_count)
+    if (st.counter_y > st.exec_block->step_event_count)
     {
-        st.step_outbits |= (1<<Y_STEP_BIT);
+        st.step_outbits |= (1 << Y_STEP_BIT);
         st.counter_y -= st.exec_block->step_event_count;
 
-        if(st.exec_segment->backlash_motion == 0)
+        if (st.exec_block->direction_bits & (1 << Y_DIRECTION_BIT))
         {
-            if(st.exec_block->direction_bits & (1<<Y_DIRECTION_BIT))
+            sys_position[Y_AXIS]--;
+        }
+        else
+        {
+            sys_position[Y_AXIS]++;
+        }
+
+        if (fabsf(current_backlash[Y_AXIS]) > 0.5)
+        {
+            if (current_backlash[Y_AXIS] > 0.0)
             {
+                current_backlash[Y_AXIS] -= 1.0;
                 sys_position[Y_AXIS]--;
             }
             else
             {
+                current_backlash[Y_AXIS] += 1.0;
                 sys_position[Y_AXIS]++;
             }
         }
@@ -615,19 +655,30 @@ void Stepper_MainISR(void)
 
     st.counter_z += st.steps[Z_AXIS];
 
-    if(st.counter_z > st.exec_block->step_event_count)
+    if (st.counter_z > st.exec_block->step_event_count)
     {
-        st.step_outbits |= (1<<Z_STEP_BIT);
+        st.step_outbits |= (1 << Z_STEP_BIT);
         st.counter_z -= st.exec_block->step_event_count;
 
-        if(st.exec_segment->backlash_motion == 0)
+        if (st.exec_block->direction_bits & (1 << Z_DIRECTION_BIT))
         {
-            if(st.exec_block->direction_bits & (1<<Z_DIRECTION_BIT))
+            sys_position[Z_AXIS]--;
+        }
+        else
+        {
+            sys_position[Z_AXIS]++;
+        }
+
+        if (fabsf(current_backlash[Z_AXIS]) > 0.5)
+        {
+            if (current_backlash[Z_AXIS] > 0.0)
             {
+                current_backlash[Z_AXIS] -= 1.0;
                 sys_position[Z_AXIS]--;
             }
             else
             {
+                current_backlash[Z_AXIS] += 1.0;
                 sys_position[Z_AXIS]++;
             }
         }
@@ -715,16 +766,17 @@ void Stepper_PortResetISR(void)
     }
 
     // Y
-#if !defined(LATHE_MODE)
-    if(step_port_invert_mask & (1<<Y_STEP_BIT))
+    if (BIT_IS_FALSE(settings.flags_ext, BITFLAG_LATHE_MODE))
     {
-        GPIO_SetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
+        if (step_port_invert_mask & (1 << Y_STEP_BIT))
+        {
+            GPIO_SetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
+        }
+        else
+        {
+            GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
+        }
     }
-    else
-    {
-        GPIO_ResetBits(GPIO_STEP_Y_PORT, GPIO_STEP_Y_PIN);
-    }
-#endif
 
     // Z
     if(step_port_invert_mask & (1<<Z_STEP_BIT))
@@ -807,9 +859,10 @@ void Stepper_Reset(void)
     // Reset Direction Pins
     // ToDo: Use invert mask?
     GPIO_ResetBits(GPIO_DIR_X_PORT, GPIO_DIR_X_PIN);
-#if !defined(LATHE_MODE)
-    GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
-#endif
+    if (BIT_IS_FALSE(settings.flags_ext, BITFLAG_LATHE_MODE))
+    {
+        GPIO_ResetBits(GPIO_DIR_Y_PORT, GPIO_DIR_Y_PIN);
+    }
     GPIO_ResetBits(GPIO_DIR_Z_PORT, GPIO_DIR_Z_PIN);
     GPIO_ResetBits(GPIO_DIR_A_PORT, GPIO_DIR_A_PIN);
     //GPIO_ResetBits(GPIO_DIR_B_PORT, GPIO_DIR_B_PIN);
@@ -980,14 +1033,14 @@ void Stepper_PrepareBuffer(void)
                 }
                 else
                 {
-                    prep.current_speed = sqrt(pl_block->entry_speed_sqr);
+                    prep.current_speed = sqrtf(pl_block->entry_speed_sqr);
                 }
 
                 // Setup laser mode variables. PWM rate adjusted motions will always complete a motion with the
                 // spindle off.
                 st_prep_block->is_pwm_rate_adjusted = false;
 
-                if(settings.flags & BITFLAG_LASER_MODE)
+                if (BIT_IS_TRUE(settings.flags, BITFLAG_LASER_MODE))
                 {
                     if(pl_block->condition & PL_COND_FLAG_SPINDLE_CCW)
                     {
@@ -1018,7 +1071,7 @@ void Stepper_PrepareBuffer(void)
                 if(decel_dist < 0.0)
                 {
                     // Deceleration through entire planner block. End of feed hold is not in this block.
-                    prep.exit_speed = sqrt(pl_block->entry_speed_sqr-2*pl_block->acceleration*pl_block->millimeters);
+                    prep.exit_speed = sqrtf(pl_block->entry_speed_sqr-2*pl_block->acceleration*pl_block->millimeters);
                 }
                 else
                 {
@@ -1042,7 +1095,7 @@ void Stepper_PrepareBuffer(void)
                 else
                 {
                     exit_speed_sqr = Planner_GetExecBlockExitSpeedSqr();
-                    prep.exit_speed = sqrt(exit_speed_sqr);
+                    prep.exit_speed = sqrtf(exit_speed_sqr);
                 }
 
                 nominal_speed = Planner_ComputeProfileNominalSpeed(pl_block);
@@ -1060,7 +1113,7 @@ void Stepper_PrepareBuffer(void)
                         // prep.maximum_speed = prep.current_speed;
 
                         // Compute override block exit speed since it doesn't match the planner exit speed.
-                        prep.exit_speed = sqrt(pl_block->entry_speed_sqr - 2*pl_block->acceleration*pl_block->millimeters);
+                        prep.exit_speed = sqrtf(pl_block->entry_speed_sqr - 2*pl_block->acceleration*pl_block->millimeters);
                         prep.recalculate_flag |= PREP_FLAG_DECEL_OVERRIDE; // Flag to load next block as deceleration override.
 
                         // TODO: Determine correct handling of parameters in deceleration-only.
@@ -1100,7 +1153,7 @@ void Stepper_PrepareBuffer(void)
                         {
                             prep.accelerate_until = intersect_distance;
                             prep.decelerate_after = intersect_distance;
-                            prep.maximum_speed = sqrt(2.0*pl_block->acceleration*intersect_distance+exit_speed_sqr);
+                            prep.maximum_speed = sqrtf(2.0*pl_block->acceleration*intersect_distance+exit_speed_sqr);
                         }
                     }
                     else   // Deceleration-only type
@@ -1312,8 +1365,8 @@ void Stepper_PrepareBuffer(void)
         supported by Grbl (i.e. exceeding 10 meters axis travel at 200 step/mm).
         */
         float step_dist_remaining = prep.step_per_mm*mm_remaining; // Convert mm_remaining to steps
-        float n_steps_remaining = ceil(step_dist_remaining); // Round-up current steps remaining
-        float last_n_steps_remaining = ceil(prep.steps_remaining); // Round-up last steps remaining
+        float n_steps_remaining = ceilf(step_dist_remaining); // Round-up current steps remaining
+        float last_n_steps_remaining = ceilf(prep.steps_remaining); // Round-up last steps remaining
         prep_segment->n_step = last_n_steps_remaining-n_steps_remaining; // Compute number of steps to execute.
 
         // Bail if we are at the end of a feed hold and don't have a step to execute.
@@ -1347,7 +1400,7 @@ void Stepper_PrepareBuffer(void)
         float inv_rate = dt/(last_n_steps_remaining - step_dist_remaining); // Compute adjusted step rate inverse
 
         // Compute CPU cycles per step for the prepped segment.
-        uint32_t cycles = ceil((TICKS_PER_MICROSECOND*1000000*60)*inv_rate); // (cycles/step)
+        uint32_t cycles = ceilf((TICKS_PER_MICROSECOND*1000000*60)*inv_rate); // (cycles/step)
 
         // Compute step timing and multi-axis smoothing level.
         // NOTE: AMASS overdrives the timer with each level, so only one prescalar is required.
@@ -1369,9 +1422,13 @@ void Stepper_PrepareBuffer(void)
             {
                 prep_segment->amass_level = 3;
             }
-            else
+            else if (cycles < AMASS_LEVEL5)
             {
                 prep_segment->amass_level = 4;
+            }
+            else
+            {
+                prep_segment->amass_level = 5;
             }
 
             cycles >>= prep_segment->amass_level;

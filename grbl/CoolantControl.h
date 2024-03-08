@@ -23,6 +23,7 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 #define COOLANT_NO_SYNC             false
@@ -43,10 +44,10 @@ void Coolant_Stop(void);
 uint8_t Coolant_GetState(void);
 
 // Sets the coolant pins according to state specified.
-void Coolant_SetState(uint8_t mode);
+void Coolant_SetState(const uint8_t mode);
 
 // G-code parser entry-point for setting coolant states. Checks for and executes additional conditions.
-void Coolant_Sync(uint8_t mode);
+void Coolant_Sync(const uint8_t mode);
 
 
 #endif // COOLANTCONTROL_H

@@ -27,7 +27,7 @@
 
 void TC_Init(void);
 void TC_ChangeCurrentTool(void);
-void TC_ProbeTLS(void);
+uint8_t TC_ProbeTLS(void);
 void TC_ApplyToolOffset(void);
 
 

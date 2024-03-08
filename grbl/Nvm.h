@@ -36,7 +36,7 @@ uint8_t Nvm_ReadByte(uint16_t Address);
 void Nvm_WriteByte(uint16_t Address, uint8_t Data);
 
 uint8_t Nvm_Read(uint8_t *DataOut, uint16_t Address, uint16_t size);
-uint8_t Nvm_Write(uint16_t Address, uint8_t *DataIn, uint16_t size);
+uint8_t Nvm_Write(uint16_t Address, const uint8_t *DataIn, uint16_t size);
 
 void Nvm_Update(void);
 

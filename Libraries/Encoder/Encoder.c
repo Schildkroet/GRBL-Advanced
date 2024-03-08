@@ -22,20 +22,17 @@
 #include "TIM.h"
 
 
-#ifndef PULSES_PER_REV
-    #define PULSES_PER_REV      360
-    #pragma message("Using 360 pulses/rev for encoder")
-#endif
-
-
 static uint32_t OvfCnt = 0;
 static uint32_t CntValue = 0;
 
+static uint16_t PulsesPerRev = 360;
 
-void Encoder_Init(void)
+
+void Encoder_Init(uint16_t ppr)
 {
-    TIM4_Init(PULSES_PER_REV);
+    TIM4_Init(ppr);
     Encoder_Reset();
+    PulsesPerRev = ppr;
 }
 
 
@@ -43,6 +40,12 @@ void Encoder_Reset(void)
 {
     OvfCnt = 0;
     CntValue = 0;
+}
+
+
+void Encoder_SetPulsesPerRev(uint16_t ppr)
+{
+    Encoder_Init(ppr);
 }
 
 
@@ -61,5 +64,5 @@ void Encoder_SetValue(uint32_t val)
 void Encoder_OvfISR(void)
 {
     OvfCnt++;
-    CntValue += PULSES_PER_REV;
+    CntValue += PulsesPerRev;
 }

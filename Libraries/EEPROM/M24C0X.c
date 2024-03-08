@@ -141,11 +141,11 @@ uint8_t M24C0X_WriteByteArray(uint16_t addr, uint8_t *pData, uint16_t len)
         // If eeprom is busy (write takes up to 5ms), try again until success or timeout
         while((ret = I2C_WriteByteArray(M24C0X_I2C, slave_adr, addr, &pData[bytesWritten], bytes2write)) && (timeout < 4))
         {
-            Delay_ms(2);
+            Delay_ms(1);
             timeout++;
         }
 
-        if(timeout >= 4)
+        if(timeout >= 7)
         {
             // Failed to write
             return 1;

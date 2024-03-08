@@ -31,7 +31,9 @@
 #include "defaults.h"
 
 
-#define TOOL_SENSOR_OFFSET        70.0  // mm
+#define TOOL_SENSOR_OFFSET          (70.0)  // mm
+#define TOOL_PROBE_FAST             (250.0) // mm/min
+#define TOOL_PROBE_SLOW             (40.0)  // mm/min
 
 
 static uint8_t isFirstTC = 1;
@@ -59,8 +61,8 @@ void TC_Init(void)
 
 void TC_ChangeCurrentTool(void)
 {
-    Planner_LineData_t pl_data = {0};
-    float position[N_AXIS] = {0.0};
+    Planner_LineData_t pl_data = {};
+    float position[N_AXIS] = {};
 
 
     if(sys.state == STATE_CHECK_MODE)
@@ -111,16 +113,21 @@ void TC_ChangeCurrentTool(void)
 }
 
 
-void TC_ProbeTLS(void)
+uint8_t TC_ProbeTLS(void)
 {
-    Planner_LineData_t pl_data = {0};
-    float position[N_AXIS] = {0.0};
+    Planner_LineData_t pl_data = {};
+    float position[N_AXIS] = {};
     uint8_t flags = 0;
 
 
-    if(sys.state == STATE_CHECK_MODE || settings.tls_valid == 0)
+    if(sys.state == STATE_CHECK_MODE)
     {
-        return;
+        return 0;
+    }
+    if(settings.tls_valid == 0)
+    {
+        // Error
+        return 1;
     }
 
     // Move to XY position of TLS
@@ -145,34 +152,34 @@ void TC_ProbeTLS(void)
     Protocol_BufferSynchronize();
 
     // Set up fast probing
-    pl_data.feed_rate = 220.0;
+    pl_data.feed_rate = TOOL_PROBE_FAST;
     pl_data.condition = 0; // Reset rapid motion condition flag.
 
     // Probe TLS fast
-    position[TOOL_LENGTH_OFFSET_AXIS] -= 200.0;
+    position[TOOL_LENGTH_OFFSET_AXIS] -= 300.0;
     uint8_t ret = MC_ProbeCycle(position, &pl_data, flags);
     if(ret != GC_PROBE_FOUND)
     {
         // Error
-        return;
+        return 2;
     }
 
     // Get current position
     System_ConvertArraySteps2Mpos(position, sys_position);
-    position[TOOL_LENGTH_OFFSET_AXIS] += 1.8;
+    position[TOOL_LENGTH_OFFSET_AXIS] += 2.0;
 
     // Move up a little bit for slow probing
-    pl_data.feed_rate = 200.0;
+    pl_data.feed_rate = TOOL_PROBE_FAST;
     MC_Line(position, &pl_data);
 
     // Probe TLS slow
-    pl_data.feed_rate = 12.0;
+    pl_data.feed_rate = TOOL_PROBE_SLOW;
     position[TOOL_LENGTH_OFFSET_AXIS] -= 200;
     ret = MC_ProbeCycle(position, &pl_data, flags);
     if(ret != GC_PROBE_FOUND)
     {
         // Error
-        return;
+        return 2;
     }
 
     if(isFirstTC)
@@ -186,8 +193,8 @@ void TC_ProbeTLS(void)
         // Calculate tool offset
         toolOffset = sys_probe_position[TOOL_LENGTH_OFFSET_AXIS] - toolReferenz;
 
-        // Apply offset as dynamic tool length offset
-        gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
+        // Apply offset
+        //gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE;
         gc_state.tool_length_offset[TOOL_LENGTH_OFFSET_AXIS] = toolOffset / settings.steps_per_mm[TOOL_LENGTH_OFFSET_AXIS];
     }
 
@@ -206,6 +213,8 @@ void TC_ProbeTLS(void)
     Protocol_BufferSynchronize();
 
     GC_SyncPosition();
+
+    return 0;
 }
 
 
@@ -216,7 +225,7 @@ void TC_ApplyToolOffset(void)
     TT_GetToolParams(gc_state.tool, &params);
 
     // Apply offset as dynamic tool length offset
-    gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
+    //gc_state.modal.tool_length = TOOL_LENGTH_OFFSET_ENABLE_DYNAMIC;
 
     gc_state.tool_length_offset[X_AXIS] = params.x_offset;
     gc_state.tool_length_offset[Y_AXIS] = params.y_offset;

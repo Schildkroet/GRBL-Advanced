@@ -45,9 +45,10 @@ void Spindle_Init(void)
 
     TIM1_Init();
     //TIM3_Init();
-#if defined(LATHE_MODE)
-    Encoder_Init();
-#endif
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_LATHE_MODE))
+    {
+        Encoder_Init(settings.enc_ppr);
+    }
 
     pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
     spindle_dir_cw = 1;
@@ -165,7 +166,7 @@ uint8_t Spindle_ComputePwmValue(float rpm) // 328p PWM register is 8-bit.
         // Compute intermediate PWM value with linear spindle speed model.
         // NOTE: A nonlinear model could be installed here, if required, but keep it VERY light-weight.
         sys.spindle_speed = rpm;
-        pwm_value = floor((rpm-settings.rpm_min)*pwm_gradient) + SPINDLE_PWM_MIN_VALUE;
+        pwm_value = floorf((rpm-settings.rpm_min)*pwm_gradient) + SPINDLE_PWM_MIN_VALUE;
     }
 
     return pwm_value;
@@ -208,7 +209,7 @@ void Spindle_SetState(uint8_t state, float rpm)
 #endif
 
         // NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
-        if(settings.flags & BITFLAG_LASER_MODE)
+        if (BIT_IS_TRUE(settings.flags, BITFLAG_LASER_MODE))
         {
             if(state == SPINDLE_ENABLE_CCW)
             {
@@ -244,7 +245,7 @@ void Spindle_SetSurfaceSpeed(float x_pos)
     {
         x_pos = 0.5;
     }
-    float u = (fabs(x_pos) * 2) * M_PI;
+    float u = (fabsf(x_pos) * 2) * M_PI;
     float rpm = gc_state.spindle_speed / (u / 1000);
 
     // Limit Max RPM

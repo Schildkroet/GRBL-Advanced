@@ -172,7 +172,10 @@ uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data)
 	// Loop while DR register is not empty
 	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
 
-	// Send byte through the SPIx peripheral
+    // Clear rx register
+    SPI_I2S_ReceiveData(SPIx);
+
+    // Send byte through the SPIx peripheral
 	SPI_I2S_SendData(SPIx, _data);
 
 	while((SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET) && timeout--);
@@ -182,17 +185,20 @@ uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data)
 }
 
 
-void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint8_t _len)
+void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint16_t _len)
 {
-	uint8_t i = 0;
-	uint16_t timeout = 0xFFF;
+    uint16_t i = 0;
+    uint16_t timeout = 0xFFF;
 
-	for(i = 0; i < _len; ++i)
+    // Clear rx register
+    SPI_I2S_ReceiveData(SPIx);
+
+    for(i = 0; i < _len; ++i)
     {
 		// Loop while DR register is not empty
 		while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
 
-		// Send byte through the SPIx peripheral
+        // Send byte through the SPIx peripheral
 		SPI_I2S_SendData(SPIx, 0xFF);
 
 		while((SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET) && timeout--);
@@ -201,11 +207,11 @@ void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint8_t _len)
 	}
 }
 
-void Spi_WriteDataArray(SPI_TypeDef *SPIx, uint8_t *_data, uint8_t _len)
+void Spi_WriteDataArray(SPI_TypeDef *SPIx, uint8_t *_data, uint16_t _len)
 {
-	uint8_t i = 0;
+    uint16_t i = 0;
 
-	for(i = 0; i < _len; ++i)
+    for(i = 0; i < _len; ++i)
     {
 		// Loop while DR register is not empty
 		while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
@@ -213,6 +219,10 @@ void Spi_WriteDataArray(SPI_TypeDef *SPIx, uint8_t *_data, uint8_t _len)
 		// Send byte through the SPIx peripheral
 		SPI_I2S_SendData(SPIx, _data[i]);
 	}
+	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
+
+    // Clear rx register
+    SPI_I2S_ReceiveData(SPIx);
 }
 
 

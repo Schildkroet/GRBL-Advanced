@@ -24,6 +24,7 @@
 #include "GCode.h"
 #include "CoolantControl.h"
 #include "Config.h"
+#include "Settings.h"
 
 
 void Coolant_Init(void)
@@ -43,15 +44,15 @@ void Coolant_Stop(void)
     GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
 #endif
 
-#ifdef ENABLE_M7
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
+    {
 #ifdef INVERT_COOLANT_MIST_PIN
-    GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+        GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #else
-    GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+        GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #endif
-#endif
+    }
 }
-
 
 // Returns current coolant output state. Overrides may alter it from programmed state.
 uint8_t Coolant_GetState(void)
@@ -69,17 +70,18 @@ uint8_t Coolant_GetState(void)
         cl_state |= COOLANT_STATE_FLOOD;
     }
 
-#ifdef ENABLE_M7
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
+    {
 #ifdef INVERT_COOLANT_MIST_PIN
-    if(!GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
-    {
+        if (!GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
+        {
 #else
-    if(GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
-    {
+        if (GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
+        {
 #endif
-        cl_state |= COOLANT_STATE_MIST;
+            cl_state |= COOLANT_STATE_MIST;
+        }
     }
-#endif
 
     return cl_state;
 }
@@ -89,7 +91,7 @@ uint8_t Coolant_GetState(void)
 // if enabled. Also sets a flag to report an update to a coolant state.
 // Called by coolant toggle override, parking restore, parking retract, sleep mode, g-code
 // parser program end, and g-code parser coolant_sync().
-void Coolant_SetState(uint8_t mode)
+void Coolant_SetState(const uint8_t mode)
 {
     if(sys.abort)
     {
@@ -114,38 +116,39 @@ void Coolant_SetState(uint8_t mode)
 #endif
     }
 
-#ifdef ENABLE_M7
-    if (mode & COOLANT_MIST_ENABLE)
+    if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
     {
+        if (mode & COOLANT_MIST_ENABLE)
+        {
 #ifdef INVERT_COOLANT_MIST_PIN
-        GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #else
-        GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #endif
-    }
-    else
-    {
+        }
+        else
+        {
 #ifdef INVERT_COOLANT_MIST_PIN
-        GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #else
-        GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
 #endif
+        }
     }
-#endif
 
     sys.report_ovr_counter = 0; // Set to report change immediately
 }
 
-
 // G-code parser entry-point for setting coolant state. Forces a planner buffer sync and bails
 // if an abort or check-mode is active.
-void Coolant_Sync(uint8_t mode)
+void Coolant_Sync(const uint8_t mode)
 {
     if(sys.state == STATE_CHECK_MODE)
     {
         return;
     }
 
-    Protocol_BufferSynchronize(); // Ensure coolant turns on when specified in program.
+    // Ensure coolant turns on when specified in program.
+    Protocol_BufferSynchronize();
     Coolant_SetState(mode);
 }

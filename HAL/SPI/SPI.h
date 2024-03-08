@@ -49,8 +49,8 @@ void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode);
 uint8_t Spi_ReadByte(SPI_TypeDef *SPIx);
 uint8_t Spi_WriteByte(SPI_TypeDef *SPIx, uint8_t _data);
 
-void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint8_t _len);
-void Spi_WriteDataArray(SPI_TypeDef *SPIx, uint8_t *_data, uint8_t _len);
+void Spi_ReadByteArray(SPI_TypeDef *SPIx, uint8_t *_buffer, uint16_t _len);
+void Spi_WriteDataArray(SPI_TypeDef *SPIx, uint8_t *_data, uint16_t _len);
 
 void Spi_SetPrescaler(SPI_TypeDef *SPIx, uint16_t prescaler);
 void Spi_ChipSelect(SPI_TypeDef *SPIx, bool select);

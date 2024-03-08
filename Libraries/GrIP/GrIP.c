@@ -17,7 +17,7 @@
 */
 #include "GrIP.h"
 #include "CRC.h"
-#include "util2.h"
+#include "ServerTCP.h"
 #include "ComIf.h"
 #include "Print.h"
 #include <stdio.h>
@@ -64,8 +64,6 @@ void GrIP_Init(void)
 
     // Init generic interface
     ComIf_Init(IF_ETH, 0);
-    // Init CRC module
-    CRC_Init();
 }
 
 

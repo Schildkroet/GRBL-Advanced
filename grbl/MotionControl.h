@@ -44,9 +44,9 @@ void MC_SyncBacklashPosition(void);
 // Execute linear motion in absolute millimeter coordinates. Feed rate given in millimeters/second
 // unless invert_feed_rate is true. Then the feed_rate means that the motion should be completed in
 // (1 minute)/feed_rate time.
-void MC_Line(float *target, Planner_LineData_t *pl_data);
+void MC_Line(const float *target, const Planner_LineData_t *pl_data);
 
-void MC_LineSync(float *target, Planner_LineData_t *pl_data, float pitch);
+void MC_LineSync(const float *target, const Planner_LineData_t *pl_data, float pitch);
 
 void MC_LineSyncStart(void);
 
@@ -56,7 +56,7 @@ void MC_UpdateSyncMove(void);
 // offset == offset from current xyz, axis_XXX defines circle plane in tool space, axis_linear is
 // the direction of helical travel, radius == circle radius, is_clockwise_arc boolean. Used
 // for vector transformation direction.
-void MC_Arc(float *target, Planner_LineData_t *pl_data, float *position, float *offset, float radius,
+void MC_Arc(const float *target, Planner_LineData_t *pl_data, float *position, const float *offset, const float radius,
             uint8_t axis_0, uint8_t axis_1, uint8_t axis_linear, uint8_t is_clockwise_arc);
 
 // Dwell for a specific number of seconds
@@ -66,13 +66,13 @@ void MC_Dwell(float seconds);
 void MC_HomigCycle(uint8_t cycle_mask);
 
 // Perform tool length probe cycle. Requires probe switch.
-uint8_t MC_ProbeCycle(float *target, Planner_LineData_t *pl_data, uint8_t parser_flags);
+uint8_t MC_ProbeCycle(const float *target, const Planner_LineData_t *pl_data, uint8_t parser_flags);
 
 // Handles updating the override control state.
 void MC_OverrideCtrlUpdate(uint8_t override_state);
 
 // Plans and executes the single special motion case for parking. Independent of main planner buffer.
-void MC_ParkingMotion(float *parking_target, Planner_LineData_t *pl_data);
+void MC_ParkingMotion(const float *parking_target, const Planner_LineData_t *pl_data);
 
 // Performs system reset. If in motion state, kills all motion and sets system alarm.
 void MC_Reset(void);

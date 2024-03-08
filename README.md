@@ -16,7 +16,7 @@ Grbl-Advanced includes full acceleration management with look ahead. That means 
 
 ### Extras:
 #### Backlash Compensation:
-Backlash compensation enabled by default. You can switch it off in Config.h.
+Backlash compensation enabled by default.
 Edit defaults.h to your needs.
 
 * $140=(X Backlash [mm])
@@ -46,11 +46,11 @@ G33 / G76 (Requires rotary encoder)
 Uses Dynamic TLO when $14 = (2 or 3)
 
 #### I2C EEPROM
-Added support for external EEPROM (e.g. ST M24C08). Uncomment 'USE_EXT_EEPROM' in Config.h.
+Added support for external 1Kb EEPROM (e.g. ST M24C08). Enable 'USE_EXT_EEPROM' in Config.h.
 ![EEPROM](https://github.com/Schildkroet/GRBL-Advanced/blob/software/doc/eeprom.png?raw=true)
 
 #### ETHERNET Support
-GRBL-Advanced can be controlled with USB or ETHERNET. For ETHERNET an additional W5500 Module is required. Then uncomment ETH_IF in Platform.h. The default IP Address is 192.168.1.20.
+GRBL-Advanced can be controlled with USB or ETHERNET. For ETHERNET an additional W5500 Module is required. Then enable USE_ETH_IF in Config.h. The default IP Address is 192.168.1.20 : 30501.
 Use [Candle 2](https://github.com/Schildkroet/Candle2) as control interface.
 ![W5500](https://github.com/Schildkroet/GRBL-Advanced/blob/software/doc/w5500.png?raw=true)
 
@@ -129,5 +129,6 @@ List of Supported G-Codes in Grbl-Advanced:
   - Coolant Control: M7*, M8, M9
   - Spindle Control: M3, M4, M5
   - Tool Control: M6, M61
+  - Input/output control: M62, M63, M64, M65
   - Valid Non-Command Words: A, B, D, E, F, H, I, J, K, L, N, P, Q, R, S, T, X, Y, Z
 ```

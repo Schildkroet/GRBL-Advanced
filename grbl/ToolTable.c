@@ -23,12 +23,12 @@
 #include <string.h>
 
 
-static ToolTable_t tool_table = {0};
+static ToolTable_t tool_table = {};
 
 
 void TT_Init(void)
 {
-    for(uint8_t i = 0; i < MAX_TOOL_NR; i++)
+    for (uint8_t i = 0; i < TOOLTABLE_MAX_TOOL_NR; i++)
     {
         tool_table.tools[i].x_offset = 0.0;
         tool_table.tools[i].y_offset = 0.0;
@@ -36,13 +36,16 @@ void TT_Init(void)
         tool_table.tools[i].reserved = 0.0;
     }
 
-    Settings_ReadToolTable(&tool_table);
+    if (!Settings_ReadToolTable(&tool_table))
+    {
+        Report_StatusMessage(STATUS_TOOLS_READ_FAIL);
+    }
 }
 
 
 void TT_Reset(void)
 {
-    for(uint8_t i = 0; i < MAX_TOOL_NR; i++)
+    for (uint8_t i = 0; i < TOOLTABLE_MAX_TOOL_NR; i++)
     {
         tool_table.tools[i].x_offset = 0.0;
         tool_table.tools[i].y_offset = 0.0;
@@ -56,7 +59,7 @@ void TT_Reset(void)
 
 void TT_GetToolParams(uint8_t tool_nr, ToolParams_t *params)
 {
-    if(tool_nr < MAX_TOOL_NR)
+    if (tool_nr < TOOLTABLE_MAX_TOOL_NR)
     {
         memcpy(params, &tool_table.tools[tool_nr], sizeof(ToolParams_t));
     }
@@ -69,10 +72,11 @@ void TT_GetToolParams(uint8_t tool_nr, ToolParams_t *params)
 
 void TT_SaveToolParams(uint8_t tool_nr, ToolParams_t *params)
 {
-    if(tool_nr < MAX_TOOL_NR)
+    if (tool_nr < TOOLTABLE_MAX_TOOL_NR)
     {
         memcpy(&tool_table.tools[tool_nr], params, sizeof(ToolParams_t));
-        Settings_StoreToolParams(tool_nr, params);
+        //Settings_StoreToolParams(tool_nr, params);
+        Settings_StoreToolTable(&tool_table);
     }
     else
     {

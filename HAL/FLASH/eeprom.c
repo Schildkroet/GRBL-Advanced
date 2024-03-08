@@ -31,15 +31,15 @@ uint8_t EE_ReadByteArray(uint8_t *DataOut, uint16_t VirtAddress, uint16_t size)
 		*(DataOut++) = data;
 	}
 
-	data = EE_ReadByte(VirtAddress);
-	if(data == checksum) {
-		return 1;
-	}
+	/*data = EE_ReadByte(VirtAddress);
+	if(data != checksum) {
+		return 0;
+	}*/
 
-	return 0;
+	return 1;
 }
 
-void EE_WriteByteArray(uint16_t VirtAddress, uint8_t *DataIn, uint16_t size)
+void EE_WriteByteArray(uint16_t VirtAddress, const uint8_t *DataIn, uint16_t size)
 {
 	unsigned char checksum = 0;
 
@@ -49,7 +49,7 @@ void EE_WriteByteArray(uint16_t VirtAddress, uint8_t *DataIn, uint16_t size)
 		EE_WriteByte(VirtAddress++, *(DataIn++));
 	}
 
-	EE_WriteByte(VirtAddress, checksum);
+	//EE_WriteByte(VirtAddress, checksum);
 }
 
 void EE_Program(void)

@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2017-2020 Patrick F.
+  Copyright (c) 2017-2024 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
   You should have received a copy of the GNU General Public License
   along with Grbl-Advanced.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -35,6 +34,24 @@
 #include "System32.h"
 
 
+// Declare system global variable structure
+System_t sys;
+// Real-time machine (aka home) position vector in steps.
+int32_t sys_position[N_AXIS];
+// Last probe position in machine coordinates and steps.
+int32_t sys_probe_position[N_AXIS];
+// Probing state value.  Used to coordinate the probing cycle with stepper ISR.
+volatile uint8_t sys_probe_state;
+// Global realtime executor bitflag variable for state management. See EXEC bitmasks.
+volatile uint16_t sys_rt_exec_state;
+// Global realtime executor bitflag variable for setting various alarms.
+volatile uint8_t sys_rt_exec_alarm;
+// Global realtime executor bitflag variable for motion-based overrides.
+volatile uint8_t sys_rt_exec_motion_override;
+// Global realtime executor bitflag variable for spindle/coolant overrides.
+volatile uint8_t sys_rt_exec_accessory_override;
+
+
 void System_Init(void)
 {
     GPIO_InitGPIO(GPIO_SYSTEM);
@@ -43,11 +60,13 @@ void System_Init(void)
 
 void System_Clear(void)
 {
-    memset(&sys, 0, sizeof(System_t)); // Clear system struct variable.
+    // Clear system struct variable.
+    memset(&sys, 0, sizeof(System_t));
 
-    sys.f_override = DEFAULT_FEED_OVERRIDE;  // Set to 100%
-    sys.r_override = DEFAULT_RAPID_OVERRIDE; // Set to 100%
-    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE; // Set to 100%
+    // Set overrides to 100%
+    sys.f_override = DEFAULT_FEED_OVERRIDE;
+    sys.r_override = DEFAULT_RAPID_OVERRIDE;
+    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE;
 }
 
 
@@ -86,7 +105,8 @@ uint8_t System_GetControlState(void)
         {
             control_state |= CONTROL_PIN_INDEX_CYCLE_START;
         }
-        /*if(BIT_IS_TRUE(pin, (1<<CONTROL_SAFETY_DOOR_BIT))) {
+        /*if(BIT_IS_TRUE(pin, (1<<CONTROL_SAFETY_DOOR_BIT)))
+        {
             control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR;
         }*/
     }
@@ -135,10 +155,7 @@ uint8_t System_CheckSafetyDoorAjar(void)
 // Executes user startup script, if stored.
 void System_ExecuteStartup(char *line)
 {
-#if (N_STARTUP_LINE > 0)
-    uint8_t n;
-
-    for(n = 0; n < N_STARTUP_LINE; n++)
+    for (uint8_t n = 0; n < N_STARTUP_LINE; n++)
     {
         if(!(Settings_ReadStartupLine(n, line)))
         {
@@ -155,9 +172,6 @@ void System_ExecuteStartup(char *line)
             }
         }
     }
-#else
-    (void)line;
-#endif
 }
 
 
@@ -191,7 +205,8 @@ uint8_t System_ExecuteLine(char *line)
         {
             return STATUS_INVALID_STATEMENT;
         }
-        return GC_ExecuteLine(line); // NOTE: $J= is ignored inside g-code parser and used to detect jog motions.
+        // NOTE: $J= is ignored inside g-code parser and used to detect jog motions.
+        return GC_ExecuteLine(line);
         break;
 
     case '$':
@@ -208,8 +223,9 @@ uint8_t System_ExecuteLine(char *line)
         case '$': // Prints Grbl settings
             if(sys.state & (STATE_CYCLE | STATE_HOLD))
             {
+                // Block during cycle. Takes too long to print.
                 return(STATUS_IDLE_ERROR);
-            } // Block during cycle. Takes too long to print.
+            }
             else
             {
                 Report_GrblSettings();
@@ -225,7 +241,7 @@ uint8_t System_ExecuteLine(char *line)
             // Perform reset when toggling off. Check g-code mode should only work if Grbl
             // is idle and ready, regardless of alarm locks. This is mainly to keep things
             // simple and consistent.
-            if(sys.state == STATE_CHECK_MODE )
+            if(sys.state == STATE_CHECK_MODE)
             {
                 MC_Reset();
                 Report_FeedbackMessage(MESSAGE_DISABLED);
@@ -264,7 +280,7 @@ uint8_t System_ExecuteLine(char *line)
     case 'T':
         if(line[++char_counter] == 0)
         {
-            // Tool change finished. Continue execution
+            // Tool change by user finished. Continue execution
             System_ClearExecStateFlag(EXEC_TOOL_CHANGE);
             sys.state = STATE_IDLE;
 
@@ -278,7 +294,10 @@ uint8_t System_ExecuteLine(char *line)
                     if(settings.tls_valid)
                     {
                         // Probe new tool
-                        TC_ProbeTLS();
+                        if(TC_ProbeTLS() != 0)
+                        {
+                            return STATUS_PROBE_ERROR;
+                        }
                     }
                     else
                     {
@@ -287,7 +306,7 @@ uint8_t System_ExecuteLine(char *line)
                 }
                 else if(settings.tool_change == 3)
                 {
-                    // Change tool with tool table
+                    // Change tool with tool table (Apply offsets)
                     TC_ApplyToolOffset();
                 }
                 else
@@ -319,7 +338,7 @@ uint8_t System_ExecuteLine(char *line)
             if(c == '=')
             {
                 // Save params of new tool
-                char tmp_float[10];
+                char tmp_float[10] = {};
                 int t = 0;
                 float value_f[4] = {};
 
@@ -332,7 +351,10 @@ uint8_t System_ExecuteLine(char *line)
                     if(strlen(tmp_float) > 0)
                     {
                         // Convert string to float
-                        sscanf(tmp_float, "%f", &value_f[i]);
+                        //sscanf(tmp_float, "%f", &value_f[i]);
+                        //tmp_float[0] = '\0';
+                        uint8_t cnt = 0;
+                        Read_Float(tmp_float, &cnt, &value_f[i]);
                         tmp_float[0] = '\0';
                     }
                     else
@@ -360,13 +382,13 @@ uint8_t System_ExecuteLine(char *line)
     case 'P':
         if(sys.is_homed)
         {
+            // Store position of TLS
             Settings_StoreTlsPosition();
         }
         else
         {
             return STATUS_MACHINE_NOT_HOMED;
         }
-
         break;
 
     default:
@@ -400,7 +422,8 @@ uint8_t System_ExecuteLine(char *line)
                 return STATUS_CHECK_DOOR;
             }
 
-            sys.state = STATE_HOMING; // Set system state variable
+            // Set homing state
+            sys.state = STATE_HOMING;
 
             if(line[2] == 0)
             {
@@ -441,10 +464,13 @@ uint8_t System_ExecuteLine(char *line)
                 return STATUS_INVALID_STATEMENT;
             }
 
-            if(!sys.abort)    // Execute startup scripts after successful homing.
+            if(!sys.abort)
             {
-                sys.state = STATE_IDLE; // Set to IDLE when complete.
-                Stepper_Disable(0); // Set steppers to the settings idle state before returning.
+                // Execute startup scripts after successful homing.
+                // Set to IDLE when complete.
+                sys.state = STATE_IDLE;
+                // Set steppers to the settings idle state before returning.
+                Stepper_Disable(0);
 
                 if(line[2] == 0)
                 {
@@ -462,7 +488,7 @@ uint8_t System_ExecuteLine(char *line)
             break;
 
         case 'I': // Print or store build info. [IDLE/ALARM]
-            if(line[++char_counter] == 0 )
+            if(line[++char_counter] == 0)
             {
                 Settings_ReadBuildInfo(line);
                 Report_BuildInfo(line);
@@ -474,8 +500,8 @@ uint8_t System_ExecuteLine(char *line)
                 {
                     return STATUS_INVALID_STATEMENT;
                 }
-
-                helper_var = char_counter; // Set helper variable as counter to start of user info line.
+                // Set helper variable as counter to start of user info line.
+                helper_var = char_counter;
 
                 do
                 {
@@ -493,38 +519,65 @@ uint8_t System_ExecuteLine(char *line)
             {
                 return(STATUS_INVALID_STATEMENT);
             }
+
             switch(line[5])
             {
 #ifdef ENABLE_RESTORE_EEPROM_DEFAULT_SETTINGS
             case '$':
+                // Restore defaults
                 Settings_Restore(SETTINGS_RESTORE_DEFAULTS);
                 break;
 #endif
 #ifdef ENABLE_RESTORE_EEPROM_CLEAR_PARAMETERS
             case '#':
+                // Reset coord system
                 Settings_Restore(SETTINGS_RESTORE_PARAMETERS);
                 break;
 #endif
 #ifdef ENABLE_RESTORE_EEPROM_WIPE_ALL
             case '*':
+                // Restore all
                 Settings_Restore(SETTINGS_RESTORE_ALL);
                 break;
 #endif
+#ifdef ENABLE_RESTORE_EEPROM_CLEAR_TOOLS
             case 'T':
+                // Reset tool table
                 TT_Reset();
                 break;
+#endif
+#ifdef ENABLE_RESTORE_EEPROM_CLEAR_COORD
+            case 'C':
+                // Reset coord system G54-G59
+                Settings_Restore(SETTINGS_RESTORE_COORDS);
+                break;
+#endif
+#ifdef ENABLE_RESTORE_EEPROM_CLEAR_STARTUP
+            case 'N':
+            {
+                // Reset line with default value
+                // Empty line
+                char startup[STARTUP_LINE_LEN] = {};
 
+                for (int i = 0; i < N_STARTUP_LINE; i++)
+                {
+                    Settings_StoreStartupLine(i, startup);
+                }
+                break;
+            }
+#endif
             default:
                 return STATUS_INVALID_STATEMENT;
             }
 
             Report_FeedbackMessage(MESSAGE_RESTORE_DEFAULTS);
-            MC_Reset(); // Force reset to ensure settings are initialized correctly.
+            // Force reset to ensure settings are initialized correctly.
+            MC_Reset();
             break;
 
         case 'N': // Startup lines. [IDLE/ALARM]
-#if (N_STARTUP_LINE > 0)
-            if(line[++char_counter] == 0 )   // Print startup lines
+            // Print startup lines
+            if(line[++char_counter] == 0)
             {
                 for(helper_var = 0; helper_var < N_STARTUP_LINE; helper_var++)
                 {
@@ -546,10 +599,10 @@ uint8_t System_ExecuteLine(char *line)
                     // Store only when idle.
                     return STATUS_IDLE_ERROR;
                 }
-                helper_var = true;  // Set helper_var to flag storing method.
+                // Set helper_var to flag storing method.
+                helper_var = true;
                 // No break. Continues into default: to read remaining command characters.
             }
-#endif
 
         default:  // Storing setting methods [IDLE/ALARM]
             if(!Read_Float(line, &char_counter, &parameter))
@@ -572,16 +625,21 @@ uint8_t System_ExecuteLine(char *line)
                 while(line[char_counter++] != 0);
 
                 // Execute gcode block to ensure block is valid.
-                helper_var = GC_ExecuteLine(line); // Set helper_var to returned status code.
+                // Set helper_var to returned status code.
+                helper_var = GC_ExecuteLine(line);
 
                 if(helper_var)
                 {
-                    return(helper_var);
+                    return (helper_var);
                 }
                 else
                 {
-                    helper_var = trunc(parameter); // Set helper_var to int value of parameter
-                    Settings_StoreStartupLine(helper_var, line);
+                    // Set helper_var to int value of parameter
+                    helper_var = truncf(parameter);
+                    if (helper_var < N_STARTUP_LINE)
+                    {
+                        Settings_StoreStartupLine(helper_var, line);
+                    }
                 }
             }
             else   // Store global setting.
@@ -599,10 +657,9 @@ uint8_t System_ExecuteLine(char *line)
             }
         }
     }
-
-    return STATUS_OK; // If '$' command makes it to here, then everything's ok.
+    // If '$' command makes it to here, then everything's ok.
+    return STATUS_OK;
 }
-
 
 
 void System_FlagWcoChange(void)
@@ -621,26 +678,28 @@ float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
 {
     float pos = 0.0;
 
+    if (steps)
+    {
 #ifdef COREXY
-    if(idx == X_AXIS)
-    {
-        pos = (float)system_convert_corexy_to_x_axis_steps(steps) / settings.steps_per_mm[idx];
-    }
-    else if (idx == Y_AXIS)
-    {
-        pos = (float)system_convert_corexy_to_y_axis_steps(steps) / settings.steps_per_mm[idx];
-    }
-    else
-    {
-        pos = steps[idx]/settings.steps_per_mm[idx];
-    }
+        if (idx == X_AXIS)
+        {
+            pos = (float)system_convert_corexy_to_x_axis_steps(steps) / settings.steps_per_mm[idx];
+        }
+        else if (idx == Y_AXIS)
+        {
+            pos = (float)system_convert_corexy_to_y_axis_steps(steps) / settings.steps_per_mm[idx];
+        }
+        else
+        {
+            pos = steps[idx] / settings.steps_per_mm[idx];
+        }
 #else
-    if(settings.steps_per_mm[idx] != 0)
-    {
-        pos = steps[idx] / settings.steps_per_mm[idx];
-    }
-
+        if (settings.steps_per_mm[idx] > 0.0)
+        {
+            pos = steps[idx] / settings.steps_per_mm[idx];
+        }
 #endif
+    }
 
     return pos;
 }
@@ -648,11 +707,12 @@ float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
 
 void System_ConvertArraySteps2Mpos(float *position, const int32_t *steps)
 {
-    uint8_t idx;
-
-    for(idx = 0; idx < N_AXIS; idx++)
+    if (position)
     {
-        position[idx] = System_ConvertAxisSteps2Mpos(steps, idx);
+        for (uint8_t idx = 0; idx < N_AXIS; idx++)
+        {
+            position[idx] = System_ConvertAxisSteps2Mpos(steps, idx);
+        }
     }
 
     return;
@@ -661,12 +721,12 @@ void System_ConvertArraySteps2Mpos(float *position, const int32_t *steps)
 
 // CoreXY calculation only. Returns x or y-axis "steps" based on CoreXY motor steps.
 #ifdef COREXY
-int32_t system_convert_corexy_to_x_axis_steps(int32_t *steps)
+int32_t system_convert_corexy_to_x_axis_steps(const int32_t *steps)
 {
     return ((steps[A_MOTOR] + steps[B_MOTOR])/2);
 }
 
-int32_t system_convert_corexy_to_y_axis_steps(int32_t *steps)
+int32_t system_convert_corexy_to_y_axis_steps(const int32_t *steps)
 {
     return ((steps[A_MOTOR] - steps[B_MOTOR])/2);
 }
@@ -674,36 +734,37 @@ int32_t system_convert_corexy_to_y_axis_steps(int32_t *steps)
 
 
 // Checks and reports if target array exceeds machine travel limits.
-uint8_t System_CheckTravelLimits(float *target)
+uint8_t System_CheckTravelLimits(const float *target)
 {
-    uint8_t idx;
-
-    for(idx = 0; idx < N_AXIS; idx++)
+    for (uint8_t idx = 0; idx < N_AXIS; idx++)
     {
-#ifdef HOMING_FORCE_SET_ORIGIN
-        // When homing forced set origin is enabled, soft limits checks need to account for directionality.
-        // NOTE: max_travel is stored as negative
-        if(BIT_IS_TRUE(settings.homing_dir_mask, BIT(idx)))
+        if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_HOMING_FORCE_SET_ORIGIN))
         {
-            if(target[idx] < 0 || target[idx] > -settings.max_travel[idx])
+            // When homing forced set origin is enabled, soft limits checks need to account for directionality.
+            // NOTE: max_travel is stored as negative
+            if (BIT_IS_TRUE(settings.homing_dir_mask, BIT(idx)))
             {
-                return true;
+                if (target[idx] < 0 || target[idx] > -settings.max_travel[idx])
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                if (target[idx] > 0 || target[idx] < settings.max_travel[idx])
+                {
+                    return true;
+                }
             }
         }
         else
         {
-            if(target[idx] > 0 || target[idx] < settings.max_travel[idx])
+            // NOTE: max_travel is stored as negative
+            if (target[idx] > 0 || target[idx] < settings.max_travel[idx])
             {
                 return true;
             }
         }
-#else
-        // NOTE: max_travel is stored as negative
-        if(target[idx] > 0 || target[idx] < settings.max_travel[idx])
-        {
-            return true;
-        }
-#endif
     }
 
     return false;

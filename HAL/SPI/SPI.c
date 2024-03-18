@@ -150,7 +150,7 @@ void Spi_Init(SPI_TypeDef *SPIx, SPI_Mode mode)
 
         // Deselect chip
         GPIO_SetBits(SPI3_CS_GPIO_PORT, SPI3_CS_PIN);
-	}
+    }
 
 	SPI_CalculateCRC(SPIx, DISABLE);
 

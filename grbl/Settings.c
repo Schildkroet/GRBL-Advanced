@@ -61,14 +61,14 @@ void Settings_Init(void)
 
 
 // Method to restore EEPROM-saved Grbl global settings back to defaults.
-void Settings_Restore(uint8_t restore_flag)
+void Settings_Restore(const uint8_t restore_flag)
 {
     sys.state = STATE_BUSY;
     Report_RealtimeStatus();
 
     if (restore_flag & SETTINGS_RESTORE_DEFAULTS)
     {
-        settings.system_flags = DEFAULT_SYSTEM_INVERT_MASK;
+        settings.input_invert_mask = DEFAULT_SYSTEM_INVERT_MASK;
         settings.stepper_idle_lock_time = DEFAULT_STEPPER_IDLE_LOCK_TIME;
         settings.step_invert_mask = DEFAULT_STEPPING_INVERT_MASK;
         settings.dir_invert_mask = DEFAULT_DIRECTION_INVERT_MASK;
@@ -230,12 +230,11 @@ void Settings_Restore(uint8_t restore_flag)
 
     if (restore_flag & SETTINGS_RESTORE_PARAMETERS)
     {
-        uint8_t idx;
         float coord_data[N_AXIS];
 
         memset(&coord_data, 0, sizeof(coord_data));
 
-        for (idx = 0; idx <= SETTING_INDEX_NCOORD; idx++)
+        for (uint8_t idx = 0; idx <= SETTING_INDEX_NCOORD; idx++)
         {
             Settings_WriteCoordData(idx, coord_data);
         }
@@ -441,7 +440,7 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
 #ifdef MAX_STEP_RATE_HZ
                     if (value*settings.max_rate[parameter] > (MAX_STEP_RATE_HZ*60.0))
                     {
-                        return(STATUS_MAX_STEP_RATE_EXCEEDED);
+                        return (STATUS_MAX_STEP_RATE_EXCEEDED);
                     }
 #endif
                     settings.steps_per_mm[parameter] = value;
@@ -451,7 +450,7 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
 #ifdef MAX_STEP_RATE_HZ
                     if (value*settings.steps_per_mm[parameter] > (MAX_STEP_RATE_HZ*60.0))
                     {
-                        return(STATUS_MAX_STEP_RATE_EXCEEDED);
+                        return (STATUS_MAX_STEP_RATE_EXCEEDED);
                     }
 #endif
                     settings.max_rate[parameter] = value;
@@ -478,7 +477,7 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
                 // If axis index greater than N_AXIS or setting index greater than number of axis settings, error out.
                 if ((parameter < AXIS_SETTINGS_INCREMENT) || (set_idx == AXIS_N_SETTINGS))
                 {
-                    return(STATUS_INVALID_STATEMENT);
+                    return (STATUS_INVALID_STATEMENT);
                 }
                 parameter -= AXIS_SETTINGS_INCREMENT;
             }
@@ -492,7 +491,7 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
         switch(parameter)
         {
         case 0:
-            settings.system_flags = int_value & CONTROL_MASK;
+            settings.input_invert_mask = int_value & CONTROL_MASK;
             break;
 
         case 1:
@@ -899,7 +898,7 @@ static void WriteGlobalSettings(void)
 static uint8_t ReadGlobalSettings(void)
 {
     // Check version-byte of eeprom
-    uint8_t version = Nvm_ReadByte(0);
+    uint8_t version = Nvm_ReadByte(EEPROM_ADDR_VERSION);
 
     if (version == SETTINGS_VERSION)
     {

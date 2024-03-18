@@ -53,8 +53,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-volatile uint8_t DebounceCounterControl = 0;
-volatile uint8_t DebounceCounterLimits = 0;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -87,39 +85,43 @@ void ProcessReceive(char c)
 	// not passed into the main buffer, but these set system state flag bits for realtime execution.
 	switch(c)
 	{
-	case CMD_RESET:         MC_Reset(); break; // Call motion control reset routine.
-	case CMD_RESET_HARD:    NVIC_SystemReset();     // Perform hard reset
-	case CMD_STATUS_REPORT: System_SetExecStateFlag(EXEC_STATUS_REPORT);break;
-	case CMD_CYCLE_START:   System_SetExecStateFlag(EXEC_CYCLE_START); break; // Set as true
-	case CMD_FEED_HOLD:     System_SetExecStateFlag(EXEC_FEED_HOLD); break; // Set as true
-	case CMD_STEPPER_DISABLE:     Stepper_Disable(1); break; // Set as true
+	case CMD_RESET:             MC_Reset(); break; // Call motion control reset routine.
+	case CMD_RESET_HARD:        NVIC_SystemReset();     // Perform hard reset
+	case CMD_STATUS_REPORT:     System_SetExecStateFlag(EXEC_STATUS_REPORT);break;
+	case CMD_CYCLE_START:       System_SetExecStateFlag(EXEC_CYCLE_START); break; // Set as true
+	case CMD_FEED_HOLD:         System_SetExecStateFlag(EXEC_FEED_HOLD); break; // Set as true
+	case CMD_STEPPER_DISABLE:   Stepper_Disable(1); break; // Set as true
 
 	default:
-		if(c > 0x7F) { // Real-time control characters are extended ACSII only.
+		if(c > 0x7F)
+        {
+            // Real-time control characters are extended ACSII only.
 			switch(c)
 			{
 			case CMD_SAFETY_DOOR: System_SetExecStateFlag(EXEC_SAFETY_DOOR); break; // Set as true
 			case CMD_JOG_CANCEL:
-				if(sys.state & STATE_JOG) { // Block all other states from invoking motion cancel.
+				if(sys.state & STATE_JOG)
+                {
+                    // Block all other states from invoking motion cancel.
 					System_SetExecStateFlag(EXEC_MOTION_CANCEL);
 				}
 				break;
 
-			case CMD_FEED_OVR_RESET: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_RESET); break;
-			case CMD_FEED_OVR_COARSE_PLUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_PLUS); break;
-			case CMD_FEED_OVR_COARSE_MINUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_MINUS); break;
-			case CMD_FEED_OVR_FINE_PLUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_PLUS); break;
-			case CMD_FEED_OVR_FINE_MINUS: System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_MINUS); break;
-			case CMD_RAPID_OVR_RESET: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_RESET); break;
-			case CMD_RAPID_OVR_MEDIUM: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_MEDIUM); break;
-			case CMD_RAPID_OVR_LOW: System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_LOW); break;
-			case CMD_SPINDLE_OVR_RESET: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_RESET); break;
-			case CMD_SPINDLE_OVR_COARSE_PLUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_PLUS); break;
-			case CMD_SPINDLE_OVR_COARSE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_MINUS); break;
-			case CMD_SPINDLE_OVR_FINE_PLUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_PLUS); break;
-			case CMD_SPINDLE_OVR_FINE_MINUS: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_MINUS); break;
-			case CMD_SPINDLE_OVR_STOP: System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_STOP); break;
-			case CMD_COOLANT_FLOOD_OVR_TOGGLE: System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_FLOOD_OVR_TOGGLE); break;
+			case CMD_FEED_OVR_RESET:            System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_RESET); break;
+			case CMD_FEED_OVR_COARSE_PLUS:      System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_PLUS); break;
+			case CMD_FEED_OVR_COARSE_MINUS:     System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_COARSE_MINUS); break;
+			case CMD_FEED_OVR_FINE_PLUS:        System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_PLUS); break;
+			case CMD_FEED_OVR_FINE_MINUS:       System_SetExecMotionOverrideFlag(EXEC_FEED_OVR_FINE_MINUS); break;
+			case CMD_RAPID_OVR_RESET:           System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_RESET); break;
+			case CMD_RAPID_OVR_MEDIUM:          System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_MEDIUM); break;
+			case CMD_RAPID_OVR_LOW:             System_SetExecMotionOverrideFlag(EXEC_RAPID_OVR_LOW); break;
+			case CMD_SPINDLE_OVR_RESET:         System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_RESET); break;
+			case CMD_SPINDLE_OVR_COARSE_PLUS:   System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_PLUS); break;
+			case CMD_SPINDLE_OVR_COARSE_MINUS:  System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_COARSE_MINUS); break;
+			case CMD_SPINDLE_OVR_FINE_PLUS:     System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_PLUS); break;
+			case CMD_SPINDLE_OVR_FINE_MINUS:    System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_FINE_MINUS); break;
+			case CMD_SPINDLE_OVR_STOP:          System_SetExecAccessoryOverrideFlag(EXEC_SPINDLE_OVR_STOP); break;
+			case CMD_COOLANT_FLOOD_OVR_TOGGLE:  System_SetExecAccessoryOverrideFlag(EXEC_COOLANT_FLOOD_OVR_TOGGLE); break;
             case CMD_COOLANT_MIST_OVR_TOGGLE:
                 if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
                 {
@@ -129,7 +131,8 @@ void ProcessReceive(char c)
 			}
 		// Throw away any unfound extended-ASCII character by not passing it to the serial buffer.
 		}
-		else {
+		else
+        {
 			// Write character to buffer
 			FifoUsart_Insert(USART2_NUM, USART_DIR_RX, c);
 		}
@@ -245,48 +248,29 @@ void SysTick_Handler(void)
 	 * Therefore we just poll them in this 1ms task, which is hopefully fast
 	 * enough for critical events. Debouncing pins is also implemented here.
 	 */
-	uint8_t limits = Limits_GetState();
-	if(limits)
+	uint8_t limits = Limits_GetState(false);
+    if (limits && (sys.system_flags & BITFLAG_ENABLE_LIMITS))
     {
-		// X-Y-Z Limit
-		if((DebounceCounterLimits == 0) && (settings.system_flags & BITFLAG_ENABLE_LIMITS))
-        {
-			DebounceCounterLimits = 20;
-			Limit_PinChangeISR();
-		}
-	}
+        // X-Y-Z Limit
+        Limit_PinChangeISR();
+    }
 
-	uint8_t controls = System_GetControlState();
-	if(controls)
+    uint8_t controls = System_GetControlState(false);
+    if (controls && (sys.system_flags & BITFLAG_ENABLE_SYSTEM_INPUT))
     {
-		// System control
-		if(DebounceCounterControl == 0)
-        {
-			DebounceCounterControl = 20;
-			System_PinChangeISR();
-		}
-	}
+        System_PinChangeISR();
+    }
 
-	if(DebounceCounterLimits && !limits)
-    {
-		DebounceCounterLimits--;
-	}
-	if(DebounceCounterControl && !controls)
-    {
-		DebounceCounterControl--;
-	}
-
-	gMillis++;
+    gMillis++;
 
     if(gMillis%16 == 0)
     {
-      // Update sync motion
-      MC_UpdateSyncMove();
+        // Update sync motion
+        MC_UpdateSyncMove();
     }
 
-	if(gMillis%32 == 0)
+    if(gMillis%32 == 0)
     {
-        // 25ms Task (min 7 RPM)
         uint16_t cnt = (uint16_t)Encoder_GetValue();
         uint32_t cnt_diff = 0;
 
@@ -302,11 +286,14 @@ void SysTick_Handler(void)
         }
 
         // Calculate RPM and smooth it
-        float rpm = ((cnt_diff * 31.25) / settings.enc_ppr) * 60.0;
-        rpm_arr[rpm_idx++] = (uint32_t)rpm;
-        if(rpm_idx > (RPM_FILTER_NUM-1))
+        if (settings.enc_ppr > 0)
         {
-            rpm_idx = 0;
+            float rpm = ((cnt_diff * 31.25) / settings.enc_ppr) * 60.0;
+            rpm_arr[rpm_idx++] = (uint32_t)rpm;
+            if (rpm_idx > (RPM_FILTER_NUM - 1))
+            {
+                rpm_idx = 0;
+            }
         }
 
         // Assign smoothed RPM
@@ -369,10 +356,10 @@ void TIM4_IRQHandler(void)
 		Encoder_OvfISR();
 
         // Spindle at zero position
-        if(sys.sync_move && sys.state == STATE_HOLD)
+        /*if(sys.sync_move && sys.state == STATE_HOLD)
         {
             MC_LineSyncStart();
-        }
+        }*/
 	}
 }
 
@@ -394,7 +381,8 @@ void EXTI9_5_IRQHandler(void)
   */
 void USART1_IRQHandler(void)
 {
-	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+    {
 		/* Read one byte from the receive data register */
 		unsigned char c = (USART_ReceiveData(USART1) & 0xFF);
 
@@ -402,22 +390,26 @@ void USART1_IRQHandler(void)
 		FifoUsart_Insert(USART1_NUM, USART_DIR_RX, c);
 	}
 
-	if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET) {
+	if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)
+    {
 		char c;
 
-		if(FifoUsart_Get(USART1_NUM, USART_DIR_TX, &c) == 0) {
+		if(FifoUsart_Get(USART1_NUM, USART_DIR_TX, &c) == 0)
+        {
 			/* Write one byte to the transmit data register */
 			while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
 			USART_SendData(USART1, c);
 		}
-		else {
+		else
+        {
 			// Nothing to transmit - disable interrupt
 			USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
 		}
 	}
 
 	/* If overrun condition occurs, clear the ORE flag and recover communication */
-	if(USART_GetFlagStatus(USART1, USART_FLAG_ORE) != RESET) {
+	if(USART_GetFlagStatus(USART1, USART_FLAG_ORE) != RESET)
+    {
 		(void)USART_ReceiveData(USART1);
 	}
 }
@@ -430,29 +422,34 @@ void USART1_IRQHandler(void)
   */
 void USART2_IRQHandler(void)
 {
-	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET) {
+	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
+    {
 		/* Read one byte from the receive data register */
 		unsigned char c = (USART_ReceiveData(USART2) & 0xFF);
 
 		ProcessReceive(c);
 	}
 
-	if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET) {
+	if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET)
+    {
 		char c;
 
-		if(FifoUsart_Get(USART2_NUM, USART_DIR_TX, &c) == 0) {
+		if(FifoUsart_Get(USART2_NUM, USART_DIR_TX, &c) == 0)
+        {
 			/* Write one byte to the transmit data register */
 			while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
 			USART_SendData(USART2, c);
 		}
-		else {
+		else
+        {
 			// Nothing to transmit - disable interrupt
 			USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
 		}
 	}
 
 	/* If overrun condition occurs, clear the ORE flag and recover communication */
-	if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) != RESET) {
+	if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) != RESET)
+    {
 		(void)USART_ReceiveData(USART2);
 	}
 }
@@ -465,7 +462,8 @@ void USART2_IRQHandler(void)
   */
 void USART6_IRQHandler(void)
 {
-	if(USART_GetITStatus(USART6, USART_IT_RXNE) != RESET) {
+	if(USART_GetITStatus(USART6, USART_IT_RXNE) != RESET)
+    {
 		/* Read one byte from the receive data register */
 		unsigned char c = (USART_ReceiveData(USART6) & 0xFF);
 
@@ -473,22 +471,26 @@ void USART6_IRQHandler(void)
 		FifoUsart_Insert(USART6_NUM, USART_DIR_RX, c);
 	}
 
-	if(USART_GetITStatus(USART6, USART_IT_TXE) != RESET) {
+	if(USART_GetITStatus(USART6, USART_IT_TXE) != RESET)
+    {
 		char c;
 
-		if(FifoUsart_Get(USART6_NUM, USART_DIR_TX, &c) == 0) {
+		if(FifoUsart_Get(USART6_NUM, USART_DIR_TX, &c) == 0)
+        {
 			/* Write one byte to the transmit data register */
 			while(USART_GetFlagStatus(USART6, USART_FLAG_TC) == RESET);
 			USART_SendData(USART6, c);
 		}
-		else {
+		else
+        {
 			// Nothing to transmit - disable interrupt
 			USART_ITConfig(USART6, USART_IT_TXE, DISABLE);
 		}
 	}
 
 	/* If overrun condition occurs, clear the ORE flag and recover communication */
-	if(USART_GetFlagStatus(USART6, USART_FLAG_ORE) != RESET) {
+	if(USART_GetFlagStatus(USART6, USART_FLAG_ORE) != RESET)
+    {
 		(void)USART_ReceiveData(USART6);
 	}
 }

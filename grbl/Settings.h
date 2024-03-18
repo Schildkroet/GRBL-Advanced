@@ -32,12 +32,18 @@
 #define SETTINGS_VERSION                        8  // NOTE: Check settings_reset() when moving to next version.
 
 
-// Define bit flag masks for the boolean settings in settings.system_flags
+// Define bit flag masks for the boolean settings in settings.input_invert_mask
 #define BITFLAG_INVERT_RESET_PIN                BIT(0)
 #define BITFLAG_INVERT_FEED_PIN                 BIT(1)
 #define BITFLAG_INVERT_CYCLE_PIN                BIT(2)
 #define BITFLAG_INVERT_SAFETY_PIN               BIT(3)
-#define BITFLAG_ENABLE_LIMITS                   BIT(4)
+#define BITFLAG_INVERT_SPINDLE_PIN              BIT(4)
+#define BITFLAG_INVERT_FLOOD_PIN                BIT(5)
+#define BITFLAG_INVERT_MIST_PIN                 BIT(6)
+
+// Define bit flag masks for the boolean settings in settings.system_flags
+#define BITFLAG_ENABLE_SYSTEM_INPUT             BIT(0)
+#define BITFLAG_ENABLE_LIMITS                   BIT(1)
 
 // Define bit flag masks for the boolean settings in settings.flags.
 #define BITFLAG_REPORT_INCHES                   BIT(0)
@@ -85,6 +91,7 @@
 // NOTE: Default 1KB EEPROM. The upper half is reserved for parameters and
 // the startup script. The lower half contains the global settings and space for future
 // developments.
+#define EEPROM_ADDR_VERSION                 0U
 #define EEPROM_ADDR_GLOBAL                  1U      // +163
 #define EEPROM_ADDR_TOOLTABLE               180U    // +320
 #define EEPROM_ADDR_PARAMETERS              512U    // +160
@@ -134,7 +141,7 @@ typedef struct
     uint8_t tls_valid;
 
     // Remaining Grbl settings
-    uint8_t system_flags;
+    uint8_t input_invert_mask;
     uint8_t step_invert_mask;
     uint8_t dir_invert_mask;
     uint8_t stepper_idle_lock_time;     // If max value 255, steppers do not disable.
@@ -166,7 +173,7 @@ extern Settings_t settings;
 void Settings_Init(void);
 
 // Helper function to clear and restore EEPROM defaults
-void Settings_Restore(uint8_t restore_flag);
+void Settings_Restore(const uint8_t restore_flag);
 
 // A helper method to set new settings from command line
 uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value);
@@ -180,7 +187,7 @@ void Settings_StoreStartupLine(uint8_t n, const char *line);
 // Stores tool table in EEPROM
 void Settings_StoreToolTable(const ToolTable_t *table);
 
-void Settings_StoreToolParams(uint8_t tool_nr, const ToolParams_t *params);
+//void Settings_StoreToolParams(uint8_t tool_nr, const ToolParams_t *params);
 
 // Read tool table
 uint8_t Settings_ReadToolTable(ToolTable_t *table);

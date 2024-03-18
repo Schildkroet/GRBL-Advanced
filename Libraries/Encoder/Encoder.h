@@ -3,6 +3,7 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 #ifdef __cplusplus
@@ -17,6 +18,8 @@ void Encoder_SetPulsesPerRev(uint16_t ppr);
 
 uint32_t Encoder_GetValue(void);
 void Encoder_SetValue(uint32_t val);
+
+bool Encoder_Zero(void);
 
 void Encoder_OvfISR(void);
 

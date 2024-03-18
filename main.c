@@ -24,11 +24,8 @@
 #include "ServerTCP.h"
 #include "System32.h"
 #include "grbl_advance.h"
-#include "w5500.h"
-
 #include "Print.h"
 #include "FIFO_USART.h"
-#include "ComIf.h"
 #include "Platform.h"
 
 
@@ -43,13 +40,13 @@ int main(void)
     // Initialize GrIP protocol
     GrIP_Init();
 
-    System_Init();
     Settings_Init();
+    System_Init();
+
     Stepper_Init();
+    Limits_Init();
 
     System_ResetPosition();
-
-    Limits_Init();
 
 #if (USE_ETH_IF)
     // Initialize TCP server

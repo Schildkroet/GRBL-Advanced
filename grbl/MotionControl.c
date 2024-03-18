@@ -318,8 +318,11 @@ void MC_LineSync(const float *target, const Planner_LineData_t *pl_data, float p
     MC_Line(target, pl_data);
     sys.sync_move = 1;
 
+    // Clear
+    Encoder_Zero();
+
     // Wait for spindle sync
-    while(wait_spindle == 0)
+    while(!Encoder_Zero())
     {
         Protocol_ExecuteRealtime(); // Check for any run-time commands
 

@@ -72,22 +72,22 @@
 // used, if they are available per user setup. Also, extended ASCII codes (>127), which are never in
 // g-code programs, maybe selected for interface programs.
 // NOTE: If changed, manually update help message in report.c.
+#define CMD_STEPPER_DISABLE             0x17
 #define CMD_RESET                       0x18 // ctrl-x.
 #define CMD_RESET_HARD                  0x19 // ctrl-y.
 #define CMD_STATUS_REPORT               '?'
 #define CMD_CYCLE_START                 '~'
 #define CMD_FEED_HOLD                   '!'
-#define CMD_STEPPER_DISABLE             0x17
 
 
 // NOTE: All override realtime commands must be in the extended ASCII character set, starting
 // at character value 128 (0x80) and up to 255 (0xFF). If the normal set of realtime commands,
 // such as status reports, feed hold, reset, and cycle start, are moved to the extended set
 // space, RX ISR will need to be modified to accomodate the change.
-// #define CMD_RESET 0x80
-// #define CMD_STATUS_REPORT 0x81
-// #define CMD_CYCLE_START 0x82
-// #define CMD_FEED_HOLD 0x83
+// #define CMD_RESET                        0x80
+// #define CMD_STATUS_REPORT                0x81
+// #define CMD_CYCLE_START                  0x82
+// #define CMD_FEED_HOLD                    0x83
 #define CMD_SAFETY_DOOR                     0x84
 #define CMD_JOG_CANCEL                      0x85
 #define CMD_DEBUG_REPORT                    0x86    // Only when DEBUG enabled, sends debug report in '{}' braces.
@@ -220,20 +220,6 @@
 // normally-open(NO) and normally-closed(NC) switches installed on their machine.
 // NOTE: PLEASE DO NOT USE THIS, unless you have a situation that needs it.
 //#define INVERT_LIMIT_PIN_MASK ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)) // Default disabled. Uncomment to enable.
-
-
-// Inverts the spindle enable pin from low-disabled/high-enabled to low-enabled/high-disabled. Useful
-// for some pre-built electronic boards.
-// NOTE: If VARIABLE_SPINDLE is enabled(default), this option has no effect as the PWM output and
-// spindle enable are combined to one pin. If you need both this option and spindle speed PWM,
-// uncomment the config option USE_SPINDLE_DIR_AS_ENABLE_PIN below.
-//#define INVERT_SPINDLE_ENABLE_PIN // Default disabled. Uncomment to enable.
-
-
-// Inverts the selected coolant pin from low-disabled/high-enabled to low-enabled/high-disabled. Useful
-// for some pre-built electronic boards.
-//#define INVERT_COOLANT_FLOOD_PIN // Default disabled. Uncomment to enable.
-//#define INVERT_COOLANT_MIST_PIN // Default disabled. Note: Enable M7 mist coolant in Config.h
 
 
 // When Grbl powers-cycles or is hard reset with the Arduino reset button, Grbl boots up with no ALARM
@@ -512,8 +498,8 @@
 // uses the homing pull-off distance setting times the LOCATE_SCALAR to pull-off and re-engage
 // the limit switch.
 // NOTE: Both of these values must be greater than 1.0 to ensure proper function.
-//#define HOMING_AXIS_SEARCH_SCALAR     1.5 // Uncomment to override defaults in limits.c.
-//#define HOMING_AXIS_LOCATE_SCALAR     10.0 // Uncomment to override defaults in limits.c.
+//#define HOMING_AXIS_SEARCH_SCALAR             1.5 // Uncomment to override defaults in limits.c.
+//#define HOMING_AXIS_LOCATE_SCALAR             10.0 // Uncomment to override defaults in limits.c.
 
 
 // Enable the '$RST=*', '$RST=$', and '$RST=#' eeprom restore commands. There are cases where
@@ -580,11 +566,11 @@
 
 
 // Configure options for the parking motion, if enabled.
-#define PARKING_AXIS                    Z_AXIS  // Define which axis that performs the parking motion
-#define PARKING_TARGET                  -10.0    // Parking axis target. In mm, as machine coordinate [-max_travel,0].
-#define PARKING_RATE                    800.0   // Parking fast rate after pull-out in mm/min.
-#define PARKING_PULLOUT_RATE            300.0   // Pull-out/plunge slow feed rate in mm/min.
-#define PARKING_PULLOUT_INCREMENT       10.0     // Spindle pull-out and plunge distance in mm. Incremental distance.
+#define PARKING_AXIS                        Z_AXIS  // Define which axis that performs the parking motion
+#define PARKING_TARGET                      -10.0    // Parking axis target. In mm, as machine coordinate [-max_travel,0].
+#define PARKING_RATE                        800.0   // Parking fast rate after pull-out in mm/min.
+#define PARKING_PULLOUT_RATE                300.0   // Pull-out/plunge slow feed rate in mm/min.
+#define PARKING_PULLOUT_INCREMENT           10.0     // Spindle pull-out and plunge distance in mm. Incremental distance.
 // Must be positive value or equal to zero.
 
 

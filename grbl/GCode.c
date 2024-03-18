@@ -39,11 +39,11 @@
 
 // Modal Group M9: Override control
 #ifdef DEACTIVATE_PARKING_UPON_INIT
-#define OVERRIDE_DISABLED                   0 // (Default: Must be zero)
-#define OVERRIDE_PARKING_MOTION             1 // M56
+  #define OVERRIDE_DISABLED                 0 // (Default: Must be zero)
+  #define OVERRIDE_PARKING_MOTION           1 // M56
 #else
-#define OVERRIDE_PARKING_MOTION             0 // M56 (Default: Must be zero)
-#define OVERRIDE_DISABLED                   1 // Parking disabled.
+  #define OVERRIDE_PARKING_MOTION           0 // M56 (Default: Must be zero)
+  #define OVERRIDE_DISABLED                 1 // Parking disabled.
 #endif
 
 
@@ -105,29 +105,40 @@ uint8_t GC_ExecuteLine(const char *line)
 
     uint8_t axis_command = AXIS_COMMAND_NONE;
     uint8_t axis_0, axis_1, axis_linear;
-    uint8_t coord_select = 0; // Tracks G10 P coordinate selection for execution
+    // Tracks G10 P coordinate selection for execution
+    uint8_t coord_select = 0;
 
     // Initialize bitflag tracking variables for axis indices compatible operations.
-    uint8_t axis_words = 0; // XYZ tracking
-    uint8_t ijk_words = 0; // IJK tracking
+
+    // XYZ tracking
+    uint8_t axis_words = 0;
+    // IJK tracking
+    uint8_t ijk_words = 0;
 
     // Initialize command and value words and parser flags variables.
-    uint16_t command_words = 0; // Tracks G and M command words. Also used for modal group violations.
-    uint16_t value_words = 0; // Tracks value words.
+
+    // Tracks G and M command words. Also used for modal group violations.
+    uint16_t command_words = 0;
+    // Tracks value words.
+    uint16_t value_words = 0;
     uint8_t gc_parser_flags = GC_PARSER_NONE;
 
 
-    memset(&gc_block, 0, sizeof(Parser_Block_t)); // Initialize the parser block struct.
-    memcpy(&gc_block.modal,&gc_state.modal,sizeof(GC_Modal_t)); // Copy current modes
+    // Initialize the parser block struct.
+    memset(&gc_block, 0, sizeof(Parser_Block_t));
+    // Copy current modes
+    memcpy(&gc_block.modal, &gc_state.modal, sizeof(GC_Modal_t));
 
     // Determine if the line is a jogging motion or a normal g-code block.
-    if(line[0] == '$')   // NOTE: `$J=` already parsed when passed to this function.
+    // NOTE: `$J=` already parsed when passed to this function.
+    if(line[0] == '$')
     {
         // Set G1 and G94 enforced modes to ensure accurate error checks.
         gc_parser_flags |= GC_PARSER_JOG_MOTION;
         gc_block.modal.motion = MOTION_MODE_LINEAR;
         gc_block.modal.feed_rate = FEED_RATE_MODE_UNITS_PER_MIN;
-        gc_block.values.n = JOG_LINE_NUMBER; // Initialize default line number reported during jog.
+        // Initialize default line number reported during jog.
+        gc_block.values.n = JOG_LINE_NUMBER;
     }
 
     /* -------------------------------------------------------------------------------------
@@ -143,7 +154,7 @@ uint8_t GC_ExecuteLine(const char *line)
     float value = 0.0;
     uint16_t int_value = 0;
     uint16_t mantissa = 0;
-    float old_xyz[N_AXIS] = {0.0};
+    float old_xyz[N_AXIS] = {};
     uint8_t change_tool = 0, update_tooltable = 0, apply_tool = 0;
     uint8_t io_cmd = 0;
 
@@ -357,9 +368,9 @@ uint8_t GC_ExecuteLine(const char *line)
                 axis_command = AXIS_COMMAND_MOTION_MODE;
                 break;
 
-                // Set retract mode
             case 98:
             case 99:
+                // Set retract mode
                 word_bit = MODAL_GROUP_G10;
                 gc_block.modal.retract = int_value - 98;
                 break;
@@ -628,6 +639,7 @@ uint8_t GC_ExecuteLine(const char *line)
                     axis_words |= (1 << A_AXIS);
                 }
                 break;
+
             case 'B':
                 if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_MULTI_AXIS))
                 {
@@ -636,63 +648,78 @@ uint8_t GC_ExecuteLine(const char *line)
                     axis_words |= (1 << B_AXIS);
                 }
                 break;
+
             // case 'C': // Not supported
+
             case 'D':
                 word_bit = WORD_D;
                 gc_block.values.d = int_value;
                 break;  // Maybe float?
+
             case 'F':
                 word_bit = WORD_F;
                 gc_block.values.f = value;
                 break;
+
             case 'H':
                 word_bit = WORD_H;
                 gc_block.values.h = int_value;
                 break;
+
             case 'E':
                 word_bit = WORD_E;
                 gc_block.values.e = value;
                 break;
+
             case 'I':
                 word_bit = WORD_I;
                 gc_block.values.ijk[X_AXIS] = value;
                 ijk_words |= (1<<X_AXIS);
                 break;
+
             case 'J':
                 word_bit = WORD_J;
                 gc_block.values.ijk[Y_AXIS] = value;
                 ijk_words |= (1<<Y_AXIS);
                 break;
+
             case 'K':
                 word_bit = WORD_K;
                 gc_block.values.ijk[Z_AXIS] = value;
                 ijk_words |= (1<<Z_AXIS);
                 break;
+
             case 'L':
                 word_bit = WORD_L;
                 gc_block.values.l = int_value;
                 break;
+
             case 'N':
                 word_bit = WORD_N;
                 gc_block.values.n = truncf(value);
                 break;
+
             case 'P':
+                // NOTE: For certain commands, P value must be an integer.
                 word_bit = WORD_P;
                 gc_block.values.p = value;
                 break;
-                // NOTE: For certain commands, P value must be an integer.
+
             case 'Q':
                 word_bit = WORD_Q;
                 gc_block.values.q = value;
                 break;
+
             case 'R':
                 word_bit = WORD_R;
                 gc_block.values.r = value;
                 break;
+
             case 'S':
                 word_bit = WORD_S;
                 gc_block.values.s = value;
                 break;
+
             case 'T':
                 word_bit = WORD_T;
                 if(value > MAX_TOOL_NUMBER)
@@ -707,16 +734,19 @@ uint8_t GC_ExecuteLine(const char *line)
                 gc_block.values.xyz[X_AXIS] = value;
                 axis_words |= (1<<X_AXIS);
                 break;
+
             case 'Y':
                 word_bit = WORD_Y;
                 gc_block.values.xyz[Y_AXIS] = value;
                 axis_words |= (1<<Y_AXIS);
                 break;
+
             case 'Z':
                 word_bit = WORD_Z;
                 gc_block.values.xyz[Z_AXIS] = value;
                 axis_words |= (1<<Z_AXIS);
                 break;
+
             default:
                 return STATUS_GCODE_UNSUPPORTED_COMMAND;
             }
@@ -740,7 +770,6 @@ uint8_t GC_ExecuteLine(const char *line)
             }
             // Flag to indicate parameter assigned.
             value_words |= BIT(word_bit);
-
         }
     }
     // Parsing complete!

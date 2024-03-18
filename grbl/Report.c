@@ -47,9 +47,7 @@
 // Internal report utilities to reduce flash with repetitive tasks turned into functions.
 static void Report_SettingPrefix(uint8_t n)
 {
-    Printf("$");
-    Printf("%d", n);
-    Printf("=");
+    Printf("$%d=", n);
 }
 
 
@@ -60,20 +58,20 @@ static void Report_LineFeed(void)
 }
 
 
-static void report_util_feedback_line_feed(void)
+static void Report_UtilFeedback_LineFeed(void)
 {
     Printf("]");
     Report_LineFeed();
 }
 
 
-static void report_util_gcode_modes_G(void)
+static void Report_UtilGCodeModes_G(void)
 {
     Printf(" G");
 }
 
 
-static void report_util_gcode_modes_M(void)
+static void Report_UtilGCodeModes_M(void)
 {
     Printf(" M");
 }
@@ -137,8 +135,7 @@ void Report_StatusMessage(uint8_t status_code)
         break;
 
     default:
-        Printf("error:");
-        Printf("%d\r\n", status_code);
+        Printf("error:%d\r\n", status_code);
         Printf_Flush();
     }
 }
@@ -147,12 +144,11 @@ void Report_StatusMessage(uint8_t status_code)
 // Prints alarm messages.
 void Report_AlarmMessage(uint8_t alarm_code)
 {
-    Printf("ALARM:");
-    Printf("%d", alarm_code);
+    Printf("ALARM:%d", alarm_code);
     Report_LineFeed();
 
     // Force delay to ensure message clears serial write buffer.
-    Delay_ms(100);
+    Delay_ms(50);
 }
 
 
@@ -214,9 +210,28 @@ void Report_FeedbackMessage(uint8_t message_code)
     case MESSAGE_INVALID_TOOL:
         Printf("Invalid Tool Number");
         break;
+
+    case MESSAGE_CHECK_INPUTS:
+    {
+        uint8_t control = System_GetControlState(true);
+        Printf("Check input buttons:");
+        if (BIT_IS_TRUE(control, CONTROL_PIN_INDEX_RESET))
+        {
+            Printf(" RST");
+        }
+        if (BIT_IS_TRUE(control, CONTROL_PIN_INDEX_FEED_HOLD))
+        {
+            Printf(" HLD");
+        }
+        if (BIT_IS_TRUE(control, CONTROL_PIN_INDEX_CYCLE_START))
+        {
+            Printf(" RUN");
+        }
+        break;
+    }
     }
 
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
 }
 
 
@@ -248,7 +263,7 @@ void Report_GrblHelp(void)
 void Report_GrblSettings(void)
 {
     // Print Grbl settings.
-    report_util_uint8_setting(0, settings.system_flags);
+    report_util_uint8_setting(0, settings.input_invert_mask);
     report_util_uint8_setting(1, settings.stepper_idle_lock_time);
     report_util_uint8_setting(2, settings.step_invert_mask);
     report_util_uint8_setting(3, settings.dir_invert_mask);
@@ -360,7 +375,7 @@ void Report_ProbeParams(void)
     }
 
     Printf(":%d", sys.probe_succeeded);
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
 }
 
 
@@ -383,7 +398,7 @@ void Report_TLSParams(void)
     }
 
     Printf(":%d", settings.tls_valid);
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
 }
 
 
@@ -400,7 +415,7 @@ void Report_ToolParams(uint8_t tool_nr)
     PrintFloat_CoordValue(params.z_offset);
     Printf(":");
     PrintFloat_CoordValue(params.reserved);
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
 }
 
 
@@ -440,13 +455,13 @@ void Report_NgcParams(void)
 
         Printf(":");
         Report_AxisValue(coord_data);
-        report_util_feedback_line_feed();
+        Report_UtilFeedback_LineFeed();
     }
 
     // Print G92,G92.1 which are not persistent in memory
     Printf("[G92:");
     Report_AxisValue(gc_state.coord_offset);
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
     // Print tool length offset value
     Printf("[TLO:");
     for(uint8_t idx = 0; idx < N_LINEAR_AXIS; idx++)
@@ -457,7 +472,7 @@ void Report_NgcParams(void)
             Printf(",");
         }
     }
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
     // Print probe parameters. Not persistent in memory.
     Report_ProbeParams();
     // Print tls position. Persistent in memory.
@@ -474,35 +489,34 @@ void Report_GCodeModes(void)
 
     if(gc_state.modal.motion >= MOTION_MODE_PROBE_TOWARD)
     {
-        Printf("38.");
-        Printf("%d", gc_state.modal.motion - (MOTION_MODE_PROBE_TOWARD-2));
+        Printf("38.%d", gc_state.modal.motion - (MOTION_MODE_PROBE_TOWARD - 2));
     }
     else
     {
         Printf("%d", gc_state.modal.motion);
     }
 
-    report_util_gcode_modes_G();
+    Report_UtilGCodeModes_G();
     Printf("%d", gc_state.modal.coord_select+54);
 
-    report_util_gcode_modes_G();
+    Report_UtilGCodeModes_G();
     Printf("%d", gc_state.modal.plane_select+17);
 
-    report_util_gcode_modes_G();
+    Report_UtilGCodeModes_G();
     Printf("%d", 21-gc_state.modal.units);
 
-    report_util_gcode_modes_G();
+    Report_UtilGCodeModes_G();
     Printf("%d", gc_state.modal.distance+90);
 
-    report_util_gcode_modes_G();
+    Report_UtilGCodeModes_G();
     Printf("%d", 94-gc_state.modal.feed_rate);
 
-    report_util_gcode_modes_G();
+    Report_UtilGCodeModes_G();
     Printf("%d", 98+gc_state.modal.retract);
 
     if(gc_state.modal.program_flow)
     {
-        report_util_gcode_modes_M();
+        Report_UtilGCodeModes_M();
 
         switch(gc_state.modal.program_flow)
         {
@@ -510,7 +524,7 @@ void Report_GCodeModes(void)
             Printf("0");
             break;
 
-            // case PROGRAM_FLOW_OPTIONAL_STOP : Putc('1'); break; // M1 is ignored and not supported.
+        // case PROGRAM_FLOW_OPTIONAL_STOP : Putc('1'); break; // M1 is ignored and not supported.
         case PROGRAM_FLOW_COMPLETED_M2:
         case PROGRAM_FLOW_COMPLETED_M30:
             Printf("%d", gc_state.modal.program_flow);
@@ -521,7 +535,7 @@ void Report_GCodeModes(void)
         }
     }
 
-    report_util_gcode_modes_M();
+    Report_UtilGCodeModes_M();
 
     switch(gc_state.modal.spindle)
     {
@@ -545,18 +559,18 @@ void Report_GCodeModes(void)
         {
             if (gc_state.modal.coolant & PL_COND_FLAG_COOLANT_MIST)
             {
-                report_util_gcode_modes_M();
+                Report_UtilGCodeModes_M();
                 Printf("7");
             }
             if (gc_state.modal.coolant & PL_COND_FLAG_COOLANT_FLOOD)
             {
-                report_util_gcode_modes_M();
+                Report_UtilGCodeModes_M();
                 Printf("8");
             }
         }
         else
         {
-            report_util_gcode_modes_M();
+            Report_UtilGCodeModes_M();
             Printf("9");
         }
     }
@@ -564,40 +578,35 @@ void Report_GCodeModes(void)
 #ifdef ENABLE_PARKING_OVERRIDE_CONTROL
     if(sys.override_ctrl == OVERRIDE_PARKING_MOTION)
     {
-        report_util_gcode_modes_M();
+        Report_UtilGCodeModes_M();
         Printf("%d", 56);
     }
 #endif
 
-    Printf(" T");
-    Printf("%d", gc_state.tool);
+    Printf(" T%d", gc_state.tool);
 
     Printf(" F");
     PrintFloat_RateValue(gc_state.feed_rate);
 
     Printf(" S");
-    //PrintFloat(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
-    Printf("%d", Spindle_GetRPM());
+    Printf_Float(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
+    //Printf(" S%d", Spindle_GetRPM());
 
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
 }
 
 
 // Prints specified startup line
 void Report_StartupLine(uint8_t n, const char *line)
 {
-    Printf("$N");
-    Printf("%d", n);
-    Printf("=%s", line);
+    Printf("$N%d=%s", n, line);
     Report_LineFeed();
 }
 
 
 void Report_ExecuteStartupMessage(const char *line, uint8_t status_code)
 {
-    Printf(">");
-    Printf("%s", line);
-    Printf(":");
+    Printf(">%s:", line);
     Report_StatusMessage(status_code);
 }
 
@@ -606,12 +615,12 @@ void Report_ExecuteStartupMessage(const char *line, uint8_t status_code)
 void Report_BuildInfo(const char *line)
 {
 #ifdef GRBL_COMPATIBLE
-    Printf("[VER: 1.1, %s: ", GRBL_VERSION_BUILD);
+    Printf("[VER:1.1h.20240101: ");
 #else
     Printf("[VER: %s, %s, GCC %s: ", GRBL_VERSION, GRBL_VERSION_BUILD, __VERSION__);
 #endif
     Printf("%s", line);
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
     Printf("[OPT:");
     Printf("V");
     Printf("N");
@@ -689,7 +698,7 @@ void Report_BuildInfo(const char *line)
     Printf(",%d", BLOCK_BUFFER_SIZE-1);
     Printf(",%d", LINE_BUFFER_SIZE);
 
-    report_util_feedback_line_feed();
+    Report_UtilFeedback_LineFeed();
 }
 
 
@@ -697,16 +706,15 @@ void Report_BuildInfo(const char *line)
 // and has been sent into protocol_execute_line() routine to be executed by Grbl.
 void Report_EchoLineReceived(char *line)
 {
-    Printf("[echo: ");
-    Printf("%s", line);
-    report_util_feedback_line_feed();
+    Printf("[echo: %s", line);
+    Report_UtilFeedback_LineFeed();
 }
 
 
 // Prints real-time data. This function grabs a real-time snapshot of the stepper subprogram
 // and the actual location of the CNC machine. Users may change the following function to their
 // specific needs, but the desired real-time data report must be as short as possible. This is
-// requires as it minimizes the computational overhead and allows grbl to keep running smoothly,
+// required as it minimizes the computational overhead and allows grbl to keep running smoothly,
 // especially during g-code programs with fast, short line segments and high frequency reports (5-20Hz).
 void Report_RealtimeStatus(void)
 {
@@ -718,7 +726,6 @@ void Report_RealtimeStatus(void)
     System_ConvertArraySteps2Mpos(print_position, current_position);
 
     // Report current machine state and sub-states
-    // For better syncing purposes
     Printf("<");
 
     switch(sys.state)
@@ -870,13 +877,20 @@ void Report_RealtimeStatus(void)
         Printf("|FS:");
         PrintFloat_RateValue(Stepper_GetRealtimeRate());
         Printf(",");
-        Printf_Float(sys.spindle_speed, N_DECIMAL_RPMVALUE);
+        if(settings.enc_ppr > 0)
+        {
+            Printf_Float(Spindle_GetRPM(), N_DECIMAL_RPMVALUE);
+        }
+        else
+        {
+            Printf_Float(sys.spindle_speed, N_DECIMAL_RPMVALUE);
+        }
     }
 
     if (BIT_IS_TRUE(settings.flags_report, BITFLAG_REPORT_FIELD_PIN_STATE))
     {
-        uint8_t lim_pin_state = Limits_GetState();
-        uint8_t ctrl_pin_state = System_GetControlState();
+        uint8_t lim_pin_state = Limits_GetState(true);
+        uint8_t ctrl_pin_state = System_GetControlState(true);
         uint8_t prb_pin_state = Probe_GetState();
 
         if (lim_pin_state | ctrl_pin_state | prb_pin_state)

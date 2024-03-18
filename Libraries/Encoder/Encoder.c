@@ -26,6 +26,7 @@ static uint32_t OvfCnt = 0;
 static uint32_t CntValue = 0;
 
 static uint16_t PulsesPerRev = 360;
+static bool isZero = false;
 
 
 void Encoder_Init(uint16_t ppr)
@@ -40,6 +41,7 @@ void Encoder_Reset(void)
 {
     OvfCnt = 0;
     CntValue = 0;
+    isZero = false;
 }
 
 
@@ -61,8 +63,20 @@ void Encoder_SetValue(uint32_t val)
 }
 
 
+bool Encoder_Zero(void)
+{
+    if(isZero)
+    {
+        isZero = false;
+        return true;
+    }
+    return false;
+}
+
+
 void Encoder_OvfISR(void)
 {
     OvfCnt++;
     CntValue += PulsesPerRev;
+    isZero = true;
 }

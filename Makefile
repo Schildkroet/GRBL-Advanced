@@ -53,7 +53,7 @@ endif
 # options for code generation
 #---------------------------------------------------------------------------------
 FLAGS       := 	-mfloat-abi=hard -mcpu=cortex-m4 -gdwarf-2 -mfpu=fpv4-sp-d16 -mthumb -Wno-misleading-indentation
-CFLAGS      := 	-O2 -g1 -std=c11 -Wall -Wextra $(INCLUDE) -fno-common -fsingle-precision-constant -fdata-sections \
+CFLAGS      := 	-O2 -g1 -std=c17 -Wall -Wextra $(INCLUDE) -fno-common -fsingle-precision-constant -fdata-sections \
                 -ffunction-sections -fomit-frame-pointer -mlittle-endian  -DUSE_STDPERIPH_DRIVER -D__FPU_USED -DARM_MATH_CM4 -Wimplicit-fallthrough=0
 CXXFLAGS    :=  $(CFLAGS)
 

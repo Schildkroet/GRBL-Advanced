@@ -41,15 +41,18 @@
 #endif
 
 
+static uint8_t last_state = 0;
+
+
 void Limits_Init(void)
 {
     GPIO_InitGPIO(GPIO_LIMIT);
+    last_state = 0;
 
-    // TODO: Hard limits via interrupt
-    if(BIT_IS_TRUE(settings.flags, BITFLAG_HARD_LIMIT_ENABLE))
+    if (BIT_IS_TRUE(settings.flags, BITFLAG_HARD_LIMIT_ENABLE))
     {
         // Enable hard limits
-        settings.system_flags |= BITFLAG_ENABLE_LIMITS;
+        sys.system_flags |= BITFLAG_ENABLE_LIMITS;
     }
     else
     {
@@ -61,22 +64,20 @@ void Limits_Init(void)
 void Limits_Disable(void)
 {
     // Disables hard limits.
-    settings.system_flags &= ~BITFLAG_ENABLE_LIMITS;
+    sys.system_flags &= ~BITFLAG_ENABLE_LIMITS;
 }
 
 
 // Returns limit state as a bit-wise uint8 variable. Each bit indicates an axis limit, where
 // triggered is 1 and not triggered is 0. Invert mask is applied. Axes are defined by their
 // number in bit position, i.e. Z_AXIS is (1<<2) or bit 2, and Y_AXIS is (1<<1) or bit 1.
-uint8_t Limits_GetState(void)
+uint8_t Limits_GetState(bool held)
 {
     uint8_t limit_state = 0;
 
+    // First limit
     limit_state = (GPIO_ReadInputDataBit(GPIO_LIM_X_PORT, GPIO_LIM_X_PIN) << X1_LIMIT_BIT);
-    if (BIT_IS_FALSE(settings.flags_ext, BITFLAG_LATHE_MODE))
-    {
-        limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Y_PORT, GPIO_LIM_Y_PIN) << Y1_LIMIT_BIT);
-    }
+    limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Y_PORT, GPIO_LIM_Y_PIN) << Y1_LIMIT_BIT);
     limit_state |= (GPIO_ReadInputDataBit(GPIO_LIM_Z_PORT, GPIO_LIM_Z_PIN) << Z1_LIMIT_BIT);
 
     // Second limit
@@ -84,7 +85,7 @@ uint8_t Limits_GetState(void)
     limit_state |= (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5)<<Y2_LIMIT_BIT);
     limit_state |= (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_6)<<Z2_LIMIT_BIT);
 
-    if(BIT_IS_FALSE(settings.flags, BITFLAG_INVERT_LIMIT_PINS))
+    if(BIT_IS_TRUE(settings.flags, BITFLAG_INVERT_LIMIT_PINS))
     {
         limit_state ^= LIMIT_MASK;
     }
@@ -95,7 +96,17 @@ uint8_t Limits_GetState(void)
         limit_state &= ~(1 << Y1_LIMIT_BIT | 1 << Y2_LIMIT_BIT);
     }
 
-    return limit_state;
+    uint8_t tmp_state = limit_state ^ last_state;
+    tmp_state &= limit_state;
+
+    if (held)
+    {
+        tmp_state = limit_state;
+    }
+
+    last_state = limit_state;
+
+    return tmp_state;
 }
 
 
@@ -123,8 +134,8 @@ void Limit_PinChangeISR(void) // DEFAULT: Limit pin change interrupt process.
         {
             if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_FORCE_HARD_LIMIT_CHECK))
             {
-                Delay_us(25);
-                uint8_t lim = Limits_GetState();
+                Delay_ms(2);
+                uint8_t lim = Limits_GetState(true);
 
                 // Check limit pin state.
                 if(lim)
@@ -280,7 +291,7 @@ void Limits_GoHome(uint8_t cycle_mask)
             if(approach)
             {
                 // Check limit state. Lock out cycle axes when they change.
-                limit_state = Limits_GetState();
+                limit_state = Limits_GetState(true);
                 for(idx = 0; idx < N_AXIS; idx++)
                 {
                     if(axislock & step_pin[idx])
@@ -325,7 +336,7 @@ void Limits_GoHome(uint8_t cycle_mask)
                     System_SetExecAlarm(EXEC_ALARM_HOMING_FAIL_DOOR);
                 }
                 // Homing failure condition: Limit switch still engaged after pull-off motion
-                if(!approach && (Limits_GetState() & cycle_mask))
+                if(!approach && (Limits_GetState(true) & cycle_mask))
                 {
                     System_SetExecAlarm(EXEC_ALARM_HOMING_FAIL_PULLOFF);
                 }

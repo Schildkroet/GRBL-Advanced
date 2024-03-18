@@ -81,6 +81,7 @@
 #define CONTROL_CYCLE_START_BIT     2
 #define CONTROL_SAFETY_DOOR_BIT     3
 #define CONTROL_MASK                ((1<<CONTROL_RESET_BIT) | (1<<CONTROL_FEED_HOLD_BIT) | (1<<CONTROL_CYCLE_START_BIT) | (1<<CONTROL_SAFETY_DOOR_BIT))
+#define CONTROL_BTN_MASK            ((1<<CONTROL_RESET_BIT) | (1<<CONTROL_FEED_HOLD_BIT) | (1<<CONTROL_CYCLE_START_BIT))
 
 
 #define DELAY_MODE_DWELL            0
@@ -95,7 +96,7 @@
 
 // Conversions
 #define MM_PER_INCH                 (25.40)
-#define INCH_PER_MM                 (0.0393701)
+#define INCH_PER_MM                 (0.039370079)
 #define TICKS_PER_MICROSECOND       (24UL)
 
 
@@ -129,7 +130,6 @@ void PrintFloat_RateValue(float n);
 void Delay_sec(float seconds, uint8_t mode);
 
 // Computes hypotenuse, avoiding avr-gcc's bloated version and the extra error checking.
-float hypot_f(float x, float y);
 bool isEqual_f(float a, float b);
 float convert_delta_vector_to_unit_vector(float *vector);
 float limit_value_by_axis_maximum(float *max_value, float *unit_vec);

@@ -4,7 +4,7 @@
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
-  Copyright (c) 2017-2020 Patrick F.
+  Copyright (c) 2017-2024 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ void Spindle_Init(void)
     GPIO_InitGPIO(GPIO_SPINDLE);
 
     TIM1_Init();
-    //TIM3_Init();
+
     if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_LATHE_MODE))
     {
         Encoder_Init(settings.enc_ppr);
@@ -65,11 +65,14 @@ void Spindle_Stop(void)
     TIM1->CCR1 = TIM1_INIT; // Disable PWM. Output voltage is zero.
     spindle_enabled = 0;
 
-#ifdef INVERT_SPINDLE_ENABLE_PIN
-    GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-#else
-    GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-#endif
+    if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_SPINDLE_PIN))
+    {
+        GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+    }
+    else
+    {
+        GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+    }
 }
 
 
@@ -105,15 +108,18 @@ void Spindle_SetSpeed(uint8_t pwm_value)
     else
     {
         TIM_Cmd(TIM1, ENABLE); // Ensure PWM output is enabled.
-#ifdef INVERT_SPINDLE_ENABLE_PIN
-        GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-#else
-        GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-#endif
+        if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_SPINDLE_PIN))
+        {
+            GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+        }
+        else
+        {
+            GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+        }
         spindle_enabled = 1;
     }
 #else
-    if(pwm_value == SPINDLE_PWM_OFF_VALUE)
+    if (pwm_value == SPINDLE_PWM_OFF_VALUE)
     {
         TIM1->CCR1 = TIM1_INIT;    // Disable PWM. Output voltage is zero.
         TIM_Cmd(TIM1, DISABLE); // Disable PWM. Output voltage is zero.
@@ -202,11 +208,14 @@ void Spindle_SetState(uint8_t state, float rpm)
             spindle_dir_cw = 0;
         }
 
-#ifdef INVERT_SPINDLE_ENABLE_PIN
-        GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-#else
-        GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
-#endif
+        if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_SPINDLE_PIN))
+        {
+            GPIO_ResetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+        }
+        else
+        {
+            GPIO_SetBits(GPIO_SPINDLE_ENA_PORT, GPIO_SPINDLE_ENA_PIN);
+        }
 
         // NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
         if (BIT_IS_TRUE(settings.flags, BITFLAG_LASER_MODE))

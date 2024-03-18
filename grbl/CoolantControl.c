@@ -3,7 +3,7 @@
   Part of Grbl-Advanced
 
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2017 Patrick F.
+  Copyright (c) 2017-2024 Patrick F.
 
   Grbl-Advanced is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -38,19 +38,25 @@ void Coolant_Init(void)
 // an interrupt-level. No report flag set, but only called by routines that don't need it.
 void Coolant_Stop(void)
 {
-#ifdef INVERT_COOLANT_FLOOD_PIN
-    GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
-#else
-    GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
-#endif
+    if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_FLOOD_PIN))
+    {
+        GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+    }
+    else
+    {
+        GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+    }
 
     if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
     {
-#ifdef INVERT_COOLANT_MIST_PIN
-        GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-#else
-        GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-#endif
+        if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_MIST_PIN))
+        {
+            GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+        }
+        else
+        {
+            GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+        }
     }
 }
 
@@ -59,26 +65,28 @@ uint8_t Coolant_GetState(void)
 {
     uint8_t cl_state = COOLANT_STATE_DISABLE;
 
+    uint8_t flood_state = GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+    uint8_t mist_state = GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+
+    if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_FLOOD_PIN))
+    {
+        flood_state = !flood_state;
+    }
+    if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_MIST_PIN))
+    {
+        mist_state = !mist_state;
+    }
+
     // TODO: Check if reading works
-#ifdef INVERT_COOLANT_FLOOD_PIN
-    if(!GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN))
+    if (flood_state)
     {
-#else
-    if(GPIO_ReadInputDataBit(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN))
-    {
-#endif
         cl_state |= COOLANT_STATE_FLOOD;
     }
 
     if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
     {
-#ifdef INVERT_COOLANT_MIST_PIN
-        if (!GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
+        if (mist_state)
         {
-#else
-        if (GPIO_ReadInputDataBit(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN))
-        {
-#endif
             cl_state |= COOLANT_STATE_MIST;
         }
     }
@@ -101,38 +109,50 @@ void Coolant_SetState(const uint8_t mode)
 
     if (mode & COOLANT_FLOOD_ENABLE)
     {
-#ifdef INVERT_COOLANT_FLOOD_PIN
-        GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
-#else
-        GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
-#endif
+        if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_FLOOD_PIN))
+        {
+            GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+        }
+        else
+        {
+            GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+        }
     }
     else
     {
-#ifdef INVERT_COOLANT_FLOOD_PIN
-        GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
-#else
-        GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
-#endif
+        if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_FLOOD_PIN))
+        {
+            GPIO_SetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+        }
+        else
+        {
+            GPIO_ResetBits(GPIO_COOL_FLOOD_PORT, GPIO_COOL_FLOOD_PIN);
+        }
     }
 
     if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_M7))
     {
         if (mode & COOLANT_MIST_ENABLE)
         {
-#ifdef INVERT_COOLANT_MIST_PIN
-            GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-#else
-            GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-#endif
+            if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_MIST_PIN))
+            {
+                GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            }
+            else
+            {
+                GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            }
         }
         else
         {
-#ifdef INVERT_COOLANT_MIST_PIN
-            GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-#else
-            GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
-#endif
+            if (BIT_IS_TRUE(settings.input_invert_mask, BITFLAG_INVERT_MIST_PIN))
+            {
+                GPIO_SetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            }
+            else
+            {
+                GPIO_ResetBits(GPIO_COOL_MIST_PORT, GPIO_COOL_MIST_PIN);
+            }
         }
     }
 

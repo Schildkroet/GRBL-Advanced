@@ -247,11 +247,6 @@ void Delay_sec(float seconds, uint8_t mode)
     }
 }
 
-// Simple hypotenuse computation function.
-/*float hypot_f(float x, float y)
-{
-    return sqrtf(x*x + y*y);
-}*/
 
 bool isEqual_f(float a, float b)
 {

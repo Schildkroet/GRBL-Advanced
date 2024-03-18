@@ -70,12 +70,17 @@ void Protocol_MainLoop(void)
     {
         if (BIT_IS_TRUE(settings.flags, BITFLAG_HARD_LIMIT_ENABLE))
         {
-            if (Limits_GetState())
+            if (Limits_GetState(true))
             {
                 sys.state = STATE_ALARM; // Ensure alarm state is active.
                 Report_FeedbackMessage(MESSAGE_CHECK_LIMITS);
             }
         }
+    }
+
+    if (System_GetControlState(true) & CONTROL_BTN_MASK)
+    {
+        Report_FeedbackMessage(MESSAGE_CHECK_INPUTS);
     }
 
     // Check for and report alarm state after a reset, error, or an initial power up.
@@ -297,7 +302,9 @@ void Protocol_ExecuteRealtime(void)
 
 #if (USE_ETH_IF)
     ServerTCP_Update();
+
     GrIP_Update();
+
     if(GrIP_Receive(&packet))
     {
         for(int i = 0; i < packet.RX_Header.Length; i++)
@@ -644,7 +651,8 @@ void Protocol_ExecRtSystem(void)
     rt_exec = sys_rt_exec_accessory_override;
     if(rt_exec)
     {
-        System_ClearExecAccessoryOverrides(); // Clear all accessory override flags.
+        // Clear all accessory override flags.
+        System_ClearExecAccessoryOverrides();
 
         // NOTE: Unlike motion overrides, spindle overrides do not require a planner reinitialization.
         uint8_t last_s_override =  sys.spindle_speed_ovr;
@@ -823,6 +831,7 @@ static void Protocol_ExecRtSuspend(void)
 
 #if (USE_ETH_IF)
         GrIP_Update();
+
         if(GrIP_Receive(&packet))
         {
             for(int i = 0; i < packet.RX_Header.Length; i++)
@@ -913,9 +922,7 @@ static void Protocol_ExecRtSuspend(void)
                         Coolant_SetState(COOLANT_DISABLE);     // De-energize
 
                     }
-
 #endif
-
                     sys.suspend &= ~(SUSPEND_RESTART_RETRACT);
                     sys.suspend |= SUSPEND_RETRACT_COMPLETE;
 
@@ -933,10 +940,11 @@ static void Protocol_ExecRtSuspend(void)
 
                         while(!(sys.abort))
                         {
+                            // Do nothing until reset.
                             Protocol_ExecRtSystem();
-                        } // Do nothing until reset.
-
-                        return; // Abort received. Return to re-initialize.
+                        }
+                        // Abort received. Return to re-initialize.
+                        return;
                     }
 
                     // Allows resuming from parking/safety door. Actively checks if safety door is closed and ready to resume.
@@ -944,7 +952,8 @@ static void Protocol_ExecRtSuspend(void)
                     {
                         if(!(System_CheckSafetyDoorAjar()))
                         {
-                            sys.suspend &= ~(SUSPEND_SAFETY_DOOR_AJAR); // Reset door ajar flag to denote ready to resume.
+                            // Reset door ajar flag to denote ready to resume.
+                            sys.suspend &= ~(SUSPEND_SAFETY_DOOR_AJAR);
                         }
                     }
 
@@ -1054,7 +1063,8 @@ static void Protocol_ExecRtSuspend(void)
                         }
                         else
                         {
-                            sys.spindle_stop_ovr = SPINDLE_STOP_OVR_DISABLED; // Clear stop override state
+                            // Clear stop override state
+                            sys.spindle_stop_ovr = SPINDLE_STOP_OVR_DISABLED;
                         }
                         // Handles restoring of spindle state
                     }
@@ -1077,8 +1087,8 @@ static void Protocol_ExecRtSuspend(void)
                         {
                             System_SetExecStateFlag(EXEC_CYCLE_START);  // Set to resume program.
                         }
-
-                        sys.spindle_stop_ovr = SPINDLE_STOP_OVR_DISABLED; // Clear stop override state
+                        // Clear stop override state
+                        sys.spindle_stop_ovr = SPINDLE_STOP_OVR_DISABLED;
                     }
                 }
                 else

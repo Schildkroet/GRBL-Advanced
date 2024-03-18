@@ -45,6 +45,7 @@
 #define STATUS_SETTING_DISABLED_LASER           17
 #define STATUS_MACHINE_NOT_HOMED                18
 #define STATUS_TLS_NOT_SET                      19
+#define STATUS_CHECK_INPUT                      20
 
 #define STATUS_GCODE_UNSUPPORTED_COMMAND        20
 #define STATUS_GCODE_MODAL_GROUP_VIOLATION      21
@@ -93,6 +94,7 @@
 #define MESSAGE_SPINDLE_RESTORE         10
 #define MESSAGE_SLEEP_MODE              11
 #define MESSAGE_INVALID_TOOL            12
+#define MESSAGE_CHECK_INPUTS            13
 
 
 // Prints system status messages.

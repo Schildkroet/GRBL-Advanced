@@ -51,10 +51,17 @@ volatile uint8_t sys_rt_exec_motion_override;
 // Global realtime executor bitflag variable for spindle/coolant overrides.
 volatile uint8_t sys_rt_exec_accessory_override;
 
+//static uint8_t initial_state = 0;
+static uint8_t last_state = 0;
+
 
 void System_Init(void)
 {
     GPIO_InitGPIO(GPIO_SYSTEM);
+    last_state = 0;
+
+    sys.system_flags |= BITFLAG_ENABLE_SYSTEM_INPUT;
+    System_GetControlState(false);
 }
 
 
@@ -67,6 +74,8 @@ void System_Clear(void)
     sys.f_override = DEFAULT_FEED_OVERRIDE;
     sys.r_override = DEFAULT_RAPID_OVERRIDE;
     sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE;
+
+    sys.system_flags |= BITFLAG_ENABLE_SYSTEM_INPUT;
 }
 
 
@@ -80,7 +89,7 @@ void System_ResetPosition(void)
 // Returns control pin state as a uint8 bitfield. Each bit indicates the input pin state, where
 // triggered is 1 and not triggered is 0. Invert mask is applied. Bitfield organization is
 // defined by the CONTROL_PIN_INDEX in the header file.
-uint8_t System_GetControlState(void)
+uint8_t System_GetControlState(bool held)
 {
     uint8_t control_state = 0;
     uint8_t pin = ((GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)<<CONTROL_RESET_BIT) |
@@ -89,19 +98,30 @@ uint8_t System_GetControlState(void)
                    (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_8)<<CONTROL_SAFETY_DOOR_BIT));
 
     // Invert control pins if necessary
-    pin ^= CONTROL_MASK & settings.system_flags;
+    pin ^= CONTROL_MASK & settings.input_invert_mask;
 
-    if(pin)
+    // XOR: Only get changed
+    uint8_t tmp_state = pin ^ last_state;
+    // Only get active
+    tmp_state &= pin;
+
+    if(held)
     {
-        if(BIT_IS_TRUE(pin, (1<<CONTROL_RESET_BIT)))
+        // Get current state of inputs
+        tmp_state = pin;
+    }
+
+    if (tmp_state)
+    {
+        if (BIT_IS_TRUE(tmp_state, (1 << CONTROL_RESET_BIT)))
         {
             control_state |= CONTROL_PIN_INDEX_RESET;
         }
-        if(BIT_IS_TRUE(pin, (1<<CONTROL_FEED_HOLD_BIT)))
+        if (BIT_IS_TRUE(tmp_state, (1 << CONTROL_FEED_HOLD_BIT)))
         {
             control_state |= CONTROL_PIN_INDEX_FEED_HOLD;
         }
-        if(BIT_IS_TRUE(pin, (1<<CONTROL_CYCLE_START_BIT)))
+        if (BIT_IS_TRUE(tmp_state, (1 << CONTROL_CYCLE_START_BIT)))
         {
             control_state |= CONTROL_PIN_INDEX_CYCLE_START;
         }
@@ -110,6 +130,8 @@ uint8_t System_GetControlState(void)
             control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR;
         }*/
     }
+
+    last_state = pin;
 
     return control_state;
 }
@@ -121,7 +143,7 @@ uint8_t System_GetControlState(void)
 // directly from the incoming serial data stream.
 void System_PinChangeISR(void)
 {
-    uint8_t pin = System_GetControlState();
+    uint8_t pin = System_GetControlState(true);
 
     if(pin)
     {
@@ -148,7 +170,7 @@ void System_PinChangeISR(void)
 // Returns if safety door is ajar(T) or closed(F), based on pin state.
 uint8_t System_CheckSafetyDoorAjar(void)
 {
-    return (System_GetControlState() & CONTROL_PIN_INDEX_SAFETY_DOOR);
+    return (System_GetControlState(true) & CONTROL_PIN_INDEX_SAFETY_DOOR);
 }
 
 
@@ -215,7 +237,7 @@ uint8_t System_ExecuteLine(char *line)
     case 'X':
         if(line[2] != 0)
         {
-            return(STATUS_INVALID_STATEMENT);
+            return (STATUS_INVALID_STATEMENT);
         }
 
         switch(line[1])
@@ -224,7 +246,7 @@ uint8_t System_ExecuteLine(char *line)
             if(sys.state & (STATE_CYCLE | STATE_HOLD))
             {
                 // Block during cycle. Takes too long to print.
-                return(STATUS_IDLE_ERROR);
+                return (STATUS_IDLE_ERROR);
             }
             else
             {
@@ -260,19 +282,24 @@ uint8_t System_ExecuteLine(char *line)
             break;
 
         case 'X': // Disable alarm lock [ALARM]
-            if(sys.state == STATE_ALARM)
+            if(BIT_IS_TRUE(sys.state, STATE_ALARM))
             {
                 // Block if safety door is ajar.
                 if(System_CheckSafetyDoorAjar())
                 {
-                    return(STATUS_CHECK_DOOR);
+                    return (STATUS_CHECK_DOOR);
+                }
+                if (System_GetControlState(true))
+                {
+                    return (STATUS_CHECK_INPUT);
                 }
 
                 Report_FeedbackMessage(MESSAGE_ALARM_UNLOCK);
                 sys.state = STATE_IDLE;
                 Stepper_WakeUp();
                 // Don't run startup script. Prevents stored moves in startup from causing accidents.
-            } // Otherwise, no effect.
+            }
+            // Otherwise, no effect.
             break;
         }
         break;
@@ -343,7 +370,7 @@ uint8_t System_ExecuteLine(char *line)
                 float value_f[4] = {};
 
                 // Read floats [x.x:x.x:x.x:x.x]
-                for(int i = 0; i < 4; i++)
+                for (uint8_t i = 0; i < 4; i++)
                 {
                     t = ExtractFloat(&line[char_counter], t, tmp_float);
 
@@ -393,9 +420,9 @@ uint8_t System_ExecuteLine(char *line)
 
     default:
         // Block any system command that requires the state as IDLE/ALARM. (i.e. EEPROM, homing)
-        if(!(sys.state == STATE_IDLE || sys.state == STATE_ALARM) )
+        if(!(sys.state == STATE_IDLE || sys.state == STATE_ALARM))
         {
-            return(STATUS_IDLE_ERROR);
+            return (STATUS_IDLE_ERROR);
         }
 
         switch(line[1])
@@ -414,7 +441,7 @@ uint8_t System_ExecuteLine(char *line)
         case 'H': // Perform homing cycle [IDLE/ALARM]
             if(BIT_IS_FALSE(settings.flags, BITFLAG_HOMING_ENABLE))
             {
-                return(STATUS_SETTING_DISABLED);
+                return (STATUS_SETTING_DISABLED);
             }
             if(System_CheckSafetyDoorAjar())
             {
@@ -482,7 +509,7 @@ uint8_t System_ExecuteLine(char *line)
         case 'S': // Puts Grbl to sleep [IDLE/ALARM]
             if((line[2] != 'L') || (line[3] != 'P') || (line[4] != 0))
             {
-                return(STATUS_INVALID_STATEMENT);
+                return (STATUS_INVALID_STATEMENT);
             }
             System_SetExecStateFlag(EXEC_SLEEP); // Set to execute sleep mode immediately
             break;
@@ -517,7 +544,7 @@ uint8_t System_ExecuteLine(char *line)
         case 'R': // Restore defaults [IDLE/ALARM]
             if((line[2] != 'S') || (line[3] != 'T') || (line[4] != '=') || (line[6] != 0))
             {
-                return(STATUS_INVALID_STATEMENT);
+                return (STATUS_INVALID_STATEMENT);
             }
 
             switch(line[5])
@@ -611,7 +638,7 @@ uint8_t System_ExecuteLine(char *line)
             }
             if(line[char_counter++] != '=')
             {
-                return(STATUS_INVALID_STATEMENT);
+                return (STATUS_INVALID_STATEMENT);
             }
             if(helper_var)   // Store startup line
             {
@@ -772,7 +799,7 @@ uint8_t System_CheckTravelLimits(const float *target)
 
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
-void System_SetExecStateFlag(uint16_t mask)
+inline void System_SetExecStateFlag(uint16_t mask)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -783,7 +810,7 @@ void System_SetExecStateFlag(uint16_t mask)
 }
 
 
-void System_ClearExecStateFlag(uint16_t mask)
+inline void System_ClearExecStateFlag(uint16_t mask)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -794,7 +821,7 @@ void System_ClearExecStateFlag(uint16_t mask)
 }
 
 
-void System_SetExecAlarm(uint8_t code)
+inline void System_SetExecAlarm(uint8_t code)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -805,7 +832,7 @@ void System_SetExecAlarm(uint8_t code)
 }
 
 
-void System_ClearExecAlarm(void)
+inline void System_ClearExecAlarm(void)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -816,7 +843,7 @@ void System_ClearExecAlarm(void)
 }
 
 
-void System_SetExecMotionOverrideFlag(uint8_t mask)
+inline void System_SetExecMotionOverrideFlag(uint8_t mask)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -827,7 +854,7 @@ void System_SetExecMotionOverrideFlag(uint8_t mask)
 }
 
 
-void System_SetExecAccessoryOverrideFlag(uint8_t mask)
+inline void System_SetExecAccessoryOverrideFlag(uint8_t mask)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -838,7 +865,7 @@ void System_SetExecAccessoryOverrideFlag(uint8_t mask)
 }
 
 
-void System_ClearExecMotionOverride(void)
+inline void System_ClearExecMotionOverride(void)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -849,7 +876,7 @@ void System_ClearExecMotionOverride(void)
 }
 
 
-void System_ClearExecAccessoryOverrides(void)
+inline void System_ClearExecAccessoryOverrides(void)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();

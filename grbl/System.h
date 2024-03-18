@@ -22,6 +22,7 @@
 #define SYSTEM_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "util.h"
 
 
@@ -97,6 +98,7 @@
 #define STATE_FEED_DWELL                    BIT(8)  // Dwell
 #define STATE_TOOL_CHANGE                   BIT(9)  // Tool change in progress
 #define STATE_BUSY                          BIT(10) // Writing NVM etc.
+#define STATE_ALARM_INPUT                   BIT(11)
 
 // Define system suspend flags. Used in various ways to manage suspend states and procedures.
 #define SUSPEND_DISABLE                     0      // Must be zero.
@@ -117,7 +119,7 @@
 #define STEP_CONTROL_UPDATE_SPINDLE_PWM     BIT(3)
 
 // Define control pin index for Grbl internal use. Pin maps may change, but these values don't.
-#define N_CONTROL_PIN 4
+#define N_CONTROL_PIN                       4
 #define CONTROL_PIN_INDEX_SAFETY_DOOR       BIT(0)
 #define CONTROL_PIN_INDEX_RESET             BIT(1)
 #define CONTROL_PIN_INDEX_FEED_HOLD         BIT(2)
@@ -155,6 +157,8 @@ typedef struct
     uint8_t is_homed;
     uint8_t sync_move;
     float x_pos;                // Current x-position of tool (for G96)
+
+    uint8_t system_flags;       // Runtime flags
 } System_t;
 
 extern System_t sys;
@@ -178,7 +182,7 @@ void System_Clear(void);
 void System_ResetPosition(void);
 
 // Returns bitfield of control pin states, organized by CONTROL_PIN_INDEX. (1=triggered, 0=not triggered).
-uint8_t System_GetControlState(void);
+uint8_t System_GetControlState(bool held);
 
 // Returns if safety door is open or closed, based on pin state.
 uint8_t System_CheckSafetyDoorAjar(void);

@@ -285,9 +285,10 @@ uint8_t Planner_BufferLine(const float *target, const Planner_LineData_t *pl_dat
         }
         else
         {
+            // Block contains backlash compensation data, which must be excluded from planner
             // Update previous path unit_vector and planner position.
-            memcpy(planner.previous_unit_vec, unit_vec_orig, sizeof(unit_vec_orig)); // pl.previous_unit_vec[] = unit_vec[]
-            memcpy(planner.position, target_steps_orig, sizeof(target_steps_orig));  // pl.position[] = target_steps[]
+            memcpy(planner.previous_unit_vec, unit_vec_orig, sizeof(unit_vec_orig));
+            memcpy(planner.position, target_steps_orig, sizeof(target_steps_orig));
         }
 
         // New block is all set. Update buffer head and next buffer head indices.
@@ -420,8 +421,7 @@ void Planner_SyncPosition(void)
 {
     // TODO: For motor configurations not in the same coordinate frame as the machine position,
     // this function needs to be updated to accomodate the difference.
-    uint8_t idx;
-    for(idx = 0; idx < N_AXIS; idx++)
+    for (uint8_t idx = 0; idx < N_AXIS; idx++)
     {
 #ifdef COREXY
         if(idx==X_AXIS)

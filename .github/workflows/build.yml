@@ -13,13 +13,13 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
     - name: Cache
       id: cache-1
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: cache
         key: ${{ runner.os }}-cache-1
@@ -39,7 +39,7 @@ jobs:
       run: make
 
     - name: Upload compiled binaries
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with: 
         name: GRBL-Advanced
         path: |

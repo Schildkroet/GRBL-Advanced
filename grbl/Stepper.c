@@ -108,6 +108,8 @@ typedef struct
     uint8_t spindle_pwm;
 
     uint8_t backlash_motion;
+    int32_t backlash_steps[N_LINEAR_AXIS];
+    float   current_speed;  // mm/min at segment computation time; used by GetRealtimeRate
 } Stepper_Segment_t;
 
 
@@ -128,6 +130,7 @@ typedef struct
     uint8_t exec_block_index; // Tracks the current st_block index. Change indicates new block.
     Stepper_Block_t *exec_block;   // Pointer to the block data for the segment being executed
     Stepper_Segment_t *exec_segment;  // Pointer to the segment being executed
+    int32_t bl_remaining[N_LINEAR_AXIS]; // Per-step backlash counter; suppresses sys_position while > 0
 } Stepper_t;
 
 
@@ -188,9 +191,6 @@ static float tim_ovr = 0;
 static uint8_t update_g96 = G96_UPDATE_CNT;
 
 
-float current_backlash[N_AXIS] = {};
-
-
 /*    BLOCK VELOCITY PROFILE DEFINITION
           __________________________
          /|                        |\     _________________         ^
@@ -246,11 +246,6 @@ void Stepper_Init(void)
 
     tim_ovr = 0;
     update_g96 = G96_UPDATE_CNT;
-
-    for(int i = 0; i < N_AXIS; i++)
-    {
-        current_backlash[i] = 0.0;
-    }
 }
 
 
@@ -549,6 +544,9 @@ void Stepper_MainISR(void)
             st.steps[A_AXIS] = st.exec_block->steps[A_AXIS] >> st.exec_segment->amass_level;
             st.steps[B_AXIS] = st.exec_block->steps[B_AXIS] >> st.exec_segment->amass_level;
 
+            for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+                st.bl_remaining[i] += st.exec_segment->backlash_steps[i];
+
             if(gc_state.modal.spindle_mode == SPINDLE_RPM_MODE)
             {
                 // Set real-time spindle output as segment is loaded, just prior to the first step.
@@ -571,7 +569,7 @@ void Stepper_MainISR(void)
             Stepper_Disable(0);
 
             // Ensure pwm is set properly upon completion of rate-controlled motion.
-            if(st.exec_block->is_pwm_rate_adjusted)
+            if(st.exec_block && st.exec_block->is_pwm_rate_adjusted)
             {
                 Spindle_SetSpeed(SPINDLE_PWM_OFF_VALUE);
             }
@@ -598,27 +596,14 @@ void Stepper_MainISR(void)
         st.step_outbits |= (1<<X_STEP_BIT);
         st.counter_x -= st.exec_block->step_event_count;
 
-        if (st.exec_block->direction_bits & (1 << X_DIRECTION_BIT))
-        {
-            sys_position[X_AXIS]--;
-        }
+        if(st.bl_remaining[X_AXIS] > 0)
+            st.bl_remaining[X_AXIS]--;
         else
         {
-            sys_position[X_AXIS]++;
-        }
-
-        if (fabsf(current_backlash[X_AXIS]) > 0.5)
-        {
-            if (current_backlash[X_AXIS] > 0.0)
-            {
-                current_backlash[X_AXIS] -= 1.0;
+            if(st.exec_block->direction_bits & (1 << X_DIRECTION_BIT))
                 sys_position[X_AXIS]--;
-            }
             else
-            {
-                current_backlash[X_AXIS] += 1.0;
                 sys_position[X_AXIS]++;
-            }
         }
     }
 
@@ -629,27 +614,14 @@ void Stepper_MainISR(void)
         st.step_outbits |= (1 << Y_STEP_BIT);
         st.counter_y -= st.exec_block->step_event_count;
 
-        if (st.exec_block->direction_bits & (1 << Y_DIRECTION_BIT))
-        {
-            sys_position[Y_AXIS]--;
-        }
+        if(st.bl_remaining[Y_AXIS] > 0)
+            st.bl_remaining[Y_AXIS]--;
         else
         {
-            sys_position[Y_AXIS]++;
-        }
-
-        if (fabsf(current_backlash[Y_AXIS]) > 0.5)
-        {
-            if (current_backlash[Y_AXIS] > 0.0)
-            {
-                current_backlash[Y_AXIS] -= 1.0;
+            if(st.exec_block->direction_bits & (1 << Y_DIRECTION_BIT))
                 sys_position[Y_AXIS]--;
-            }
             else
-            {
-                current_backlash[Y_AXIS] += 1.0;
                 sys_position[Y_AXIS]++;
-            }
         }
     }
 
@@ -660,27 +632,14 @@ void Stepper_MainISR(void)
         st.step_outbits |= (1 << Z_STEP_BIT);
         st.counter_z -= st.exec_block->step_event_count;
 
-        if (st.exec_block->direction_bits & (1 << Z_DIRECTION_BIT))
-        {
-            sys_position[Z_AXIS]--;
-        }
+        if(st.bl_remaining[Z_AXIS] > 0)
+            st.bl_remaining[Z_AXIS]--;
         else
         {
-            sys_position[Z_AXIS]++;
-        }
-
-        if (fabsf(current_backlash[Z_AXIS]) > 0.5)
-        {
-            if (current_backlash[Z_AXIS] > 0.0)
-            {
-                current_backlash[Z_AXIS] -= 1.0;
+            if(st.exec_block->direction_bits & (1 << Z_DIRECTION_BIT))
                 sys_position[Z_AXIS]--;
-            }
             else
-            {
-                current_backlash[Z_AXIS] += 1.0;
                 sys_position[Z_AXIS]++;
-            }
         }
     }
 
@@ -691,16 +650,12 @@ void Stepper_MainISR(void)
         st.step_outbits |= (1<<A_STEP_BIT);
         st.counter_a -= st.exec_block->step_event_count;
 
-        //if(st.exec_segment->backlash_motion == 0)
+        if(!(st.exec_segment->backlash_motion & BIT(A_AXIS)))
         {
             if(st.exec_block->direction_bits & (1<<A_DIRECTION_BIT))
-            {
                 sys_position[A_AXIS]--;
-            }
             else
-            {
                 sys_position[A_AXIS]++;
-            }
         }
     }
 
@@ -711,16 +666,12 @@ void Stepper_MainISR(void)
         st.step_outbits |= (1<<B_STEP_BIT);
         st.counter_b -= st.exec_block->step_event_count;
 
-        //if(st.exec_segment->backlash_motion == 0)
+        if(!(st.exec_segment->backlash_motion & BIT(B_AXIS)))
         {
             if(st.exec_block->direction_bits & (1<<B_DIRECTION_BIT))
-            {
                 sys_position[B_AXIS]--;
-            }
             else
-            {
                 sys_position[B_AXIS]++;
-            }
         }
     }
 
@@ -1181,6 +1132,11 @@ void Stepper_PrepareBuffer(void)
         prep_segment->st_block_index = prep.st_block_index;
 
         prep_segment->backlash_motion = pl_block->backlash_motion;
+        for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+        {
+            prep_segment->backlash_steps[i] = pl_block->backlash_steps[i];
+            pl_block->backlash_steps[i] = 0; // consume: only first segment of this block gets the count
+        }
 
         /*------------------------------------------------------------------------------------
         Compute the average velocity of this new segment by determining the total distance
@@ -1445,6 +1401,7 @@ void Stepper_PrepareBuffer(void)
             // Just set the slowest speed possible.
             prep_segment->cycles_per_tick = 0xffff;
         }
+        prep_segment->current_speed = prep.current_speed;
 
         // Segment complete! Increment segment buffer indices, so stepper ISR can immediately execute it.
         segment_buffer_head = segment_next_head;
@@ -1494,14 +1451,16 @@ void Stepper_PrepareBuffer(void)
 }
 
 
-// Called by realtime status reporting to fetch the current speed being executed. This value
-// however is not exactly the current speed, but the speed computed in the last step segment
-// in the segment buffer. It will always be behind by up to the number of segment blocks (-1)
-// divided by the ACCELERATION TICKS PER SECOND in seconds.
+// Returns the speed currently being executed by the ISR. Reads the speed stored in the
+// executing segment, which was set at segment preparation time and matches cycles_per_tick.
 float Stepper_GetRealtimeRate(void)
 {
     if(sys.state & (STATE_CYCLE | STATE_HOMING | STATE_HOLD | STATE_JOG | STATE_SAFETY_DOOR))
     {
+        if(st.exec_segment != NULL)
+        {
+            return st.exec_segment->current_speed;
+        }
         return prep.current_speed;
     }
 

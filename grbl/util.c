@@ -112,7 +112,7 @@ uint8_t Read_Float(const char *line, uint8_t *char_counter, float *float_ptr)
 
     // Apply decimal. Should perform no more than two floating point multiplications for the
     // expected range of E0 to E-4.
-    if(fval != 0)
+    if(fval != 0.0)
     {
         while(exp <= -2)
         {

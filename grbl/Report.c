@@ -722,7 +722,7 @@ void Report_RealtimeStatus(void)
     int32_t current_position[N_AXIS]; // Copy current state of the system position variable
     float print_position[N_AXIS];
 
-    memcpy(current_position,sys_position,sizeof(sys_position));
+    memcpy(current_position, (const void *)sys_position, sizeof(sys_position));
     System_ConvertArraySteps2Mpos(print_position, current_position);
 
     // Report current machine state and sub-states
@@ -755,6 +755,7 @@ void Report_RealtimeStatus(void)
             }
             break;
         } // Continues to print jog state during jog cancel.
+        __attribute__ ((fallthrough));
 
     case STATE_JOG:
         Printf("Jog");

@@ -264,9 +264,14 @@
 
 // Backlash Compensation
 #define ENABLE_BACKLASH_COMPENSATION            1 // true
+// Spread backlash correction across N sub-segments after reversal to reduce junction angle.
+// When the current segment is long enough (>= N * BACKLASH_SPLIT_SEGMENT_MM), MC_Line
+// automatically splits it so all N corrections are applied within that one call.
+#define BACKLASH_CORRECTION_SEGMENTS            5
+#define BACKLASH_SPLIT_SEGMENT_MM               0.04f
 
 
-// Number of possible tools in tool table
+// Number of possible tools in tool table (Limited by EEPROM size)
 #define TOOLTABLE_MAX_TOOL_NR                   20 // Max tools
 
 

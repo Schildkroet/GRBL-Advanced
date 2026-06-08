@@ -34,9 +34,11 @@
 // Define planner variables
 typedef struct
 {
-    int32_t position[N_AXIS];         // The planner position of the tool in absolute steps. Kept separate
+    // The planner position of the tool in absolute steps. Kept separate
     // from g-code position for movements requiring multiple line motions,
     // i.e. arcs, canned cycles, and backlash compensation.
+    int32_t position[N_AXIS];
+
     float previous_unit_vec[N_AXIS];  // Unit vector of previous path line segment
     float previous_nominal_speed;     // Nominal speed of previous path line segment
 } Planner_t;
@@ -100,6 +102,8 @@ uint8_t Planner_BufferLine(const float *target, const Planner_LineData_t *pl_dat
     block->spindle_speed = pl_data->spindle_speed;
     block->line_number = pl_data->line_number;
     block->backlash_motion = pl_data->backlash_motion;
+    for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+        block->backlash_steps[i] = pl_data->backlash_steps[i];
 
     // Compute and store initial move distance data.
     int32_t target_steps[N_AXIS], position_steps[N_AXIS];
@@ -118,7 +122,7 @@ uint8_t Planner_BufferLine(const float *target, const Planner_LineData_t *pl_dat
         position_steps[A_AXIS] = sys_position[A_AXIS];
         position_steps[B_AXIS] = sys_position[B_AXIS];
 #else
-        memcpy(position_steps, sys_position, sizeof(sys_position));
+        memcpy(position_steps, (const void *)sys_position, sizeof(sys_position));
 #endif
     }
     else
@@ -164,6 +168,10 @@ uint8_t Planner_BufferLine(const float *target, const Planner_LineData_t *pl_dat
         target_steps_orig[idx] = lroundf((target[idx] + pl_data->backlash[idx]) * settings.steps_per_mm[idx]);
         block->steps[idx] = labs(target_steps[idx]-position_steps[idx]);
         block->step_event_count = max(block->step_event_count, block->steps[idx]);
+        // Recompute backlash_steps from the rounded integer targets to eliminate rounding split
+        // error: lroundf(a+b)*spm != lroundf(a*spm) + lroundf(b*spm), causing sys_position drift.
+        if (block->backlash_motion & BIT(idx))
+            block->backlash_steps[idx] = labs(target_steps[idx] - target_steps_orig[idx]);
         delta_mm = (target_steps[idx] - position_steps[idx])/settings.steps_per_mm[idx];
         delta_mm_orig = (target_steps_orig[idx] - position_steps[idx]) / settings.steps_per_mm[idx];
 #endif

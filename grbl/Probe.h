@@ -22,6 +22,7 @@
 #define PROBE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 // Values that define the probing state machine.

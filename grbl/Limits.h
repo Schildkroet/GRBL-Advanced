@@ -22,7 +22,9 @@
 #ifndef LIMITS_H
 #define LIMITS_H
 
+
 #include <stdint.h>
+#include <stdbool.h>
 
 
 // Initialize the limits module

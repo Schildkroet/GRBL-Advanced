@@ -37,7 +37,7 @@
 // Declare system global variable structure
 System_t sys;
 // Real-time machine (aka home) position vector in steps.
-int32_t sys_position[N_AXIS];
+volatile int32_t sys_position[N_AXIS];
 // Last probe position in machine coordinates and steps.
 int32_t sys_probe_position[N_AXIS];
 // Probing state value.  Used to coordinate the probing cycle with stepper ISR.
@@ -82,7 +82,7 @@ void System_Clear(void)
 void System_ResetPosition(void)
 {
     // Clear machine position.
-    memset(sys_position, 0 , sizeof(sys_position));
+    memset((void *)sys_position, 0, sizeof(sys_position));
 }
 
 
@@ -338,7 +338,8 @@ uint8_t System_ExecuteLine(char *line)
                 }
                 else
                 {
-                    return STATUS_SETTING_DISABLED;
+                    // Mode 1: manual tool change, no probing — just acknowledge and continue
+                    return STATUS_OK;
                 }
             }
             else
@@ -630,6 +631,7 @@ uint8_t System_ExecuteLine(char *line)
                 helper_var = true;
                 // No break. Continues into default: to read remaining command characters.
             }
+            __attribute__ ((fallthrough));
 
         default:  // Storing setting methods [IDLE/ALARM]
             if(!Read_Float(line, &char_counter, &parameter))
@@ -701,7 +703,7 @@ void System_FlagWcoChange(void)
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
 // NOTE: If motor steps and machine position are not in the same coordinate frame, this function
 //   serves as a central place to compute the transformation.
-float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
+float System_ConvertAxisSteps2Mpos(volatile const int32_t *steps, const uint8_t idx)
 {
     float pos = 0.0;
 
@@ -732,7 +734,7 @@ float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx)
 }
 
 
-void System_ConvertArraySteps2Mpos(float *position, const int32_t *steps)
+void System_ConvertArraySteps2Mpos(float *position, volatile const int32_t *steps)
 {
     if (position)
     {

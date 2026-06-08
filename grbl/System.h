@@ -21,6 +21,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "util.h"
@@ -137,34 +138,33 @@
 // Define global system variables
 typedef struct
 {
-    uint16_t state;              // Tracks the current system state of Grbl.
-    uint8_t abort;               // System abort flag. Forces exit back to main loop for reset.
-    uint8_t suspend;             // System suspend bitflag variable that manages holds, cancels, and safety door.
-    uint8_t soft_limit;          // Tracks soft limit errors for the state machine. (boolean)
-    uint8_t step_control;        // Governs the step segment generator depending on system state.
-    uint8_t probe_succeeded;     // Tracks if last probing cycle was successful.
-    uint8_t homing_axis_lock;    // Locks axes when limits engage. Used as an axis motion mask in the stepper ISR.
-    uint8_t f_override;          // Feed rate override value in percent
-    uint8_t r_override;          // Rapids override value in percent
-    uint8_t spindle_speed_ovr;   // Spindle speed value in percent
-    uint8_t spindle_stop_ovr;    // Tracks spindle stop override states
-    uint8_t report_ovr_counter;  // Tracks when to add override data to status reports.
-    uint8_t report_wco_counter;  // Tracks when to add work coordinate offset data to status reports.
+    volatile uint16_t state;        // Tracks the current system state of Grbl.
+    volatile uint8_t abort;         // System abort flag. Forces exit back to main loop for reset.
+    volatile uint8_t suspend;       // System suspend bitflag variable that manages holds, cancels, and safety door.
+    uint8_t soft_limit;             // Tracks soft limit errors for the state machine. (boolean)
+    volatile uint8_t step_control;  // Governs the step segment generator depending on system state.
+    uint8_t probe_succeeded;        // Tracks if last probing cycle was successful.
+    uint8_t homing_axis_lock;       // Locks axes when limits engage. Used as an axis motion mask in the stepper ISR.
+    uint8_t f_override;             // Feed rate override value in percent
+    uint8_t r_override;             // Rapids override value in percent
+    uint8_t spindle_speed_ovr;      // Spindle speed value in percent
+    uint8_t spindle_stop_ovr;       // Tracks spindle stop override states
+    uint8_t report_ovr_counter;     // Tracks when to add override data to status reports.
+    uint8_t report_wco_counter;     // Tracks when to add work coordinate offset data to status reports.
 #ifdef ENABLE_PARKING_OVERRIDE_CONTROL
-    uint8_t override_ctrl;      // Tracks override control states.
+    uint8_t override_ctrl;          // Tracks override control states.
 #endif
     float spindle_speed;
     uint8_t is_homed;
-    uint8_t sync_move;
-    float x_pos;                // Current x-position of tool (for G96)
+    volatile uint8_t sync_move;
+    float x_pos;                    // Current x-position of tool (for G96)
 
-    uint8_t system_flags;       // Runtime flags
+    uint8_t system_flags;           // Runtime flags
 } System_t;
 
 extern System_t sys;
 
-// NOTE: These position variables may need to be declared as volatiles, if problems arise.
-extern int32_t sys_position[N_AXIS];      // Real-time machine (aka home) position vector in steps.
+extern volatile int32_t sys_position[N_AXIS];      // Real-time machine (aka home) position vector in steps.
 extern int32_t sys_probe_position[N_AXIS]; // Last probe position in machine coordinates and steps.
 
 extern volatile uint8_t sys_probe_state;   // Probing state value.  Used to coordinate the probing cycle with stepper ISR.
@@ -196,10 +196,10 @@ void System_ExecuteStartup(char *line);
 void System_FlagWcoChange(void);
 
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
-float System_ConvertAxisSteps2Mpos(const int32_t *steps, const uint8_t idx);
+float System_ConvertAxisSteps2Mpos(volatile const int32_t *steps, const uint8_t idx);
 
 // Updates a machine 'position' array based on the 'step' array sent.
-void System_ConvertArraySteps2Mpos(float *position, const int32_t *steps);
+void System_ConvertArraySteps2Mpos(float *position, volatile const int32_t *steps);
 
 // CoreXY calculation only. Returns x or y-axis "steps" based on CoreXY motor steps.
 int32_t system_convert_corexy_to_x_axis_steps(const int32_t *steps);

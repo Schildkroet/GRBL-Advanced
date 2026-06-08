@@ -22,6 +22,7 @@
 #define REPORT_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 // Define Grbl status codes. Valid values (0-255)

@@ -23,9 +23,6 @@
 #define STEPPER_H
 
 
-extern float current_backlash[];
-
-
 // Initialize and setup the stepper motor subsystem
 void Stepper_Init(void);
 

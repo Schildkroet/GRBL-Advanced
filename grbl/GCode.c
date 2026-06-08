@@ -118,7 +118,7 @@ uint8_t GC_ExecuteLine(const char *line)
     // Initialize command and value words and parser flags variables.
 
     // Tracks G and M command words. Also used for modal group violations.
-    uint16_t command_words = 0;
+    uint32_t command_words = 0;
     // Tracks value words.
     uint16_t value_words = 0;
     uint8_t gc_parser_flags = GC_PARSER_NONE;
@@ -216,7 +216,7 @@ uint8_t GC_ExecuteLine(const char *line)
                 // Lathe Diameter Mode
                 if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_LATHE_MODE))
                 {
-                    word_bit = MODAL_GROUP_G12;
+                    word_bit = MODAL_GROUP_G15;
                     gc_block.modal.lathe_mode = LATHE_DIAMETER_MODE;
                 }
                 else
@@ -229,7 +229,7 @@ uint8_t GC_ExecuteLine(const char *line)
                 // Lathe Radius Mode (default)
                 if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_LATHE_MODE))
                 {
-                    word_bit = MODAL_GROUP_G12;
+                    word_bit = MODAL_GROUP_G15;
                     gc_block.modal.lathe_mode = LATHE_RADIUS_MODE;
                 }
                 else
@@ -254,6 +254,7 @@ uint8_t GC_ExecuteLine(const char *line)
                     axis_command = AXIS_COMMAND_NON_MODAL;
                 }
                 // No break. Continues to next line.
+                __attribute__ ((fallthrough));
 
             case 4:
             case 53:
@@ -340,6 +341,7 @@ uint8_t GC_ExecuteLine(const char *line)
                 }
                 axis_command = AXIS_COMMAND_MOTION_MODE;
                 // No break. Continues to next line.
+                __attribute__ ((fallthrough));
 
             case 80:
                 word_bit = MODAL_GROUP_G1;
@@ -989,7 +991,7 @@ uint8_t GC_ExecuteLine(const char *line)
     }
 
     // [7. Spindle control ]:
-    if(BIT_IS_TRUE(command_words, BIT(MODAL_GROUP_G14)) && (gc_block.modal.motion == SPINDLE_SURFACE_MODE))
+    if(BIT_IS_TRUE(command_words, BIT(MODAL_GROUP_G14)) && (gc_block.modal.spindle_mode == SPINDLE_SURFACE_MODE))
     {
         if(BIT_IS_FALSE(value_words, BIT(WORD_S)))
         {
@@ -1519,6 +1521,7 @@ uint8_t GC_ExecuteLine(const char *line)
             case MOTION_MODE_CW_ARC:
                 // No break intentional.
                 gc_parser_flags |= GC_PARSER_ARC_IS_CLOCKWISE;
+                __attribute__ ((fallthrough));
 
             case MOTION_MODE_CCW_ARC:
                 // [G2/3 Errors All-Modes]: Feed rate undefined.
@@ -1709,7 +1712,9 @@ uint8_t GC_ExecuteLine(const char *line)
 
             case MOTION_MODE_PROBE_TOWARD_NO_ERROR:
             case MOTION_MODE_PROBE_AWAY_NO_ERROR:
-                gc_parser_flags |= GC_PARSER_PROBE_IS_NO_ERROR; // No break intentional.
+                gc_parser_flags |= GC_PARSER_PROBE_IS_NO_ERROR;
+                // No break intentional.
+                __attribute__ ((fallthrough));
 
             case MOTION_MODE_PROBE_TOWARD:
             case MOTION_MODE_PROBE_AWAY:
@@ -1956,6 +1961,7 @@ uint8_t GC_ExecuteLine(const char *line)
         {
         case 62:
             io_on = 1;
+            __attribute__ ((fallthrough));
         case 63:
             // Syncronized
             Protocol_BufferSynchronize();
@@ -1972,6 +1978,7 @@ uint8_t GC_ExecuteLine(const char *line)
 
         case 64:
             io_on = 1;
+            __attribute__ ((fallthrough));
         case 65:
             if(io_on)
             {
@@ -2264,8 +2271,8 @@ uint8_t GC_ExecuteLine(const char *line)
                             }
                             else
                             {
-                                // Back off a bit
-                                xyz[Z_AXIS] += 2;
+                                // Back off a fraction of Q to break the chip without leaving the hole
+                                xyz[Z_AXIS] += gc_block.values.q * 0.5f;
                                 // Set rapid motion condition flag.
                                 pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
                                 MC_Line(xyz, pl_data);
@@ -2329,7 +2336,7 @@ uint8_t GC_ExecuteLine(const char *line)
                     if(!isEqual_f(gc_block.values.xyz[X_AXIS], old_xyz[X_AXIS]))
                     {
                         // Also movement in X-axis
-                        float f = sqrtf(powf(gc_block.values.xyz[X_AXIS], 2.0) + powf(gc_block.values.ijk[Z_AXIS], 2.0));
+                        float f = sqrtf(powf(gc_block.values.xyz[X_AXIS] - old_xyz[X_AXIS], 2.0) + powf(gc_block.values.ijk[Z_AXIS], 2.0));
 
                         pl_data->feed_rate *= f;
                     }
@@ -2380,7 +2387,7 @@ uint8_t GC_ExecuteLine(const char *line)
                     if(!isEqual_f(gc_block.values.xyz[X_AXIS], old_xyz[X_AXIS]))
                     {
                         // Also movement in X-axis
-                        float f = sqrtf(powf(gc_block.values.xyz[X_AXIS], 2.0) + powf(pitch, 2.0));
+                        float f = sqrtf(powf(gc_block.values.xyz[X_AXIS] - old_xyz[X_AXIS], 2.0) + powf(pitch, 2.0));
 
                         pl_data->feed_rate *= f;
                     }
@@ -2431,7 +2438,7 @@ uint8_t GC_ExecuteLine(const char *line)
                     {
                         // Internal thread
                         cur_xyz[X_AXIS] = old_xyz[X_AXIS] + peak + doc + next_doc;
-                        if(cur_xyz[X_AXIS] <= (old_xyz[X_AXIS] + peak + final_depth))
+                        if(cur_xyz[X_AXIS] >= (old_xyz[X_AXIS] + peak + final_depth))
                         {
                             // Limit to final depth
                             cur_xyz[X_AXIS] = old_xyz[X_AXIS] + peak + final_depth;
@@ -2480,8 +2487,7 @@ uint8_t GC_ExecuteLine(const char *line)
                     }
                     else
                     {
-                        // ToDo
-                        next_doc += (1/idx) * doc;
+                        next_doc += (1.0f/idx) * doc;
                     }
                 }
             }

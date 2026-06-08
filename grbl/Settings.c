@@ -789,7 +789,7 @@ uint8_t Settings_StoreGlobalSetting(uint8_t parameter, float value)
 
 void Settings_StoreTlsPosition(void)
 {
-    memcpy(settings.tls_position, sys_position, sizeof(float)*N_AXIS);
+    memcpy(settings.tls_position, (const void *)sys_position, sizeof(int32_t)*N_AXIS);
     settings.tls_valid = 1;
 
     WriteGlobalSettings();

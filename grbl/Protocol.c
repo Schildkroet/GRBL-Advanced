@@ -80,7 +80,7 @@ void Protocol_MainLoop(void)
 
     if (System_GetControlState(true) & CONTROL_BTN_MASK)
     {
-        Report_FeedbackMessage(MESSAGE_CHECK_INPUTS);
+        //Report_FeedbackMessage(MESSAGE_CHECK_INPUTS);
     }
 
     // Check for and report alarm state after a reset, error, or an initial power up.
@@ -129,8 +129,8 @@ void Protocol_MainLoop(void)
                     // Bail to calling function upon system abort
                     return;
                 }
-
-                line[char_counter] = 0; // Set string termination character.
+                // Set string termination character.
+                line[char_counter] = 0;
 
 #ifdef REPORT_ECHO_LINE_RECEIVED
                 Report_EchoLineReceived(line);
@@ -235,7 +235,8 @@ void Protocol_MainLoop(void)
         // completed. In either case, auto-cycle start, if enabled, any queued moves.
         Protocol_AutoCycleStart();
 
-        Protocol_ExecuteRealtime();  // Runtime command check point.
+        // Runtime command check point.
+        Protocol_ExecuteRealtime();
 
         if(sys.abort)
         {
@@ -243,8 +244,8 @@ void Protocol_MainLoop(void)
             return;
         }
     }
-
-    return; /* Never reached */
+    // Never reached
+    return;
 }
 
 
@@ -256,7 +257,8 @@ void Protocol_BufferSynchronize(void)
     Protocol_AutoCycleStart();
     do
     {
-        Protocol_ExecuteRealtime();   // Check and execute run-time commands
+        // Check and execute run-time commands
+        Protocol_ExecuteRealtime();
 
         if(sys.abort)
         {
@@ -276,9 +278,11 @@ void Protocol_BufferSynchronize(void)
 // execute calls a buffer sync, or the planner buffer is full and ready to go.
 void Protocol_AutoCycleStart(void)
 {
-    if(Planner_GetCurrentBlock() != 0)   // Check if there are any blocks in the buffer.
+    // Check if there are any blocks in the buffer.
+    if(Planner_GetCurrentBlock() != 0)
     {
-        System_SetExecStateFlag(EXEC_CYCLE_START); // If so, execute them!
+        // If so, execute them!
+        System_SetExecStateFlag(EXEC_CYCLE_START);
     }
 }
 

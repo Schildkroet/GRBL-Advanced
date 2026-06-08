@@ -22,6 +22,7 @@
 #ifndef PLANNER_H
 #define PLANNER_H
 
+
 #include <stdint.h>
 #include "util.h"
 
@@ -76,6 +77,7 @@ typedef struct
     float spindle_speed;    // Block spindle speed. Copied from pl_line_data.
 
     uint8_t backlash_motion;
+    int32_t backlash_steps[N_LINEAR_AXIS];
 } Planner_Block_t;
 
 
@@ -89,6 +91,7 @@ typedef struct
 
     uint8_t backlash_motion;
     float backlash[N_AXIS];
+    int32_t backlash_steps[N_LINEAR_AXIS];
 } Planner_LineData_t;
 
 

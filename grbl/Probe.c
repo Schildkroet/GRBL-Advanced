@@ -78,7 +78,7 @@ void Probe_StateMonitor(void)
     if(Probe_GetState())
     {
         sys_probe_state = PROBE_OFF;
-        memcpy(sys_probe_position, sys_position, sizeof(sys_position));
+        memcpy(sys_probe_position, (const void *)sys_position, sizeof(sys_position));
         BIT_TRUE(sys_rt_exec_state, EXEC_MOTION_CANCEL);
     }
 }

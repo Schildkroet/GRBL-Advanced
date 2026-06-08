@@ -47,6 +47,8 @@
 static float target_prev[N_AXIS] = {0.0};
 static uint8_t dir_negative[N_AXIS] = {DIR_NEGATIV};
 static uint8_t backlash_enable = 0;
+static float backlash_remaining[N_LINEAR_AXIS];
+static int8_t backlash_dir[N_LINEAR_AXIS];
 
 // Sync move
 static int32_t pos_z = 0;
@@ -68,6 +70,12 @@ void MC_Init(void)
     }
 
     MC_SyncBacklashPosition();
+
+    for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+    {
+        backlash_remaining[i] = 0.0f;
+        backlash_dir[i]       = 0;
+    }
 
     for(uint8_t i = 0; i < N_AXIS; i++)
     {
@@ -174,89 +182,142 @@ void MC_Line(const float *target, const Planner_LineData_t *pl_data)
     // doesn't update the machine position values. Since the position values used by the g-code
     // parser and planner are separate from the system machine positions, this is doable.
 
-
     MC_WaitPlannerFree();
+
+    uint8_t ret = PLAN_EMPTY_BLOCK;
 
     if (BIT_IS_TRUE(settings.flags_ext, BITFLAG_ENABLE_BACKLASH_COMP))
     {
-        float delta_prev[N_AXIS] = {};
-        float vec_norm[N_AXIS] = {};
-
-        // Backlash compensation (not for A & B)
+        // Pre-scan: compute how many correction slices are still needed this call.
+        // Accounts for reversals (which reload full backlash) without modifying state.
+        uint8_t n_needed = 0;
         for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
         {
-            delta_prev[i] = target[i] - target_prev[i];
-            vec_norm[i] = 0.0;
-            pl_data_new.backlash[i] = 0.0;
+            if (settings.backlash[i] < 0.0001f) continue;
 
-            // Move positive?
-            if (target[i] > target_prev[i])
+            float d = target[i] - target_prev[i];
+            float eff_remaining;
+            int8_t eff_dir;
+
+            if ((d > 0.0f && dir_negative[i] == DIR_NEGATIV) ||
+                (d < 0.0f && dir_negative[i] == DIR_POSITIV))
             {
-                // Last move negative?
-                if (dir_negative[i] == DIR_NEGATIV)
-                {
-                    dir_negative[i] = DIR_POSITIV;
-                    target_new[i] += settings.backlash[i];
-                    vec_norm[i] = settings.backlash[i];
-                    pl_data_new.backlash[i] = -settings.backlash[i];
-                    current_backlash[i] += settings.backlash[i] * settings.steps_per_mm[i];
-
-                    pl_data_new.backlash_motion |= BIT(i);
-                }
+                eff_remaining = settings.backlash[i];
+                eff_dir       = (d > 0.0f) ? +1 : -1;
             }
-            // Move negative?
-            else if (target[i] < target_prev[i])
+            else
             {
-                // Last move positive?
-                if (dir_negative[i] == DIR_POSITIV)
-                {
-                    dir_negative[i] = DIR_NEGATIV;
-                    target_new[i] -= settings.backlash[i];
-                    vec_norm[i] = -settings.backlash[i];
-                    pl_data_new.backlash[i] = settings.backlash[i];
-                    current_backlash[i] -= (settings.backlash[i] * settings.steps_per_mm[i]);
+                eff_remaining = backlash_remaining[i];
+                eff_dir       = backlash_dir[i];
+            }
 
-                    pl_data_new.backlash_motion |= BIT(i);
-                }
+            if (eff_remaining > 0.0f && (float)eff_dir * d > 0.0f)
+            {
+                float slice    = settings.backlash[i] / (float)BACKLASH_CORRECTION_SEGMENTS;
+                uint8_t slices = (uint8_t)lroundf(eff_remaining / slice);
+                if (slices > BACKLASH_CORRECTION_SEGMENTS)
+                    slices = BACKLASH_CORRECTION_SEGMENTS;
+                if (slices > n_needed) n_needed = slices;
             }
         }
 
-        if (backlash_enable && pl_data_new.backlash_motion)
+        // Split the segment into n_needed sub-calls if it is long enough.
+        uint8_t n_calls = 1;
+        float   seg_len = 0.0f;
+        if (n_needed > 1)
         {
-            float vec_len = sqrtf(powf(delta_prev[X_AXIS], 2.0) + powf(delta_prev[Y_AXIS], 2.0) + powf(delta_prev[Z_AXIS], 2.0));
-
-            pl_data_new.feed_rate *= 1.2;
-
-            // Normalize target vector and reduce to a length of 0.1 and add it to previous target
             for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
             {
-                vec_norm[i] += ((delta_prev[i] / vec_len) / 10.0) + target_prev[i];
+                float d = target[i] - target_prev[i];
+                seg_len += d * d;
             }
-
-            // Perform backlash move if necessary
-            if (vec_len > 0.1)
-            {
-                Planner_BufferLine(vec_norm, &pl_data_new);
-                pl_data_new.backlash_motion = 0;
-                pl_data_new.feed_rate = pl_data->feed_rate;
-            }
+            seg_len = sqrtf(seg_len);
+            if (seg_len >= (float)n_needed * BACKLASH_SPLIT_SEGMENT_MM)
+                n_calls = n_needed;
         }
 
-        // Save target for next function call
-        memcpy(target_prev, target, N_AXIS*sizeof(float));
+        for (uint8_t call_idx = 0; call_idx < n_calls; call_idx++)
+        {
+            const float *call_target;
+            float sub_target[N_AXIS];
 
-        // Backlash move needs a slot in planner buffer, so we have to check again, if planner is free
-        MC_WaitPlannerFree();
+            if (n_calls > 1 && call_idx < n_calls - 1)
+            {
+                float frac = (float)(call_idx + 1) * BACKLASH_SPLIT_SEGMENT_MM / seg_len;
+                for (uint8_t a = 0; a < N_AXIS; a++)
+                    sub_target[a] = target_prev[a] + (target[a] - target_prev[a]) * frac;
+                call_target = sub_target;
+            }
+            else
+            {
+                call_target = target;
+            }
+
+            memcpy(target_new, call_target, sizeof(float) * N_AXIS);
+            pl_data_new.backlash_motion = 0;
+
+            for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+            {
+                pl_data_new.backlash[i]       = 0.0f;
+                pl_data_new.backlash_steps[i] = 0;
+
+                if (settings.backlash[i] < 0.0001f)
+                    continue;
+
+                // delta from ORIGINAL target_prev — unchanged throughout the split loop
+                float delta = call_target[i] - target_prev[i];
+
+                // Reversal detection fires at most once (first sub-call); subsequent
+                // sub-calls see the same-direction delta and skip this branch.
+                if (delta > 0.0f && dir_negative[i] == DIR_NEGATIV)
+                {
+                    dir_negative[i]       = DIR_POSITIV;
+                    backlash_remaining[i] = settings.backlash[i];
+                    backlash_dir[i]       = +1;
+                }
+                else if (delta < 0.0f && dir_negative[i] == DIR_POSITIV)
+                {
+                    dir_negative[i]       = DIR_NEGATIV;
+                    backlash_remaining[i] = settings.backlash[i];
+                    backlash_dir[i]       = -1;
+                }
+
+                if (backlash_remaining[i] > 0.0f)
+                {
+                    float motion_in_dir = (float)backlash_dir[i] * delta;
+                    if (motion_in_dir > 0.0f)
+                    {
+                        float slice      = settings.backlash[i] / (float)BACKLASH_CORRECTION_SEGMENTS;
+                        float correction = (backlash_remaining[i] < slice) ? backlash_remaining[i] : slice;
+                        backlash_remaining[i] -= correction;
+
+                        target_new[i]                 += (float)backlash_dir[i] * correction;
+                        pl_data_new.backlash[i]        = -(float)backlash_dir[i] * correction;
+                        pl_data_new.backlash_motion   |= BIT(i);
+                        pl_data_new.backlash_steps[i]  = lroundf(correction * settings.steps_per_mm[i]);
+                    }
+                }
+            }
+
+            if (pl_data_new.backlash_motion != 0)
+                MC_WaitPlannerFree();
+
+            if (pl_data_new.backlash_motion != 0)
+                ret = Planner_BufferLine(target_new, &pl_data_new);
+            else
+                ret = Planner_BufferLine(call_target, &pl_data_new);
+        }
+
+        memcpy(target_prev, target, N_AXIS * sizeof(float));
     }
-
-    if(pl_data_new.backlash_motion != 0)
+    else
     {
-        Planner_BufferLine(target_new, &pl_data_new);
-        return;
+        memcpy(target_prev, target, N_AXIS * sizeof(float));
+        ret = Planner_BufferLine(target, &pl_data_new);
     }
 
     // Plan and queue motion into planner buffer
-    if (Planner_BufferLine(target, &pl_data_new) == PLAN_EMPTY_BLOCK)
+    if (ret == PLAN_EMPTY_BLOCK)
     {
         if(BIT_IS_TRUE(settings.flags, BITFLAG_LASER_MODE))
         {
@@ -688,7 +749,7 @@ uint8_t MC_ProbeCycle(const float *target, const Planner_LineData_t *pl_data, ui
     {
         if(is_no_error)
         {
-            memcpy(sys_probe_position, sys_position, sizeof(sys_position));
+            memcpy(sys_probe_position, (const void *)sys_position, sizeof(sys_position));
         }
         else
         {
@@ -709,6 +770,8 @@ uint8_t MC_ProbeCycle(const float *target, const Planner_LineData_t *pl_data, ui
     Planner_Reset(); // Reset planner buffer. Zero planner positions. Ensure probing motion is cleared.
     Planner_SyncPosition(); // Sync planner position to current machine position.
     MC_SyncBacklashPosition();
+    for (uint8_t i = 0; i < N_LINEAR_AXIS; i++)
+        backlash_remaining[i] = 0.0f;
 
 #ifdef MESSAGE_PROBE_COORDINATES
     // All done! Output the probe position as message.
@@ -722,8 +785,9 @@ uint8_t MC_ProbeCycle(const float *target, const Planner_LineData_t *pl_data, ui
     }
     else
     {
+        // Failed to trigger probe within travel. With or without error.
         return GC_PROBE_FAIL_END;
-    } // Failed to trigger probe within travel. With or without error.
+    }
 }
 
 
@@ -802,12 +866,13 @@ void MC_Reset(void)
         // Kill spindle and coolant.
         Spindle_Stop();
         Coolant_Stop();
+        Limits_Disable();
 
         // Kill steppers only if in any motion state, i.e. cycle, actively holding, or homing.
         // NOTE: If steppers are kept enabled via the step idle delay setting, this also keeps
         // the steppers enabled by avoiding the go_idle call altogether, unless the motion state is
         // violated, by which, all bets are off.
-        if((sys.state & (STATE_CYCLE | STATE_HOMING | STATE_JOG)) || (sys.step_control & (STEP_CONTROL_EXECUTE_HOLD | STEP_CONTROL_EXECUTE_SYS_MOTION)))
+        if ((sys.state & (STATE_CYCLE | STATE_HOMING | STATE_JOG)) || (sys.step_control & (STEP_CONTROL_EXECUTE_HOLD | STEP_CONTROL_EXECUTE_SYS_MOTION)))
         {
             if(sys.state == STATE_HOMING)
             {

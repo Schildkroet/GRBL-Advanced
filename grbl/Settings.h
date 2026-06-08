@@ -22,7 +22,9 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+
 #include <stdint.h>
+#include <stdbool.h>
 #include "util.h"
 #include "ToolTable.h"
 
@@ -121,9 +123,8 @@
 #endif
 
 
-#pragma pack(push, 1) // exact fit - no padding
-// Global persistent settings (Stored from byte EEPROM_ADDR_GLOBAL onwards); 111 Bytes
-typedef struct
+// Global persistent settings (Stored from byte EEPROM_ADDR_GLOBAL onwards); 164 Bytes
+typedef struct __attribute__((packed,aligned(4)))
 {
     // Axis settings
     float steps_per_mm[N_AXIS];
@@ -163,7 +164,6 @@ typedef struct
     uint16_t homing_debounce_delay;
     float homing_pulloff;
 } Settings_t;
-#pragma pack(pop)
 
 
 extern Settings_t settings;

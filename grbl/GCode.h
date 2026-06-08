@@ -22,6 +22,7 @@
 #ifndef GCODE_H
 #define GCODE_H
 
+
 #include <stdint.h>
 #include "util.h"
 #include "Planner.h"
@@ -49,11 +50,11 @@
 #define MODAL_GROUP_G14     12  // [G96, G97] Spindle Speed Mode
 #define MODAL_GROUP_G15     13  // [G7, G8] Lathe Diameter Mode
 
-#define MODAL_GROUP_M4      11  // [M0,M1,M2,M30] Stopping
+#define MODAL_GROUP_M4      14  // [M0,M1,M2,M30] Stopping
 #define MODAL_GROUP_M5      15  // [M62-M65]
-#define MODAL_GROUP_M7      12  // [M3,M4,M5] Spindle turning
-#define MODAL_GROUP_M8      13  // [M7,M8,M9] Coolant control
-#define MODAL_GROUP_M9      14  // [M56] Override control
+#define MODAL_GROUP_M7      16  // [M3,M4,M5] Spindle turning
+#define MODAL_GROUP_M8      17  // [M7,M8,M9] Coolant control
+#define MODAL_GROUP_M9      18  // [M56] Override control
 
 
 // Define command actions for within execution-type modal groups (motion, stopping, non-modal). Used
@@ -278,6 +279,7 @@ typedef struct
     GC_Values_t values;
 } Parser_Block_t;
 
+
 extern Parser_State_t gc_state;
 
 
@@ -289,5 +291,6 @@ void GC_SyncPosition(void);
 
 // Execute one block of rs274/ngc/g-code
 uint8_t GC_ExecuteLine(const char *line);
+
 
 #endif // GCODE_H

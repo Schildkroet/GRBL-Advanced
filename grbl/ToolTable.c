@@ -59,6 +59,8 @@ void TT_Reset(void)
 
 void TT_GetToolParams(uint8_t tool_nr, ToolParams_t *params)
 {
+    if (params == NULL) { return; }
+
     if (tool_nr < TOOLTABLE_MAX_TOOL_NR)
     {
         memcpy(params, &tool_table.tools[tool_nr], sizeof(ToolParams_t));
@@ -72,6 +74,8 @@ void TT_GetToolParams(uint8_t tool_nr, ToolParams_t *params)
 
 void TT_SaveToolParams(uint8_t tool_nr, ToolParams_t *params)
 {
+    if (params == NULL) { return; }
+
     if (tool_nr < TOOLTABLE_MAX_TOOL_NR)
     {
         memcpy(&tool_table.tools[tool_nr], params, sizeof(ToolParams_t));

@@ -20,12 +20,12 @@
 #ifndef TOOLTABLE_H_INCLUDED
 #define TOOLTABLE_H_INCLUDED
 
+
 #include <stdint.h>
 #include "Config.h"
 
 
-#pragma pack(push, 1) // exact fit - no padding
-typedef struct
+typedef struct __attribute__((packed))
 {
     float x_offset;
     float y_offset;
@@ -34,11 +34,10 @@ typedef struct
 } ToolParams_t;
 
 
-typedef struct
+typedef struct __attribute__((packed))
 {
     ToolParams_t tools[TOOLTABLE_MAX_TOOL_NR];
 } ToolTable_t;
-#pragma pack(pop)
 
 
 void TT_Init(void);

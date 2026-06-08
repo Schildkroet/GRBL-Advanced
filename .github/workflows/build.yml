@@ -13,7 +13,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -39,7 +39,7 @@ jobs:
       run: make
 
     - name: Upload compiled binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with: 
         name: GRBL-Advanced
         path: |
